@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金币奖励站</title>
+    <style>
+        body { font-family: 'Rounded Mplus 1c', sans-serif; background-color: #f0f4f8; text-align: center; padding: 20px; }
+        .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 50px; }
+        h1 { color: #333; font-size: 24px; }
+        .coin-icon { font-size: 60px; margin: 20px 0; display: block; }
+        .total { font-size: 40px; color: #ffb700; font-weight: bold; }
+        .message { color: #666; margin-top: 10px; font-size: 16px; }
+        .anim-add { color: #2ecc71; font-weight: bold; font-size: 20px; animation: pop 0.5s ease; }
+        @keyframes pop { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .btn { margin-top: 30px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="coin-icon">💰</div>
+        <div>当前金币总数</div>
+        <div id="totalDisplay" class="total">0</div>
+        <div id="statusMsg" class="message"></div>
+    </div>
+
+    <script>
+        // 1. 获取 URL 中的参数
+        const params = new URLSearchParams(window.location.search);
+        const addAmount = parseInt(params.get('add')); // 获取要增加的金币数
+        const transId = params.get('id'); // 获取唯一交易ID（防止刷新重复加）
+        
+        // 2. 获取本地存储的总金币数
+        let currentCoins = parseInt(localStorage.getItem('my_coins')) || 0;
+        const totalDisplay = document.getElementById('totalDisplay');
+        const statusMsg = document.getElementById('statusMsg');
+
+        // 3. 核心逻辑
+        if (addAmount && transId) {
+            // 检查这个 ID 是否已经使用过
+            if (localStorage.getItem('trans_' + transId)) {
+                statusMsg.innerText = "⚠️ 这次奖励已经领取过啦！";
+            } else {
+                // 执行加法
+                currentCoins += addAmount;
+                // 保存新总数
+                localStorage.setItem('my_coins', currentCoins);
+                // 标记这个 ID 已使用
+                localStorage.setItem('trans_' + transId, 'used');
+                
+                statusMsg.innerHTML = `<span class="anim-add">+${addAmount} 金币到账！做得好！🎉</span>`;
+            }
+        } else {
+            statusMsg.innerText = "查看金币余额";
+        }
+
+        // 4. 更新页面显示
+        totalDisplay.innerText = currentCoins;
+    </script>
+</body>
+</html>

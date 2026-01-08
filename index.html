@@ -3,26 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Andy的背包</title>
+    <title>Andy的冒险背包</title>
     <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     
     <style>
-        * { box-sizing: border-box; user-select: none; }
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { 
-            background-color: #76b5fe; 
+            background-color: #76b5fe; /* 默认白天 */
             font-family: 'VT323', monospace; 
-            text-align: center; 
-            margin: 0; padding: 0;
-            overflow: hidden; 
-            height: 100vh;
+            text-align: center; margin: 0; padding: 0;
+            overflow: hidden; height: 100vh;
             display: flex; flex-direction: column; align-items: center;
+            transition: background-color 2s ease; /* 昼夜切换渐变 */
         }
+        
+        /* 星空背景 (晚上显示) */
+        .stars {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(white 1px, transparent 1px);
+            background-size: 50px 50px, 100px 100px;
+            background-position: 0 0, 25px 25px;
+            opacity: 0; transition: opacity 2s; z-index: 0; pointer-events: none;
+        }
+        body.night .stars { opacity: 0.5; }
+        body.night { background-color: #1a0b2e; } /* 深夜紫 */
 
-        /* 启动蒙版 (为了解决自动播放限制) */
+        /* 启动蒙版 */
         #start-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 9999;
+            background: rgba(0,0,0,0.9); z-index: 9999;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             color: white;
@@ -34,39 +44,44 @@
             box-shadow: inset 4px 4px #aaa, inset -4px -4px #444;
             text-transform: uppercase; margin-top: 20px;
         }
-        .mc-btn:active { background: #555; border-color: #aaa; }
+        .mc-btn:active { background: #555; border-color: #aaa; transform: scale(0.95); }
 
         .ui-container {
-            margin-top: 10vh;
-            width: 90%;
-            max-width: 400px;
-            z-index: 100; 
-            position: relative;
+            margin-top: 8vh; width: 90%; max-width: 400px;
+            z-index: 100; position: relative;
         }
 
         .card { 
-            background-color: #c6c6c6; 
-            border: 4px solid #000;
+            background-color: #c6c6c6; border: 4px solid #000;
             box-shadow: inset 4px 4px #fff, inset -4px -4px #555; 
-            padding: 20px; 
-            position: relative; 
+            padding: 20px; position: relative; 
         }
 
-        h2 { color: #404040; margin: 0 0 15px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
+        h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
+
+        /* 🏆 称号系统样式 */
+        .rank-badge {
+            background: #333; color: #f1c40f; padding: 2px 10px;
+            border: 2px solid #fff; display: inline-block;
+            margin-bottom: 15px; font-size: 18px; border-radius: 4px;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
 
         .slot {
             background: #8b8b8b; width: 120px; height: 120px; margin: 0 auto;
             border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff;
             display: flex; align-items: center; justify-content: center; position: relative;
+            cursor: pointer; /* 提示可点击 */
         }
+        .slot:active .coin-icon { transform: scale(0.8); } /* 点击缩放效果 */
 
-        .coin-icon { font-size: 70px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2;}
+        .coin-icon { font-size: 70px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
+        
         .label { color: #404040; font-size: 20px; margin-top: 15px; font-weight: bold; text-shadow: 1px 1px #fff;}
 
         .total { 
             font-size: 80px; color: #fff; font-weight: bold; 
-            text-shadow: 4px 4px 0px #333; margin: 5px 0; 
-            font-family: 'VT323', sans-serif; 
+            text-shadow: 4px 4px 0px #333; margin: 5px 0; line-height: 1;
         }
 
         .status-bar {
@@ -78,12 +93,7 @@
         .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
 
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
-
-        /* 音量控制开关 */
-        .mute-btn {
-            position: absolute; top: 10px; right: 10px;
-            font-size: 24px; cursor: pointer; color: #555;
-        }
+        .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
 
         /* 动画区 */
         .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 10; }
@@ -93,8 +103,8 @@
         .steve-body { width: 40px; height: 30px; background: #00AAAA; position: absolute; top: 40px; }
         .steve-pants { width: 40px; height: 20px; background: #303090; position: absolute; top: 70px; }
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
-
-        .creeper { position: absolute; bottom: 45px; right: -50px; width: 30px; height: 80px; z-index: 6; animation: patrol 12s linear infinite; }
+        
+        .creeper { position: absolute; bottom: 45px; right: -50px; width: 30px; height: 80px; z-index: 6; animation: patrol 15s linear infinite; }
         .creeper-head { width: 30px; height: 30px; background: #00AA00; position: absolute; top: 0; border: 2px solid #005500; }
         .face-eye-l { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; left: 4px; }
         .face-eye-r { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; right: 4px; }
@@ -106,6 +116,7 @@
         .leg-b { width: 10px; height: 20px; background: #00AA00; position: absolute; right: 0; animation: walk 0.5s infinite alternate-reverse; }
         @keyframes patrol { 0% { right: -50px; transform: scaleX(1); } 45% { right: 60%; transform: scaleX(1); } 50% { right: 60%; transform: scaleX(-1); } 95% { right: -50px; transform: scaleX(-1); } 100% { right: -50px; transform: scaleX(1); } }
         @keyframes walk { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+
         .celebrate { animation: jump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #f1c40f !important; text-shadow: 4px 4px 0 #b7950b !important; }
         @keyframes jump { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
         .confetti { position: fixed; top: -50px; z-index: 999; animation: fall linear forwards; pointer-events: none; font-size: 30px;}
@@ -113,22 +124,18 @@
     </style>
 </head>
 <body>
+    <div class="stars"></div>
 
     <div id="start-overlay">
-        <h1 style="text-shadow: 4px 4px #000; font-size: 40px;">Andy的世界</h1>
-        <p>点击下方按钮进入服务器</p>
+        <h1 style="text-shadow: 4px 4px #000; font-size: 40px; margin-bottom:10px;">Andy的世界</h1>
+        <p style="opacity: 0.8; font-size: 16px;">Server: Online | Ping: 20ms</p>
         <button class="mc-btn" onclick="startGame()">进入游戏</button>
     </div>
 
-    <audio id="bgm" loop>
-        <source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/music/game/calm1.ogg" type="audio/ogg">
-    </audio>
-    <audio id="sfx-levelup">
-        <source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/levelup.ogg" type="audio/ogg">
-    </audio>
-    <audio id="sfx-damage">
-        <source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/damage/hit1.ogg" type="audio/ogg">
-    </audio>
+    <audio id="bgm" loop><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/music/game/calm1.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-levelup"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/levelup.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-damage"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/damage/hit1.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-click"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/click.ogg" type="audio/ogg"></audio>
 
     <div class="ui-container">
         <div class="card">
@@ -136,7 +143,9 @@
 
             <h2>Andy的背包</h2>
             
-            <div class="slot">
+            <div id="rankBadge" class="rank-badge">加载中...</div>
+
+            <div class="slot" onclick="clickCoin()">
                 <div class="coin-icon" id="icon">🪙</div>
             </div>
 
@@ -169,173 +178,45 @@
         const light = document.getElementById('light');
         const connStatus = document.getElementById('connStatus');
         const overlay = document.getElementById('start-overlay');
+        const rankBadge = document.getElementById('rankBadge');
         
-        // 音频对象
         const bgm = document.getElementById('bgm');
         const sfxLevelUp = document.getElementById('sfx-levelup');
         const sfxDamage = document.getElementById('sfx-damage');
+        const sfxClick = document.getElementById('sfx-click');
         let isMuted = false;
-
         let lastCoins = null; 
 
-        // 点击开始游戏
+        // 🌟 称号配置
+        const RANKS = [
+            { limit: 0, title: "🪵 新手伐木工" },
+            { limit: 50, title: "🪨 熟练采石匠" },
+            { limit: 150, title: "⚔️ 铁甲卫士" },
+            { limit: 300, title: "🏆 黄金领主" },
+            { limit: 500, title: "💎 钻石大神" },
+            { limit: 1000, title: "🐲 末影屠龙者" }
+        ];
+
         function startGame() {
             overlay.style.display = 'none';
-            // 播放背景音 (音量调小一点)
+            checkDayNight(); // 检查昼夜
             bgm.volume = 0.4;
-            bgm.play().catch(e => console.log("BGM error", e));
-            
-            // 开始加载数据
+            bgm.play().catch(e => console.log("BGM error"));
             checkCloud(false);
             initGoEasy();
         }
 
-        function toggleMute() {
-            isMuted = !isMuted;
-            if(isMuted) {
-                bgm.pause();
-                document.querySelector('.mute-btn').innerText = '🔇';
+        // 🌟 检查昼夜
+        function checkDayNight() {
+            const hour = new Date().getHours();
+            if (hour >= 18 || hour < 6) {
+                document.body.classList.add('night'); // 晚上
             } else {
-                bgm.play();
-                document.querySelector('.mute-btn').innerText = '🔊';
+                document.body.classList.remove('night'); // 白天
             }
         }
 
-        function playSound(type) {
-            if(isMuted) return;
-            if(type === 'up') {
-                sfxLevelUp.currentTime = 0;
-                sfxLevelUp.play();
-            } else if (type === 'down') {
-                sfxDamage.currentTime = 0;
-                sfxDamage.play();
-            }
-        }
-
-        async function checkCloud(forceAnim = false) {
-            if(connStatus.innerText === "正在生成地形...") {
-                connStatus.innerText = "正在读取存档...";
-            }
-            
-            try {
-                let response = await fetch(BASE_URL + '/latest', {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
-                let data = await response.json();
-                let cloudCoins = data.record.coins || 0;
-                let usedIds = data.record.transactions || [];
-
-                if (lastCoins === null) {
-                    lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins')) || cloudCoins;
-                }
-
-                if (cloudCoins > lastCoins || (forceAnim && cloudCoins > lastCoins)) {
-                    let diff = cloudCoins - lastCoins;
-                    showSuccessAnimation(diff); 
-                } else if (cloudCoins < lastCoins) {
-                    statusMsg.innerText = `交易成功! 支付 ${lastCoins - cloudCoins} 币`;
-                    statusMsg.style.color = "#8b0000";
-                    // 播放受伤音效
-                    playSound('down'); 
-                    setTimeout(() => statusMsg.innerText = "", 3000);
-                }
-
-                totalDisplay.innerText = cloudCoins;
-                lastCoins = cloudCoins;
-                localStorage.setItem('andy_last_seen_coins', cloudCoins);
-                
-                if(light.classList.contains('online')){
-                    connStatus.innerText = "服务器在线";
-                } else {
-                    connStatus.innerText = "背包整理完毕";
-                }
-
-                handleUrlParams(usedIds, cloudCoins);
-
-            } catch (error) {
-                console.error(error);
-                connStatus.innerText = "与服务器断开连接";
-                statusMsg.innerText = "区块加载失败...";
-                statusMsg.style.color = "red";
-            }
-        }
-
-        function initGoEasy() {
-            try {
-                const goEasy = GoEasy.getInstance({
-                    host: 'hangzhou.goeasy.io', 
-                    appkey: GOEASY_KEY,
-                    modules: ['pubsub']
-                });
-
-                goEasy.connect({
-                    onSuccess: function () {
-                        light.classList.add('online');
-                        if(connStatus.innerText.includes("生成") || connStatus.innerText.includes("读取")) {
-                            connStatus.innerText = "服务器在线";
-                        }
-                    },
-                    onFailed: function (error) {
-                        connStatus.innerText = "离线模式";
-                    }
-                });
-
-                goEasy.pubsub.subscribe({
-                    channel: "andy_channel",
-                    onMessage: function (message) {
-                        checkCloud(true); 
-                    }
-                });
-            } catch(e) { console.log("Module Error"); }
-        }
-
-        function showSuccessAnimation(amount) {
-            statusMsg.innerText = `获得战利品！币 +${amount}`;
-            statusMsg.style.color = "#00aa00";
-            
-            // 播放升级音效
-            playSound('up');
-
-            totalDisplay.classList.remove('celebrate');
-            void totalDisplay.offsetWidth; 
-            totalDisplay.classList.add('celebrate');
-            setTimeout(() => totalDisplay.classList.remove('celebrate'), 2000);
-            createConfetti();
-            setTimeout(() => statusMsg.innerText = "", 4000);
-        }
-
-        function createConfetti() {
-            const emojis = ['🪙', '🪙', '🟩', '⚔️', '🧨', '🍖'];
-            for (let i = 0; i < 40; i++) {
-                const el = document.createElement('div');
-                el.classList.add('confetti');
-                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-                el.style.left = Math.random() * 100 + 'vw';
-                el.style.fontSize = (Math.random() * 20 + 20) + 'px';
-                el.style.animationDuration = (Math.random() * 2 + 1.5) + 's'; 
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 4000);
-            }
-        }
-
-        async function handleUrlParams(usedIds, currentCloudCoins) {
-            const params = new URLSearchParams(window.location.search);
-            const addAmount = parseInt(params.get('add'));
-            const transId = params.get('id');
-
-            if (addAmount && transId && !usedIds.includes(transId)) {
-                statusMsg.innerText = "正在放入末影箱...";
-                let newCoins = currentCloudCoins + addAmount;
-                usedIds.push(transId);
-                await fetch(BASE_URL, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-                    body: JSON.stringify({ coins: newCoins, transactions: usedIds })
-                });
-                lastCoins = newCoins - addAmount; 
-                checkCloud(true); 
-            }
-        }
-    </script>
-</body>
-</html>
+        // 🌟 更新称号逻辑
+        function updateRank(coins) {
+            let currentTitle = RANKS[0].title;
+            for(let rank of RANKS)

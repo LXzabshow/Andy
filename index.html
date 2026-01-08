@@ -3,48 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Andy的秘密仓库</title>
+    <title>Andy的背包</title>
     <style>
-        body { font-family: 'Rounded Mplus 1c', sans-serif; background-color: #f0f4f8; text-align: center; padding: 20px; overflow-x: hidden; }
-        .card { background: white; border-radius: 20px; padding: 40px 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 30px; position: relative; z-index: 10; }
-        
-        h2 { color: #2c3e50; margin: 0 0 10px 0; font-size: 24px; }
-        .coin-icon { font-size: 80px; margin: 10px 0; display: block; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2)); transition: transform 0.3s; }
-        
-        .label { color: #888; font-size: 14px; margin-bottom: 5px; }
-        .total { font-size: 70px; color: #ffb700; font-weight: bold; line-height: 1; text-shadow: 2px 2px 0px #ffeaa7; transition: all 0.5s; }
-        
-        .btn-refresh { margin-top: 30px; background: #3498db; color: white; border: none; padding: 10px 25px; border-radius: 20px; font-size: 14px; cursor: pointer; box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3); transition: transform 0.1s; }
-        .btn-refresh:active { transform: scale(0.95); }
+        /* 引入像素字体 (如果有的话，没有则用默认) */
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-        .message { color: #666; margin-top: 15px; font-size: 14px; min-height: 20px; }
+        body { 
+            background-color: #5d9ad3; /* MC的天空蓝 */
+            font-family: 'VT323', 'Courier New', monospace; /* 尝试使用像素字体 */
+            text-align: center; 
+            padding: 20px; 
+            color: #333;
+            overflow-x: hidden;
+        }
 
-        /* 动画关键帧 */
-        .celebrate { animation: jump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #e67e22; }
-        @keyframes jump { 0% { transform: scale(1); } 50% { transform: scale(1.5) rotate(-10deg); } 100% { transform: scale(1) rotate(0); } }
+        /* 模拟 MC 的灰色 GUI 界面 */
+        .card { 
+            background-color: #c6c6c6; 
+            border: 4px solid #373737;
+            /* 经典的 MC 边框光影效果 */
+            box-shadow: inset 4px 4px #ffffff, inset -4px -4px #555555, 10px 10px 0px rgba(0,0,0,0.2); 
+            max-width: 90%;
+            margin: 40px auto;
+            padding: 30px 20px; 
+            position: relative; 
+            z-index: 10; 
+        }
+        
+        h2 { 
+            color: #3f3f3f; 
+            margin: 0 0 20px 0; 
+            font-size: 28px; 
+            text-shadow: 2px 2px #fff;
+            letter-spacing: 2px;
+        }
 
-        /* 金币雨粒子样式 */
-        .confetti { position: fixed; top: -50px; z-index: 99; animation: fall linear forwards; pointer-events: none; }
-        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+        .icon-box {
+            background: #8b8b8b;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            border: 3px solid #373737;
+            border-right-color: #fff;
+            border-bottom-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .coin-icon { 
+            font-size: 60px; 
+            filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.3)); 
+            transition: transform 0.2s;
+        }
+        
+        .label { 
+            color: #444; 
+            font-size: 16px; 
+            margin-top: 20px; 
+            font-weight: bold;
+        }
+
+        .total { 
+            font-size: 80px; 
+            color: #fff; 
+            font-weight: bold; 
+            text-shadow: 4px 4px 0px #333; /* 像素字体描边感 */
+            margin: 10px 0;
+            font-family: 'Verdana', sans-serif; /* 数字用粗体更像游戏 */
+        }
+        
+        /* MC 风格按钮 */
+        .btn-refresh { 
+            margin-top: 20px; 
+            background-color: #727272; 
+            color: #fff; 
+            border: 3px solid #000;
+            /* 按钮立体感 */
+            box-shadow: inset 3px 3px #aaa, inset -3px -3px #444;
+            padding: 12px 20px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            font-family: inherit;
+            text-transform: uppercase;
+        }
+        .btn-refresh:active { 
+            background-color: #555;
+            box-shadow: inset 3px 3px #333, inset -3px -3px #888;
+            transform: translateY(2px);
+        }
+
+        .message { 
+            color: #333; 
+            margin-top: 15px; 
+            font-size: 14px; 
+            min-height: 20px; 
+            font-weight: bold;
+        }
+
+        /* 升级动画 */
+        .celebrate { animation: bounce 0.5s infinite alternate; color: #55ff55 !important; text-shadow: 4px 4px 0px #004400 !important;}
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+
+        /* 粒子样式 */
+        .confetti { position: fixed; top: -50px; z-index: 99; animation: fall linear forwards; pointer-events: none; filter: drop-shadow(2px 2px 0 #000); }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>Andy的秘密仓库</h2>
-        <div class="coin-icon" id="icon">💰</div>
-        <div class="label">当前积蓄</div>
+        <h2>Andy的背包</h2>
+        
+        <div class="icon-box">
+            <div class="coin-icon" id="icon">💎</div>
+        </div>
+
+        <div class="label">当前钻石数量</div>
         
         <div id="totalDisplay" class="total">...</div>
         
-        <div id="statusMsg" class="message">连接中...</div>
+        <div id="statusMsg" class="message"></div>
 
-        <button class="btn-refresh" onclick="manualCheck()">🔄 刷新看看有没到账</button>
+        <button class="btn-refresh" onclick="manualCheck()">刷新服务器</button>
     </div>
 
     <script>
         // ==========================================
-        // 已自动填入您的密钥
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         // ==========================================
@@ -57,7 +142,8 @@
         let lastCoins = null; 
         
         async function checkCloud(isManual = false) {
-            if(isManual) statusMsg.innerText = "正在查询...";
+            // 如果是手动点击，才显示文字，否则保持静默
+            if(isManual) statusMsg.innerText = "正在读取服务器存档...";
             
             try {
                 let response = await fetch(BASE_URL + '/latest', {
@@ -71,13 +157,18 @@
                     lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins')) || cloudCoins;
                 }
 
+                // 清空提示文字（除非有新消息）
+                statusMsg.innerText = "";
+
                 if (cloudCoins > lastCoins) {
                     let diff = cloudCoins - lastCoins;
                     showSuccessAnimation(diff); 
                 } else if (cloudCoins < lastCoins) {
-                    statusMsg.innerText = `扣除了 ${lastCoins - cloudCoins} 币`;
+                    statusMsg.innerText = `使用了 ${lastCoins - cloudCoins} 颗钻石`;
                 } else {
-                    if(isManual) statusMsg.innerText = "暂时没有新奖励哦 ~";
+                    if(isManual) statusMsg.innerText = "没有新的战利品";
+                    // 1秒后消失，保持界面干净
+                    setTimeout(() => { if(statusMsg.innerText === "没有新的战利品") statusMsg.innerText = ""; }, 1500);
                 }
 
                 totalDisplay.innerText = cloudCoins;
@@ -88,36 +179,36 @@
 
             } catch (error) {
                 console.log("网络波动");
-                if(isManual) statusMsg.innerText = "网络不太好，稍后再试";
+                if(isManual) statusMsg.innerText = "连接服务器失败 (Steve迷路了)";
             }
         }
 
         function showSuccessAnimation(amount) {
-            statusMsg.innerText = `🎉 哇！刚刚到账 +${amount} 币！`;
-            statusMsg.style.color = "#27ae60";
-            statusMsg.style.fontWeight = "bold";
+            statusMsg.innerText = `获得成就！钻石 +${amount}`;
+            statusMsg.style.color = "#00aa00"; // MC绿色
 
             totalDisplay.classList.remove('celebrate');
             void totalDisplay.offsetWidth; 
             totalDisplay.classList.add('celebrate');
             
-            coinIcon.style.transform = "scale(1.2) rotate(20deg)";
-            setTimeout(() => coinIcon.style.transform = "scale(1) rotate(0)", 500);
+            // 动画结束移除跳动，不然一直跳眼晕
+            setTimeout(() => totalDisplay.classList.remove('celebrate'), 2000);
 
             createConfetti();
         }
 
         function createConfetti() {
-            const emojis = ['💰', '🪙', '✨', '🎉', '💎'];
-            for (let i = 0; i < 50; i++) {
+            // MC 风格的掉落物：钻石、绿宝石、剑、稿子、TNT、肉
+            const emojis = ['💎', '🟩', '⚔️', '⛏️', '🧨', '🍖'];
+            for (let i = 0; i < 40; i++) {
                 const el = document.createElement('div');
                 el.classList.add('confetti');
                 el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
                 el.style.left = Math.random() * 100 + 'vw';
                 el.style.fontSize = (Math.random() * 20 + 20) + 'px';
-                el.style.animationDuration = (Math.random() * 3 + 2) + 's'; 
+                el.style.animationDuration = (Math.random() * 2 + 1.5) + 's'; 
                 document.body.appendChild(el);
-                setTimeout(() => el.remove(), 5000);
+                setTimeout(() => el.remove(), 4000);
             }
         }
 
@@ -127,7 +218,7 @@
             const transId = params.get('id');
 
             if (addAmount && transId && !usedIds.includes(transId)) {
-                statusMsg.innerText = "发现新奖励，正在入库...";
+                statusMsg.innerText = "发现新的宝藏箱...";
                 let newCoins = currentCloudCoins + addAmount;
                 usedIds.push(transId);
                 
@@ -147,7 +238,6 @@
         }
 
         checkCloud();
-        // 1分钟刷新一次，超级省流
         setInterval(() => checkCloud(), 60000); 
 
     </script>

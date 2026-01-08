@@ -3,109 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Andy的秘密仓库(云端版)</title>
+    <title>Andy的秘密仓库</title>
     <style>
-        body { font-family: 'Rounded Mplus 1c', sans-serif; background-color: #f0f4f8; text-align: center; padding: 20px; }
+        body { font-family: 'Rounded Mplus 1c', sans-serif; background-color: #f0f4f8; text-align: center; padding: 20px; transition: background 0.5s; }
         .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 30px; }
         h2 { color: #2c3e50; margin: 0 0 10px 0; font-size: 24px; }
         .coin-icon { font-size: 60px; margin: 10px 0 20px 0; display: block; }
-        .label { color: #888; font-size: 14px; margin-bottom: 5px; }
-        .total { font-size: 50px; color: #ffb700; font-weight: bold; line-height: 1; min-height: 50px;}
+        .total { font-size: 60px; color: #ffb700; font-weight: bold; line-height: 1; transition: transform 0.2s;}
         .message { color: #666; margin-top: 20px; font-size: 16px; min-height: 24px;}
-        .loading { font-size: 14px; color: #999; }
-        .anim-add { color: #2ecc71; font-weight: bold; font-size: 20px; animation: pop 0.5s ease; display: inline-block;}
-        @keyframes pop { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .toast { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px; display: none; z-index: 100;}
+        
+        /* 动画效果 */
+        .pop { animation: pop-anim 0.3s ease; color: #e74c3c !important; }
+        @keyframes pop-anim { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
+    <div id="toast" class="toast">数据已更新</div>
 
     <div class="card">
         <h2>Andy的秘密仓库</h2>
         <div class="coin-icon">💰</div>
-        <div class="label">云端实时币数</div>
-        <div id="totalDisplay" class="total"><span class="loading">正在连接云端...</span></div>
+        <div style="color:#888; font-size:14px;">当前余额</div>
+        <div id="totalDisplay" class="total">...</div>
         <div id="statusMsg" class="message"></div>
     </div>
 
     <script>
         // ==========================================
         // 【请在这里填入你的 JsonBin 信息】
-        // 注意：保留引号，只改里面的字
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         // ==========================================
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-        const params = new URLSearchParams(window.location.search);
-        const addAmount = parseInt(params.get('add'));
-        const transId = params.get('id');
-        
         const totalDisplay = document.getElementById('totalDisplay');
         const statusMsg = document.getElementById('statusMsg');
+        
+        // 记录本地当前的币数，用于对比
+        let localCoins = null; 
+        let isFirstLoad = true;
 
-        // 核心函数：与云端通信
-        async function syncCoins() {
+        // 核心函数：读取云端
+        async function checkCloud() {
             try {
-                // 1. 先从云端读取最新数据
                 let response = await fetch(BASE_URL + '/latest', {
                     headers: { 'X-Master-Key': API_KEY }
                 });
-                
-                if (!response.ok) throw new Error('网络连接失败');
                 let data = await response.json();
-                
-                // JsonBin V3 的数据在 record 字段里
-                let record = data.record; 
-                let currentCoins = record.coins || 0;
-                let usedIds = record.transactions || [];
+                let cloudCoins = data.record.coins || 0;
+                let usedIds = data.record.transactions || [];
 
-                // 2. 判断是否需要加币
-                if (addAmount && transId) {
-                    if (usedIds.includes(transId)) {
-                        statusMsg.innerText = "⚠️ 这次奖励已经领取过啦！";
-                        totalDisplay.innerText = currentCoins;
-                    } else {
-                        // 执行加法
-                        let newCoins = currentCoins + addAmount;
-                        usedIds.push(transId);
+                // 如果是第一次加载，或者数据发生了变化
+                if (localCoins !== null && cloudCoins !== localCoins) {
+                    let diff = cloudCoins - localCoins;
+                    showChange(diff); // 播放动画
+                }
 
-                        // 3. 把新数据写回云端
-                        statusMsg.innerHTML = '<span class="loading">正在存入金库...</span>';
-                        
-                        let updateResponse = await fetch(BASE_URL, {
-                            method: 'PUT',
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'X-Master-Key': API_KEY
-                            },
-                            body: JSON.stringify({
-                                coins: newCoins,
-                                transactions: usedIds
-                            })
-                        });
+                localCoins = cloudCoins;
+                totalDisplay.innerText = localCoins;
 
-                        if (updateResponse.ok) {
-                            totalDisplay.innerText = newCoins;
-                            statusMsg.innerHTML = `<span class="anim-add">+${addAmount} 币永久到账！🎉</span>`;
-                        } else {
-                            statusMsg.innerText = "存储失败，请重试";
-                        }
-                    }
-                } else {
-                    // 如果只是查看，不加币
-                    totalDisplay.innerText = currentCoins;
-                    statusMsg.innerText = "数据已同步";
+                // 只有第一次加载时才检查URL参数是否要加币
+                if (isFirstLoad) {
+                    isFirstLoad = false;
+                    handleUrlParams(usedIds, cloudCoins);
                 }
 
             } catch (error) {
-                console.error(error);
-                totalDisplay.innerText = "Error";
-                statusMsg.innerText = "连接云端账本失败，请检查网络或Key";
+                console.log("同步中..."); // 静默失败，不打扰用户
             }
         }
 
-        // 启动程序
-        syncCoins();
+        // 处理URL参数加币逻辑 (和之前一样)
+        async function handleUrlParams(usedIds, currentCloudCoins) {
+            const params = new URLSearchParams(window.location.search);
+            const addAmount = parseInt(params.get('add'));
+            const transId = params.get('id');
+
+            if (addAmount && transId) {
+                if (!usedIds.includes(transId)) {
+                    statusMsg.innerText = "正在存入...";
+                    let newCoins = currentCloudCoins + addAmount;
+                    usedIds.push(transId);
+                    
+                    await fetch(BASE_URL, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                        body: JSON.stringify({ coins: newCoins, transactions: usedIds })
+                    });
+                    
+                    statusMsg.innerText = `成功存入 ${addAmount} 币！`;
+                    // 强制立刻刷新一次显示
+                    localCoins = newCoins;
+                    totalDisplay.innerText = newCoins;
+                    showChange(addAmount);
+                } else {
+                    statusMsg.innerText = "⚠️ 这个奖励已经领过啦";
+                }
+            }
+        }
+
+        // 动画效果
+        function showChange(diff) {
+            const toast = document.getElementById('toast');
+            totalDisplay.classList.remove('pop');
+            void totalDisplay.offsetWidth; // 触发重绘
+            totalDisplay.classList.add('pop');
+            
+            if(diff > 0) {
+                toast.innerText = `哇！远程入账 +${diff} 币！🎉`;
+                toast.style.background = "#2ecc71";
+            } else {
+                toast.innerText = `消费扣除 ${diff} 币`;
+                toast.style.background = "#e74c3c";
+            }
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        // 启动程序：立即执行一次，然后每5秒执行一次
+        checkCloud();
+        setInterval(checkCloud, 5000); // 5秒轮询一次
 
     </script>
 </body>

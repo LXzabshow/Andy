@@ -36,3 +36,120 @@
         <div class="label">当前积蓄</div>
         
         <div id="totalDisplay" class="total">...</div>
+        
+        <div id="statusMsg" class="message">连接中...</div>
+
+        <button class="btn-refresh" onclick="manualCheck()">🔄 刷新看看有没到账</button>
+    </div>
+
+    <script>
+        // ==========================================
+        // 已自动填入您的密钥
+        const BIN_ID = '695f1cbed0ea881f405c1aab'; 
+        const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
+        // ==========================================
+
+        const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        const totalDisplay = document.getElementById('totalDisplay');
+        const statusMsg = document.getElementById('statusMsg');
+        const coinIcon = document.getElementById('icon');
+        
+        let lastCoins = null; 
+        
+        async function checkCloud(isManual = false) {
+            if(isManual) statusMsg.innerText = "正在查询...";
+            
+            try {
+                let response = await fetch(BASE_URL + '/latest', {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                let data = await response.json();
+                let cloudCoins = data.record.coins || 0;
+                let usedIds = data.record.transactions || [];
+
+                if (lastCoins === null) {
+                    lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins')) || cloudCoins;
+                }
+
+                if (cloudCoins > lastCoins) {
+                    let diff = cloudCoins - lastCoins;
+                    showSuccessAnimation(diff); 
+                } else if (cloudCoins < lastCoins) {
+                    statusMsg.innerText = `扣除了 ${lastCoins - cloudCoins} 币`;
+                } else {
+                    if(isManual) statusMsg.innerText = "暂时没有新奖励哦 ~";
+                }
+
+                totalDisplay.innerText = cloudCoins;
+                lastCoins = cloudCoins;
+                localStorage.setItem('andy_last_seen_coins', cloudCoins);
+
+                handleUrlParams(usedIds, cloudCoins);
+
+            } catch (error) {
+                console.log("网络波动");
+                if(isManual) statusMsg.innerText = "网络不太好，稍后再试";
+            }
+        }
+
+        function showSuccessAnimation(amount) {
+            statusMsg.innerText = `🎉 哇！刚刚到账 +${amount} 币！`;
+            statusMsg.style.color = "#27ae60";
+            statusMsg.style.fontWeight = "bold";
+
+            totalDisplay.classList.remove('celebrate');
+            void totalDisplay.offsetWidth; 
+            totalDisplay.classList.add('celebrate');
+            
+            coinIcon.style.transform = "scale(1.2) rotate(20deg)";
+            setTimeout(() => coinIcon.style.transform = "scale(1) rotate(0)", 500);
+
+            createConfetti();
+        }
+
+        function createConfetti() {
+            const emojis = ['💰', '🪙', '✨', '🎉', '💎'];
+            for (let i = 0; i < 50; i++) {
+                const el = document.createElement('div');
+                el.classList.add('confetti');
+                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.fontSize = (Math.random() * 20 + 20) + 'px';
+                el.style.animationDuration = (Math.random() * 3 + 2) + 's'; 
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 5000);
+            }
+        }
+
+        async function handleUrlParams(usedIds, currentCloudCoins) {
+            const params = new URLSearchParams(window.location.search);
+            const addAmount = parseInt(params.get('add'));
+            const transId = params.get('id');
+
+            if (addAmount && transId && !usedIds.includes(transId)) {
+                statusMsg.innerText = "发现新奖励，正在入库...";
+                let newCoins = currentCloudCoins + addAmount;
+                usedIds.push(transId);
+                
+                await fetch(BASE_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                    body: JSON.stringify({ coins: newCoins, transactions: usedIds })
+                });
+                
+                lastCoins = newCoins - addAmount; 
+                checkCloud(); 
+            }
+        }
+
+        function manualCheck() {
+            checkCloud(true);
+        }
+
+        checkCloud();
+        // 1分钟刷新一次，超级省流
+        setInterval(() => checkCloud(), 60000); 
+
+    </script>
+</body>
+</html>

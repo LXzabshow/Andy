@@ -3,60 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>金币奖励站</title>
+    <title>Andy的秘密仓库(云端版)</title>
     <style>
         body { font-family: 'Rounded Mplus 1c', sans-serif; background-color: #f0f4f8; text-align: center; padding: 20px; }
-        .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 50px; }
-        h1 { color: #333; font-size: 24px; }
-        .coin-icon { font-size: 60px; margin: 20px 0; display: block; }
-        .total { font-size: 40px; color: #ffb700; font-weight: bold; }
-        .message { color: #666; margin-top: 10px; font-size: 16px; }
-        .anim-add { color: #2ecc71; font-weight: bold; font-size: 20px; animation: pop 0.5s ease; }
+        .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 30px; }
+        h2 { color: #2c3e50; margin: 0 0 10px 0; font-size: 24px; }
+        .coin-icon { font-size: 60px; margin: 10px 0 20px 0; display: block; }
+        .label { color: #888; font-size: 14px; margin-bottom: 5px; }
+        .total { font-size: 50px; color: #ffb700; font-weight: bold; line-height: 1; min-height: 50px;}
+        .message { color: #666; margin-top: 20px; font-size: 16px; min-height: 24px;}
+        .loading { font-size: 14px; color: #999; }
+        .anim-add { color: #2ecc71; font-weight: bold; font-size: 20px; animation: pop 0.5s ease; display: inline-block;}
         @keyframes pop { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        .btn { margin-top: 30px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="card">
+        <h2>Andy的秘密仓库</h2>
         <div class="coin-icon">💰</div>
-        <div>当前金币总数</div>
-        <div id="totalDisplay" class="total">0</div>
+        <div class="label">云端实时币数</div>
+        <div id="totalDisplay" class="total"><span class="loading">正在连接云端...</span></div>
         <div id="statusMsg" class="message"></div>
     </div>
 
     <script>
-        // 1. 获取 URL 中的参数
+        // ==========================================
+        // 【请在这里填入你的 JsonBin 信息】
+        // 注意：保留引号，只改里面的字
+        const BIN_ID = '695f1cbed0ea881f405c1aab'; 
+        const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
+        // ==========================================
+
+        const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
         const params = new URLSearchParams(window.location.search);
-        const addAmount = parseInt(params.get('add')); // 获取要增加的金币数
-        const transId = params.get('id'); // 获取唯一交易ID（防止刷新重复加）
+        const addAmount = parseInt(params.get('add'));
+        const transId = params.get('id');
         
-        // 2. 获取本地存储的总金币数
-        let currentCoins = parseInt(localStorage.getItem('my_coins')) || 0;
         const totalDisplay = document.getElementById('totalDisplay');
         const statusMsg = document.getElementById('statusMsg');
 
-        // 3. 核心逻辑
-        if (addAmount && transId) {
-            // 检查这个 ID 是否已经使用过
-            if (localStorage.getItem('trans_' + transId)) {
-                statusMsg.innerText = "⚠️ 这次奖励已经领取过啦！";
-            } else {
-                // 执行加法
-                currentCoins += addAmount;
-                // 保存新总数
-                localStorage.setItem('my_coins', currentCoins);
-                // 标记这个 ID 已使用
-                localStorage.setItem('trans_' + transId, 'used');
+        // 核心函数：与云端通信
+        async function syncCoins() {
+            try {
+                // 1. 先从云端读取最新数据
+                let response = await fetch(BASE_URL + '/latest', {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
                 
-                statusMsg.innerHTML = `<span class="anim-add">+${addAmount} 金币到账！做得好！🎉</span>`;
+                if (!response.ok) throw new Error('网络连接失败');
+                let data = await response.json();
+                
+                // JsonBin V3 的数据在 record 字段里
+                let record = data.record; 
+                let currentCoins = record.coins || 0;
+                let usedIds = record.transactions || [];
+
+                // 2. 判断是否需要加币
+                if (addAmount && transId) {
+                    if (usedIds.includes(transId)) {
+                        statusMsg.innerText = "⚠️ 这次奖励已经领取过啦！";
+                        totalDisplay.innerText = currentCoins;
+                    } else {
+                        // 执行加法
+                        let newCoins = currentCoins + addAmount;
+                        usedIds.push(transId);
+
+                        // 3. 把新数据写回云端
+                        statusMsg.innerHTML = '<span class="loading">正在存入金库...</span>';
+                        
+                        let updateResponse = await fetch(BASE_URL, {
+                            method: 'PUT',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'X-Master-Key': API_KEY
+                            },
+                            body: JSON.stringify({
+                                coins: newCoins,
+                                transactions: usedIds
+                            })
+                        });
+
+                        if (updateResponse.ok) {
+                            totalDisplay.innerText = newCoins;
+                            statusMsg.innerHTML = `<span class="anim-add">+${addAmount} 币永久到账！🎉</span>`;
+                        } else {
+                            statusMsg.innerText = "存储失败，请重试";
+                        }
+                    }
+                } else {
+                    // 如果只是查看，不加币
+                    totalDisplay.innerText = currentCoins;
+                    statusMsg.innerText = "数据已同步";
+                }
+
+            } catch (error) {
+                console.error(error);
+                totalDisplay.innerText = "Error";
+                statusMsg.innerText = "连接云端账本失败，请检查网络或Key";
             }
-        } else {
-            statusMsg.innerText = "查看金币余额";
         }
 
-        // 4. 更新页面显示
-        totalDisplay.innerText = currentCoins;
+        // 启动程序
+        syncCoins();
+
     </script>
 </body>
 </html>

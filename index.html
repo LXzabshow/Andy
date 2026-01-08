@@ -4,21 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Andy的冒险背包</title>
-    <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { 
-            background-color: #76b5fe; /* 默认白天 */
+            background-color: #76b5fe; 
             font-family: 'VT323', monospace; 
             text-align: center; margin: 0; padding: 0;
             overflow: hidden; height: 100vh;
             display: flex; flex-direction: column; align-items: center;
-            transition: background-color 2s ease; /* 昼夜切换渐变 */
+            transition: background-color 2s ease;
         }
         
-        /* 星空背景 (晚上显示) */
         .stars {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(white 1px, transparent 1px);
@@ -27,7 +25,7 @@
             opacity: 0; transition: opacity 2s; z-index: 0; pointer-events: none;
         }
         body.night .stars { opacity: 0.5; }
-        body.night { background-color: #1a0b2e; } /* 深夜紫 */
+        body.night { background-color: #1a0b2e; }
 
         /* 启动蒙版 */
         #start-overlay {
@@ -59,7 +57,6 @@
 
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
 
-        /* 🏆 称号系统样式 */
         .rank-badge {
             background: #333; color: #f1c40f; padding: 2px 10px;
             border: 2px solid #fff; display: inline-block;
@@ -71,9 +68,9 @@
             background: #8b8b8b; width: 120px; height: 120px; margin: 0 auto;
             border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff;
             display: flex; align-items: center; justify-content: center; position: relative;
-            cursor: pointer; /* 提示可点击 */
+            cursor: pointer;
         }
-        .slot:active .coin-icon { transform: scale(0.8); } /* 点击缩放效果 */
+        .slot:active .coin-icon { transform: scale(0.8); }
 
         .coin-icon { font-size: 70px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
         
@@ -95,7 +92,6 @@
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
 
-        /* 动画区 */
         .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 10; }
         .steve { position: absolute; bottom: 45px; left: 10%; width: 40px; height: 90px; z-index: 5; animation: breathe 2s ease-in-out infinite; }
         .steve-head { width: 40px; height: 40px; background: #F8B090; position: absolute; top: 0; }
@@ -129,7 +125,7 @@
     <div id="start-overlay">
         <h1 style="text-shadow: 4px 4px #000; font-size: 40px; margin-bottom:10px;">Andy的世界</h1>
         <p style="opacity: 0.8; font-size: 16px;">Server: Online | Ping: 20ms</p>
-        <button class="mc-btn" onclick="startGame()">进入游戏</button>
+        <button class="mc-btn" onclick="document.getElementById('start-overlay').style.display='none'; startGame()">进入游戏</button>
     </div>
 
     <audio id="bgm" loop><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/music/game/calm1.ogg" type="audio/ogg"></audio>
@@ -140,23 +136,12 @@
     <div class="ui-container">
         <div class="card">
             <div class="mute-btn" onclick="toggleMute()">🔊</div>
-
             <h2>Andy的背包</h2>
-            
             <div id="rankBadge" class="rank-badge">加载中...</div>
-
-            <div class="slot" onclick="clickCoin()">
-                <div class="coin-icon" id="icon">🪙</div>
-            </div>
-
+            <div class="slot" onclick="clickCoin()"><div class="coin-icon" id="icon">🪙</div></div>
             <div class="label">当前拥有币</div>
             <div id="totalDisplay" class="total">...</div>
-
-            <div class="status-bar">
-                <div id="light" class="light"></div> 
-                <span id="connStatus">正在生成地形...</span>
-            </div>
-            
+            <div class="status-bar"><div id="light" class="light"></div><span id="connStatus">正在生成地形...</span></div>
             <div id="statusMsg" class="message"></div>
         </div>
     </div>
@@ -165,7 +150,15 @@
     <div class="creeper"><div class="creeper-head"><div class="face-eye-l"></div><div class="face-eye-r"></div><div class="face-mouth"></div><div class="face-mouth-legs"></div></div><div class="creeper-body"></div><div class="creeper-legs"><div class="leg-f"></div><div class="leg-b"></div></div></div>
     <div class="ground"></div>
 
+    <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
+
     <script>
+        // 全局错误捕获，防止孩子端因为报错而白屏
+        window.onerror = function(msg, url, line) {
+            alert("发生错误: " + msg + "\n如果一直出现，请让爸爸检查代码。");
+            return true;
+        };
+
         // ==========================================
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
@@ -177,7 +170,6 @@
         const statusMsg = document.getElementById('statusMsg');
         const light = document.getElementById('light');
         const connStatus = document.getElementById('connStatus');
-        const overlay = document.getElementById('start-overlay');
         const rankBadge = document.getElementById('rankBadge');
         
         const bgm = document.getElementById('bgm');
@@ -187,7 +179,6 @@
         let isMuted = false;
         let lastCoins = null; 
 
-        // 🌟 称号配置
         const RANKS = [
             { limit: 0, title: "🪵 新手伐木工" },
             { limit: 50, title: "🪨 熟练采石匠" },
@@ -198,25 +189,179 @@
         ];
 
         function startGame() {
-            overlay.style.display = 'none';
-            checkDayNight(); // 检查昼夜
-            bgm.volume = 0.4;
-            bgm.play().catch(e => console.log("BGM error"));
-            checkCloud(false);
-            initGoEasy();
-        }
-
-        // 🌟 检查昼夜
-        function checkDayNight() {
-            const hour = new Date().getHours();
-            if (hour >= 18 || hour < 6) {
-                document.body.classList.add('night'); // 晚上
-            } else {
-                document.body.classList.remove('night'); // 白天
+            // 业务逻辑
+            try {
+                checkDayNight(); 
+                
+                // 尝试播放音乐，如果失败（比如网络慢）不阻塞后续逻辑
+                if(bgm) {
+                    bgm.volume = 0.4;
+                    bgm.play().catch(e => console.log("BGM无法播放，可能是浏览器限制"));
+                }
+                
+                // 启动数据加载
+                checkCloud(false);
+                
+                // 启动信号连接
+                initGoEasy();
+            } catch(e) {
+                console.log("启动部分失败: " + e.message);
             }
         }
 
-        // 🌟 更新称号逻辑
+        function checkDayNight() {
+            const hour = new Date().getHours();
+            if (hour >= 18 || hour < 6) document.body.classList.add('night');
+            else document.body.classList.remove('night');
+        }
+
         function updateRank(coins) {
             let currentTitle = RANKS[0].title;
-            for(let rank of RANKS)
+            for(let rank of RANKS) {
+                if(coins >= rank.limit) currentTitle = rank.title;
+            }
+            rankBadge.innerText = currentTitle;
+        }
+
+        function clickCoin() {
+            if(!isMuted && sfxClick) {
+                sfxClick.currentTime = 0;
+                sfxClick.play().catch(e=>{});
+            }
+            if(navigator.vibrate) navigator.vibrate(20);
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            if(isMuted) {
+                if(bgm) bgm.pause();
+                document.querySelector('.mute-btn').innerText = '🔇';
+            } else {
+                if(bgm) bgm.play();
+                document.querySelector('.mute-btn').innerText = '🔊';
+            }
+        }
+
+        function playSound(type) {
+            if(isMuted) return;
+            try {
+                if(type === 'up' && sfxLevelUp) { sfxLevelUp.currentTime = 0; sfxLevelUp.play(); } 
+                else if (type === 'down' && sfxDamage) { sfxDamage.currentTime = 0; sfxDamage.play(); }
+            } catch(e){}
+        }
+
+        async function checkCloud(forceAnim = false) {
+            if(connStatus.innerText.includes("生成")) connStatus.innerText = "正在读取存档...";
+            
+            try {
+                let response = await fetch(BASE_URL + '/latest', {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                let data = await response.json();
+                let cloudCoins = data.record.coins || 0;
+                let usedIds = data.record.transactions || [];
+
+                if (lastCoins === null) {
+                    lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins')) || cloudCoins;
+                }
+
+                if (cloudCoins > lastCoins || (forceAnim && cloudCoins > lastCoins)) {
+                    let diff = cloudCoins - lastCoins;
+                    showSuccessAnimation(diff); 
+                } else if (cloudCoins < lastCoins) {
+                    statusMsg.innerText = `交易成功! 支付 ${lastCoins - cloudCoins} 币`;
+                    statusMsg.style.color = "#8b0000";
+                    playSound('down'); 
+                    setTimeout(() => statusMsg.innerText = "", 3000);
+                }
+
+                totalDisplay.innerText = cloudCoins;
+                lastCoins = cloudCoins;
+                localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                updateRank(cloudCoins);
+
+                if(light.classList.contains('online')) connStatus.innerText = "服务器在线";
+                else connStatus.innerText = "背包整理完毕";
+
+                handleUrlParams(usedIds, cloudCoins);
+            } catch (error) {
+                connStatus.innerText = "与服务器断开连接";
+                statusMsg.innerText = "读取数据失败...";
+                statusMsg.style.color = "red";
+            }
+        }
+
+        function initGoEasy() {
+            if(typeof GoEasy === 'undefined') {
+                console.log("GoEasy SDK未加载，跳过实时信号");
+                return;
+            }
+            try {
+                const goEasy = GoEasy.getInstance({
+                    host: 'hangzhou.goeasy.io', 
+                    appkey: GOEASY_KEY,
+                    modules: ['pubsub']
+                });
+
+                goEasy.connect({
+                    onSuccess: function () {
+                        light.classList.add('online');
+                        if(!connStatus.innerText.includes("断开")) connStatus.innerText = "服务器在线";
+                    },
+                    onFailed: function (error) { connStatus.innerText = "离线模式"; }
+                });
+
+                goEasy.pubsub.subscribe({
+                    channel: "andy_channel",
+                    onMessage: function (message) { checkCloud(true); }
+                });
+            } catch(e) {}
+        }
+
+        function showSuccessAnimation(amount) {
+            statusMsg.innerText = `获得战利品！币 +${amount}`;
+            statusMsg.style.color = "#00aa00";
+            playSound('up');
+            totalDisplay.classList.remove('celebrate');
+            void totalDisplay.offsetWidth; 
+            totalDisplay.classList.add('celebrate');
+            setTimeout(() => totalDisplay.classList.remove('celebrate'), 2000);
+            createConfetti();
+            setTimeout(() => statusMsg.innerText = "", 4000);
+        }
+
+        function createConfetti() {
+            const emojis = ['🪙', '🪙', '🟩', '⚔️', '🧨', '🍖'];
+            for (let i = 0; i < 40; i++) {
+                const el = document.createElement('div');
+                el.classList.add('confetti');
+                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.fontSize = (Math.random() * 20 + 20) + 'px';
+                el.style.animationDuration = (Math.random() * 2 + 1.5) + 's'; 
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 4000);
+            }
+        }
+
+        async function handleUrlParams(usedIds, currentCloudCoins) {
+            const params = new URLSearchParams(window.location.search);
+            const addAmount = parseInt(params.get('add'));
+            const transId = params.get('id');
+
+            if (addAmount && transId && !usedIds.includes(transId)) {
+                statusMsg.innerText = "正在放入末影箱...";
+                let newCoins = currentCloudCoins + addAmount;
+                usedIds.push(transId);
+                await fetch(BASE_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                    body: JSON.stringify({ coins: newCoins, transactions: usedIds })
+                });
+                lastCoins = newCoins - addAmount; 
+                checkCloud(true); 
+            }
+        }
+    </script>
+</body>
+</html>

@@ -15,7 +15,6 @@
         button:active { transform: scale(0.95); }
         .btn-add { background: #2ecc71; color: white; }
         .btn-sub { background: #e74c3c; color: white; }
-        .btn-refresh { background: #3498db; color: white; width: 100%; margin-top: 10px;}
         
         input { padding: 10px; border-radius: 5px; border: none; width: 60%; text-align: center; margin-bottom: 10px;}
         .manual-group { background: #555; padding: 10px; border-radius: 8px; margin-top: 20px;}
@@ -46,7 +45,7 @@
 
     <script>
         // ==========================================
-        // 【请在这里填入你的 JsonBin 信息】(必须与index.html一致)
+        // 已自动填入您的密钥
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         // ==========================================
@@ -54,9 +53,7 @@
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
         const display = document.getElementById('currentCoins');
         const log = document.getElementById('log');
-
-        // 为了安全简单，加个极简密码防止误触
-        const PASS = "8888"; // 你可以在这里改个简单的密码
+        const PASS = "8888"; 
 
         async function getCoins() {
             log.innerText = "正在读取...";
@@ -65,28 +62,22 @@
                 let data = await res.json();
                 display.innerText = data.record.coins;
                 log.innerText = "就绪";
-                return data.record; // 返回完整记录
+                return data.record;
             } catch (e) {
                 log.innerText = "读取失败";
             }
         }
 
         async function modifyCoins(amount) {
-            // 简单的确认逻辑
-            // if(!confirm(`确定要变更 ${amount} 币吗？`)) return;
-
             log.innerText = "正在更新...";
             try {
-                let record = await getCoins(); // 先获取最新
+                let record = await getCoins();
                 let newCoins = record.coins + amount;
                 
                 await fetch(BASE_URL, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-                    body: JSON.stringify({ 
-                        coins: newCoins, 
-                        transactions: record.transactions 
-                    })
+                    body: JSON.stringify({ coins: newCoins, transactions: record.transactions })
                 });
                 
                 display.innerText = newCoins;
@@ -101,9 +92,8 @@
             if(val) modifyCoins(val * sign);
         }
 
-        // 简单的密码拦截
         if(prompt("请输入家长密码") !== PASS) {
-            document.body.innerHTML = "密码错误，拒绝访问";
+            document.body.innerHTML = "密码错误";
         } else {
             getCoins();
         }

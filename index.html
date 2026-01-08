@@ -2,149 +2,233 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Andy的背包</title>
+    <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    
     <style>
-        /* 引入像素字体 (如果有的话，没有则用默认) */
-        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
+        * { box-sizing: border-box; user-select: none; }
         body { 
-            background-color: #5d9ad3; /* MC的天空蓝 */
-            font-family: 'VT323', 'Courier New', monospace; /* 尝试使用像素字体 */
+            background-color: #76b5fe; /* 稍微亮一点的天空蓝 */
+            font-family: 'VT323', monospace; 
             text-align: center; 
-            padding: 20px; 
-            color: #333;
-            overflow-x: hidden;
+            margin: 0; padding: 0;
+            overflow: hidden; /* 防止滚动，为了底部动画 */
+            height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* 模拟 MC 的灰色 GUI 界面 */
+        /* ------------------- UI 界面区 ------------------- */
+        .ui-container {
+            margin-top: 10vh;
+            width: 90%;
+            max-width: 400px;
+            z-index: 100; /* 保证UI在角色上面 */
+            position: relative;
+        }
+
         .card { 
             background-color: #c6c6c6; 
-            border: 4px solid #373737;
-            /* 经典的 MC 边框光影效果 */
-            box-shadow: inset 4px 4px #ffffff, inset -4px -4px #555555, 10px 10px 0px rgba(0,0,0,0.2); 
-            max-width: 90%;
-            margin: 40px auto;
-            padding: 30px 20px; 
+            border: 4px solid #000;
+            /* 经典的 MC 边框光影: 上左亮，下右暗 */
+            box-shadow: inset 4px 4px #fff, inset -4px -4px #555; 
+            padding: 20px; 
             position: relative; 
-            z-index: 10; 
         }
-        
+
         h2 { 
-            color: #3f3f3f; 
-            margin: 0 0 20px 0; 
-            font-size: 28px; 
-            text-shadow: 2px 2px #fff;
-            letter-spacing: 2px;
+            color: #404040; margin: 0 0 15px 0; font-size: 32px; 
+            text-shadow: 2px 2px #fff; letter-spacing: 2px; 
         }
 
-        .icon-box {
+        /* 物品栏格子 */
+        .slot {
             background: #8b8b8b;
-            width: 100px;
-            height: 100px;
+            width: 120px; height: 120px;
             margin: 0 auto;
-            border: 3px solid #373737;
-            border-right-color: #fff;
-            border-bottom-color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border: 4px solid #373737;
+            border-right-color: #fff; border-bottom-color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
         }
+        .slot:hover { background: #9b9b9b; } /* 简单的交互感 */
 
-        .coin-icon { 
-            font-size: 60px; 
-            filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.3)); 
-            transition: transform 0.2s;
-        }
-        
-        .label { 
-            color: #444; 
-            font-size: 16px; 
-            margin-top: 20px; 
-            font-weight: bold;
-        }
+        .coin-icon { font-size: 70px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2;}
+
+        .label { color: #404040; font-size: 20px; margin-top: 15px; font-weight: bold; text-shadow: 1px 1px #fff;}
 
         .total { 
-            font-size: 80px; 
-            color: #fff; 
-            font-weight: bold; 
-            text-shadow: 4px 4px 0px #333; /* 像素字体描边感 */
-            margin: 10px 0;
-            font-family: 'Verdana', sans-serif; /* 数字用粗体更像游戏 */
+            font-size: 80px; color: #fff; font-weight: bold; 
+            text-shadow: 4px 4px 0px #333; margin: 5px 0; 
+            font-family: 'VT323', sans-serif; 
         }
-        
-        /* MC 风格按钮 */
-        .btn-refresh { 
-            margin-top: 20px; 
-            background-color: #727272; 
-            color: #fff; 
-            border: 3px solid #000;
-            /* 按钮立体感 */
-            box-shadow: inset 3px 3px #aaa, inset -3px -3px #444;
-            padding: 12px 20px; 
-            font-size: 16px; 
-            cursor: pointer; 
-            font-family: inherit;
-            text-transform: uppercase;
+
+        /* 信号灯 */
+        .status-bar {
+            background: #000; color: #fff;
+            padding: 5px 10px; border-radius: 4px;
+            font-size: 14px; display: inline-flex; align-items: center;
+            margin-top: 10px; border: 2px solid #555;
         }
-        .btn-refresh:active { 
-            background-color: #555;
-            box-shadow: inset 3px 3px #333, inset -3px -3px #888;
-            transform: translateY(2px);
-        }
+        .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
+        .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
 
         .message { 
-            color: #333; 
-            margin-top: 15px; 
-            font-size: 14px; 
-            min-height: 20px; 
-            font-weight: bold;
+            color: #004400; margin-top: 10px; font-size: 18px; height: 24px; 
+            text-shadow: 1px 1px #fff; font-weight: bold;
         }
 
-        /* 升级动画 */
-        .celebrate { animation: bounce 0.5s infinite alternate; color: #55ff55 !important; text-shadow: 4px 4px 0px #004400 !important;}
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+        /* ------------------- 像素画与动画区 ------------------- */
+        
+        /* 地面 */
+        .ground {
+            position: absolute; bottom: 0; width: 100%; height: 60px;
+            background: #5D4037; /* 泥土色 */
+            border-top: 10px solid #4CAF50; /* 草皮 */
+            z-index: 10;
+        }
 
-        /* 粒子样式 */
-        .confetti { position: fixed; top: -50px; z-index: 99; animation: fall linear forwards; pointer-events: none; filter: drop-shadow(2px 2px 0 #000); }
+        /* 史蒂夫 (纯CSS画的) */
+        .steve {
+            position: absolute; bottom: 45px; left: 10%;
+            width: 40px; height: 90px;
+            z-index: 5;
+            animation: breathe 2s ease-in-out infinite;
+        }
+        .steve-head { width: 40px; height: 40px; background: #F8B090; position: absolute; top: 0; }
+        .steve-hair { width: 40px; height: 10px; background: #452613; position: absolute; top: 0; }
+        .steve-body { width: 40px; height: 30px; background: #00AAAA; position: absolute; top: 40px; }
+        .steve-pants { width: 40px; height: 20px; background: #303090; position: absolute; top: 70px; }
+        
+        @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
+
+        /* 苦力怕 (纯CSS画的) */
+        .creeper {
+            position: absolute; bottom: 45px; right: -50px;
+            width: 30px; height: 80px;
+            z-index: 6;
+            animation: patrol 10s linear infinite;
+        }
+        .creeper-head { 
+            width: 30px; height: 30px; background: #00AA00; position: absolute; top: 0; 
+            border: 2px solid #005500; /* 简单的像素杂色 */
+        }
+        /* 苦力怕的脸 */
+        .face-eye-l { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; left: 4px; }
+        .face-eye-r { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; right: 4px; }
+        .face-mouth { width: 10px; height: 8px; background: #000; position: absolute; top: 18px; left: 10px; }
+        .face-mouth-legs { width: 4px; height: 4px; background: #000; position: absolute; top: 24px; left: 10px; box-shadow: 6px 0 0 #000; }
+
+        .creeper-body { width: 30px; height: 30px; background: #00AA00; position: absolute; top: 30px; }
+        .creeper-legs { width: 30px; height: 20px; background: transparent; position: absolute; top: 60px; }
+        .leg-f { width: 10px; height: 20px; background: #00AA00; position: absolute; left: 0; animation: walk 0.5s infinite alternate; }
+        .leg-b { width: 10px; height: 20px; background: #00AA00; position: absolute; right: 0; animation: walk 0.5s infinite alternate-reverse; }
+
+        @keyframes patrol {
+            0% { right: -50px; transform: scaleX(1); }
+            45% { right: 60%; transform: scaleX(1); }
+            50% { right: 60%; transform: scaleX(-1); } /* 转身 */
+            95% { right: -50px; transform: scaleX(-1); }
+            100% { right: -50px; transform: scaleX(1); }
+        }
+        @keyframes walk { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+
+        /* 特效动画 */
+        .celebrate { animation: jump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #55ff55 !important; }
+        @keyframes jump { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
+        
+        .confetti { position: fixed; top: -50px; z-index: 999; animation: fall linear forwards; pointer-events: none; font-size: 30px;}
         @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>Andy的背包</h2>
-        
-        <div class="icon-box">
-            <div class="coin-icon" id="icon">💎</div>
+    <div class="ui-container">
+        <div class="card">
+            <h2>Andy的背包</h2>
+            
+            <div class="slot">
+                <div class="coin-icon" id="icon">💎</div>
+            </div>
+
+            <div class="label">当前钻石</div>
+            <div id="totalDisplay" class="total">...</div>
+
+            <div class="status-bar">
+                <div id="light" class="light"></div> 
+                <span id="connStatus">正在连接服务器...</span>
+            </div>
+            
+            <div id="statusMsg" class="message"></div>
         </div>
-
-        <div class="label">当前钻石数量</div>
-        
-        <div id="totalDisplay" class="total">...</div>
-        
-        <div id="statusMsg" class="message"></div>
-
-        <button class="btn-refresh" onclick="manualCheck()">刷新服务器</button>
     </div>
+
+    <div class="steve">
+        <div class="steve-head"></div><div class="steve-hair"></div>
+        <div class="steve-body"></div><div class="steve-pants"></div>
+    </div>
+
+    <div class="creeper">
+        <div class="creeper-head">
+            <div class="face-eye-l"></div><div class="face-eye-r"></div>
+            <div class="face-mouth"></div><div class="face-mouth-legs"></div>
+        </div>
+        <div class="creeper-body"></div>
+        <div class="creeper-legs">
+            <div class="leg-f"></div><div class="leg-b"></div>
+        </div>
+    </div>
+
+    <div class="ground"></div>
 
     <script>
         // ==========================================
+        // ✅ 你的密钥已全部填入，直接使用
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
+        const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
         // ==========================================
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
         const totalDisplay = document.getElementById('totalDisplay');
         const statusMsg = document.getElementById('statusMsg');
-        const coinIcon = document.getElementById('icon');
+        const light = document.getElementById('light');
+        const connStatus = document.getElementById('connStatus');
         
         let lastCoins = null; 
-        
-        async function checkCloud(isManual = false) {
-            // 如果是手动点击，才显示文字，否则保持静默
-            if(isManual) statusMsg.innerText = "正在读取服务器存档...";
-            
+
+        // 1. 初始化 GoEasy
+        const goEasy = GoEasy.getInstance({
+            host: 'hangzhou.goeasy.io', 
+            appkey: GOEASY_KEY,
+            modules: ['pubsub']
+        });
+
+        // 2. 连接
+        goEasy.connect({
+            onSuccess: function () {
+                light.classList.add('online');
+                connStatus.innerText = "信号正常";
+                checkCloud(false);
+            },
+            onFailed: function (error) {
+                connStatus.innerText = "离线";
+            }
+        });
+
+        // 3. 监听
+        goEasy.pubsub.subscribe({
+            channel: "andy_channel",
+            onMessage: function (message) {
+                console.log("收到信号！");
+                checkCloud(true); 
+            }
+        });
+
+        // 4. 查数据
+        async function checkCloud(forceAnim = false) {
             try {
                 let response = await fetch(BASE_URL + '/latest', {
                     headers: { 'X-Master-Key': API_KEY }
@@ -157,49 +241,42 @@
                     lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins')) || cloudCoins;
                 }
 
-                // 清空提示文字（除非有新消息）
-                statusMsg.innerText = "";
-
-                if (cloudCoins > lastCoins) {
+                if (cloudCoins > lastCoins || (forceAnim && cloudCoins > lastCoins)) {
                     let diff = cloudCoins - lastCoins;
                     showSuccessAnimation(diff); 
                 } else if (cloudCoins < lastCoins) {
                     statusMsg.innerText = `使用了 ${lastCoins - cloudCoins} 颗钻石`;
-                } else {
-                    if(isManual) statusMsg.innerText = "没有新的战利品";
-                    // 1秒后消失，保持界面干净
-                    setTimeout(() => { if(statusMsg.innerText === "没有新的战利品") statusMsg.innerText = ""; }, 1500);
+                    statusMsg.style.color = "#8b0000";
+                    setTimeout(() => statusMsg.innerText = "", 3000);
                 }
 
                 totalDisplay.innerText = cloudCoins;
                 lastCoins = cloudCoins;
                 localStorage.setItem('andy_last_seen_coins', cloudCoins);
-
+                
                 handleUrlParams(usedIds, cloudCoins);
 
             } catch (error) {
-                console.log("网络波动");
-                if(isManual) statusMsg.innerText = "连接服务器失败 (Steve迷路了)";
+                console.log("读取失败");
             }
         }
 
         function showSuccessAnimation(amount) {
-            statusMsg.innerText = `获得成就！钻石 +${amount}`;
-            statusMsg.style.color = "#00aa00"; // MC绿色
-
+            statusMsg.innerText = `成就达成！+${amount}`;
+            statusMsg.style.color = "#00aa00";
+            
             totalDisplay.classList.remove('celebrate');
             void totalDisplay.offsetWidth; 
             totalDisplay.classList.add('celebrate');
             
-            // 动画结束移除跳动，不然一直跳眼晕
             setTimeout(() => totalDisplay.classList.remove('celebrate'), 2000);
-
             createConfetti();
+            setTimeout(() => statusMsg.innerText = "", 4000);
         }
 
         function createConfetti() {
-            // MC 风格的掉落物：钻石、绿宝石、剑、稿子、TNT、肉
-            const emojis = ['💎', '🟩', '⚔️', '⛏️', '🧨', '🍖'];
+            // 掉落物：钻石，绿宝石，剑，TNT，肉
+            const emojis = ['💎', '🟩', '⚔️', '🧨', '🍖'];
             for (let i = 0; i < 40; i++) {
                 const el = document.createElement('div');
                 el.classList.add('confetti');
@@ -218,28 +295,17 @@
             const transId = params.get('id');
 
             if (addAmount && transId && !usedIds.includes(transId)) {
-                statusMsg.innerText = "发现新的宝藏箱...";
                 let newCoins = currentCloudCoins + addAmount;
                 usedIds.push(transId);
-                
                 await fetch(BASE_URL, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
                     body: JSON.stringify({ coins: newCoins, transactions: usedIds })
                 });
-                
                 lastCoins = newCoins - addAmount; 
-                checkCloud(); 
+                checkCloud(true); 
             }
         }
-
-        function manualCheck() {
-            checkCloud(true);
-        }
-
-        checkCloud();
-        setInterval(() => checkCloud(), 60000); 
-
     </script>
 </body>
 </html>

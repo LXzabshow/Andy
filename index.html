@@ -19,6 +19,23 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
+        /* 启动蒙版 (为了解决自动播放限制) */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: white;
+        }
+        .mc-btn {
+            background: #727272; border: 4px solid #fff;
+            padding: 15px 30px; font-size: 24px; color: white;
+            font-family: 'VT323', monospace; cursor: pointer;
+            box-shadow: inset 4px 4px #aaa, inset -4px -4px #444;
+            text-transform: uppercase; margin-top: 20px;
+        }
+        .mc-btn:active { background: #555; border-color: #aaa; }
+
         .ui-container {
             margin-top: 10vh;
             width: 90%;
@@ -62,8 +79,11 @@
 
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
 
-        /* 手动刷新按钮 */
-        .retry-btn { margin-top:10px; padding: 5px 10px; background: #3498db; color: white; border: 2px solid #000; cursor: pointer; display: none; }
+        /* 音量控制开关 */
+        .mute-btn {
+            position: absolute; top: 10px; right: 10px;
+            font-size: 24px; cursor: pointer; color: #555;
+        }
 
         /* 动画区 */
         .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 10; }
@@ -94,8 +114,26 @@
 </head>
 <body>
 
+    <div id="start-overlay">
+        <h1 style="text-shadow: 4px 4px #000; font-size: 40px;">Andy的世界</h1>
+        <p>点击下方按钮进入服务器</p>
+        <button class="mc-btn" onclick="startGame()">进入游戏</button>
+    </div>
+
+    <audio id="bgm" loop>
+        <source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/music/game/calm1.ogg" type="audio/ogg">
+    </audio>
+    <audio id="sfx-levelup">
+        <source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/levelup.ogg" type="audio/ogg">
+    </audio>
+    <audio id="sfx-damage">
+        <source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/damage/hit1.ogg" type="audio/ogg">
+    </audio>
+
     <div class="ui-container">
         <div class="card">
+            <div class="mute-btn" onclick="toggleMute()">🔊</div>
+
             <h2>Andy的背包</h2>
             
             <div class="slot">
@@ -107,10 +145,9 @@
 
             <div class="status-bar">
                 <div id="light" class="light"></div> 
-                <span id="connStatus">启动中...</span>
+                <span id="connStatus">正在生成地形...</span>
             </div>
             
-            <button id="retryBtn" class="retry-btn" onclick="checkCloud(false)">点我重试</button>
             <div id="statusMsg" class="message"></div>
         </div>
     </div>
@@ -131,28 +168,59 @@
         const statusMsg = document.getElementById('statusMsg');
         const light = document.getElementById('light');
         const connStatus = document.getElementById('connStatus');
-        const retryBtn = document.getElementById('retryBtn');
+        const overlay = document.getElementById('start-overlay');
         
+        // 音频对象
+        const bgm = document.getElementById('bgm');
+        const sfxLevelUp = document.getElementById('sfx-levelup');
+        const sfxDamage = document.getElementById('sfx-damage');
+        let isMuted = false;
+
         let lastCoins = null; 
 
-        // 核心修改：页面加载后，不管 GoEasy 连没连上，立即尝试加载金币
-        document.addEventListener('DOMContentLoaded', () => {
+        // 点击开始游戏
+        function startGame() {
+            overlay.style.display = 'none';
+            // 播放背景音 (音量调小一点)
+            bgm.volume = 0.4;
+            bgm.play().catch(e => console.log("BGM error", e));
+            
+            // 开始加载数据
             checkCloud(false);
             initGoEasy();
-        });
+        }
 
-        // 查数据逻辑
+        function toggleMute() {
+            isMuted = !isMuted;
+            if(isMuted) {
+                bgm.pause();
+                document.querySelector('.mute-btn').innerText = '🔇';
+            } else {
+                bgm.play();
+                document.querySelector('.mute-btn').innerText = '🔊';
+            }
+        }
+
+        function playSound(type) {
+            if(isMuted) return;
+            if(type === 'up') {
+                sfxLevelUp.currentTime = 0;
+                sfxLevelUp.play();
+            } else if (type === 'down') {
+                sfxDamage.currentTime = 0;
+                sfxDamage.play();
+            }
+        }
+
         async function checkCloud(forceAnim = false) {
-            connStatus.innerText = "正在读取存档...";
-            retryBtn.style.display = "none";
+            if(connStatus.innerText === "正在生成地形...") {
+                connStatus.innerText = "正在读取存档...";
+            }
             
             try {
                 let response = await fetch(BASE_URL + '/latest', {
                     headers: { 'X-Master-Key': API_KEY }
                 });
-                
-                if(!response.ok) throw new Error("服务器无响应");
-                
                 let data = await response.json();
                 let cloudCoins = data.record.coins || 0;
                 let usedIds = data.record.transactions || [];
@@ -165,8 +233,10 @@
                     let diff = cloudCoins - lastCoins;
                     showSuccessAnimation(diff); 
                 } else if (cloudCoins < lastCoins) {
-                    statusMsg.innerText = `使用了 ${lastCoins - cloudCoins} 币`;
+                    statusMsg.innerText = `交易成功! 支付 ${lastCoins - cloudCoins} 币`;
                     statusMsg.style.color = "#8b0000";
+                    // 播放受伤音效
+                    playSound('down'); 
                     setTimeout(() => statusMsg.innerText = "", 3000);
                 }
 
@@ -174,25 +244,22 @@
                 lastCoins = cloudCoins;
                 localStorage.setItem('andy_last_seen_coins', cloudCoins);
                 
-                // 恢复正常状态文字
                 if(light.classList.contains('online')){
-                    connStatus.innerText = "信号正常";
+                    connStatus.innerText = "服务器在线";
                 } else {
-                    connStatus.innerText = "数据已同步 (信号断开)";
+                    connStatus.innerText = "背包整理完毕";
                 }
 
                 handleUrlParams(usedIds, cloudCoins);
 
             } catch (error) {
                 console.error(error);
-                connStatus.innerText = "读取失败";
-                statusMsg.innerText = "网络有点卡";
+                connStatus.innerText = "与服务器断开连接";
+                statusMsg.innerText = "区块加载失败...";
                 statusMsg.style.color = "red";
-                retryBtn.style.display = "inline-block"; // 显示重试按钮
             }
         }
 
-        // 初始化信号逻辑
         function initGoEasy() {
             try {
                 const goEasy = GoEasy.getInstance({
@@ -204,28 +271,31 @@
                 goEasy.connect({
                     onSuccess: function () {
                         light.classList.add('online');
-                        connStatus.innerText = "信号正常";
+                        if(connStatus.innerText.includes("生成") || connStatus.innerText.includes("读取")) {
+                            connStatus.innerText = "服务器在线";
+                        }
                     },
                     onFailed: function (error) {
-                        connStatus.innerText = "信号连接失败";
+                        connStatus.innerText = "离线模式";
                     }
                 });
 
                 goEasy.pubsub.subscribe({
                     channel: "andy_channel",
                     onMessage: function (message) {
-                        console.log("收到信号！");
                         checkCloud(true); 
                     }
                 });
-            } catch(e) {
-                console.log("信号模块错误");
-            }
+            } catch(e) { console.log("Module Error"); }
         }
 
         function showSuccessAnimation(amount) {
-            statusMsg.innerText = `成就达成！币 +${amount}`;
+            statusMsg.innerText = `获得战利品！币 +${amount}`;
             statusMsg.style.color = "#00aa00";
+            
+            // 播放升级音效
+            playSound('up');
+
             totalDisplay.classList.remove('celebrate');
             void totalDisplay.offsetWidth; 
             totalDisplay.classList.add('celebrate');
@@ -254,7 +324,7 @@
             const transId = params.get('id');
 
             if (addAmount && transId && !usedIds.includes(transId)) {
-                statusMsg.innerText = "正在存币...";
+                statusMsg.innerText = "正在放入末影箱...";
                 let newCoins = currentCloudCoins + addAmount;
                 usedIds.push(transId);
                 await fetch(BASE_URL, {

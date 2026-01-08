@@ -10,11 +10,11 @@
     <style>
         * { box-sizing: border-box; user-select: none; }
         body { 
-            background-color: #76b5fe; /* 稍微亮一点的天空蓝 */
+            background-color: #76b5fe; /* 天空蓝 */
             font-family: 'VT323', monospace; 
             text-align: center; 
             margin: 0; padding: 0;
-            overflow: hidden; /* 防止滚动，为了底部动画 */
+            overflow: hidden; 
             height: 100vh;
             display: flex; flex-direction: column; align-items: center;
         }
@@ -24,14 +24,13 @@
             margin-top: 10vh;
             width: 90%;
             max-width: 400px;
-            z-index: 100; /* 保证UI在角色上面 */
+            z-index: 100; 
             position: relative;
         }
 
         .card { 
             background-color: #c6c6c6; 
             border: 4px solid #000;
-            /* 经典的 MC 边框光影: 上左亮，下右暗 */
             box-shadow: inset 4px 4px #fff, inset -4px -4px #555; 
             padding: 20px; 
             position: relative; 
@@ -52,8 +51,9 @@
             display: flex; align-items: center; justify-content: center;
             position: relative;
         }
-        .slot:hover { background: #9b9b9b; } /* 简单的交互感 */
+        .slot:hover { background: #9b9b9b; } 
 
+        /* 图标改为硬币 */
         .coin-icon { font-size: 70px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2;}
 
         .label { color: #404040; font-size: 20px; margin-top: 15px; font-weight: bold; text-shadow: 1px 1px #fff;}
@@ -84,12 +84,12 @@
         /* 地面 */
         .ground {
             position: absolute; bottom: 0; width: 100%; height: 60px;
-            background: #5D4037; /* 泥土色 */
-            border-top: 10px solid #4CAF50; /* 草皮 */
+            background: #5D4037; 
+            border-top: 10px solid #4CAF50; 
             z-index: 10;
         }
 
-        /* 史蒂夫 (纯CSS画的) */
+        /* 史蒂夫 */
         .steve {
             position: absolute; bottom: 45px; left: 10%;
             width: 40px; height: 90px;
@@ -103,18 +103,17 @@
         
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
 
-        /* 苦力怕 (纯CSS画的) */
+        /* 苦力怕 */
         .creeper {
             position: absolute; bottom: 45px; right: -50px;
             width: 30px; height: 80px;
             z-index: 6;
-            animation: patrol 10s linear infinite;
+            animation: patrol 12s linear infinite;
         }
         .creeper-head { 
             width: 30px; height: 30px; background: #00AA00; position: absolute; top: 0; 
-            border: 2px solid #005500; /* 简单的像素杂色 */
+            border: 2px solid #005500; 
         }
-        /* 苦力怕的脸 */
         .face-eye-l { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; left: 4px; }
         .face-eye-r { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; right: 4px; }
         .face-mouth { width: 10px; height: 8px; background: #000; position: absolute; top: 18px; left: 10px; }
@@ -128,14 +127,14 @@
         @keyframes patrol {
             0% { right: -50px; transform: scaleX(1); }
             45% { right: 60%; transform: scaleX(1); }
-            50% { right: 60%; transform: scaleX(-1); } /* 转身 */
+            50% { right: 60%; transform: scaleX(-1); } 
             95% { right: -50px; transform: scaleX(-1); }
             100% { right: -50px; transform: scaleX(1); }
         }
         @keyframes walk { from { transform: translateY(0); } to { transform: translateY(-3px); } }
 
         /* 特效动画 */
-        .celebrate { animation: jump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #55ff55 !important; }
+        .celebrate { animation: jump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #f1c40f !important; text-shadow: 4px 4px 0 #b7950b !important; }
         @keyframes jump { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
         
         .confetti { position: fixed; top: -50px; z-index: 999; animation: fall linear forwards; pointer-events: none; font-size: 30px;}
@@ -150,15 +149,15 @@
             <h2>Andy的背包</h2>
             
             <div class="slot">
-                <div class="coin-icon" id="icon">💎</div>
+                <div class="coin-icon" id="icon">🪙</div>
             </div>
 
-            <div class="label">当前钻石</div>
+            <div class="label">当前拥有币</div>
             <div id="totalDisplay" class="total">...</div>
 
             <div class="status-bar">
                 <div id="light" class="light"></div> 
-                <span id="connStatus">正在连接服务器...</span>
+                <span id="connStatus">正在连接...</span>
             </div>
             
             <div id="statusMsg" class="message"></div>
@@ -185,7 +184,6 @@
 
     <script>
         // ==========================================
-        // ✅ 你的密钥已全部填入，直接使用
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
@@ -243,69 +241,4 @@
 
                 if (cloudCoins > lastCoins || (forceAnim && cloudCoins > lastCoins)) {
                     let diff = cloudCoins - lastCoins;
-                    showSuccessAnimation(diff); 
-                } else if (cloudCoins < lastCoins) {
-                    statusMsg.innerText = `使用了 ${lastCoins - cloudCoins} 颗钻石`;
-                    statusMsg.style.color = "#8b0000";
-                    setTimeout(() => statusMsg.innerText = "", 3000);
-                }
-
-                totalDisplay.innerText = cloudCoins;
-                lastCoins = cloudCoins;
-                localStorage.setItem('andy_last_seen_coins', cloudCoins);
-                
-                handleUrlParams(usedIds, cloudCoins);
-
-            } catch (error) {
-                console.log("读取失败");
-            }
-        }
-
-        function showSuccessAnimation(amount) {
-            statusMsg.innerText = `成就达成！+${amount}`;
-            statusMsg.style.color = "#00aa00";
-            
-            totalDisplay.classList.remove('celebrate');
-            void totalDisplay.offsetWidth; 
-            totalDisplay.classList.add('celebrate');
-            
-            setTimeout(() => totalDisplay.classList.remove('celebrate'), 2000);
-            createConfetti();
-            setTimeout(() => statusMsg.innerText = "", 4000);
-        }
-
-        function createConfetti() {
-            // 掉落物：钻石，绿宝石，剑，TNT，肉
-            const emojis = ['💎', '🟩', '⚔️', '🧨', '🍖'];
-            for (let i = 0; i < 40; i++) {
-                const el = document.createElement('div');
-                el.classList.add('confetti');
-                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-                el.style.left = Math.random() * 100 + 'vw';
-                el.style.fontSize = (Math.random() * 20 + 20) + 'px';
-                el.style.animationDuration = (Math.random() * 2 + 1.5) + 's'; 
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 4000);
-            }
-        }
-
-        async function handleUrlParams(usedIds, currentCloudCoins) {
-            const params = new URLSearchParams(window.location.search);
-            const addAmount = parseInt(params.get('add'));
-            const transId = params.get('id');
-
-            if (addAmount && transId && !usedIds.includes(transId)) {
-                let newCoins = currentCloudCoins + addAmount;
-                usedIds.push(transId);
-                await fetch(BASE_URL, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-                    body: JSON.stringify({ coins: newCoins, transactions: usedIds })
-                });
-                lastCoins = newCoins - addAmount; 
-                checkCloud(true); 
-            }
-        }
-    </script>
-</body>
-</html>
+                    showSuccessAnimation

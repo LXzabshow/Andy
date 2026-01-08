@@ -10,7 +10,7 @@
     <style>
         * { box-sizing: border-box; user-select: none; }
         body { 
-            background-color: #76b5fe; /* 天空蓝 */
+            background-color: #76b5fe; 
             font-family: 'VT323', monospace; 
             text-align: center; 
             margin: 0; padding: 0;
@@ -19,7 +19,6 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* ------------------- UI 界面区 ------------------- */
         .ui-container {
             margin-top: 10vh;
             width: 90%;
@@ -36,26 +35,15 @@
             position: relative; 
         }
 
-        h2 { 
-            color: #404040; margin: 0 0 15px 0; font-size: 32px; 
-            text-shadow: 2px 2px #fff; letter-spacing: 2px; 
-        }
+        h2 { color: #404040; margin: 0 0 15px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
 
-        /* 物品栏格子 */
         .slot {
-            background: #8b8b8b;
-            width: 120px; height: 120px;
-            margin: 0 auto;
-            border: 4px solid #373737;
-            border-right-color: #fff; border-bottom-color: #fff;
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
+            background: #8b8b8b; width: 120px; height: 120px; margin: 0 auto;
+            border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff;
+            display: flex; align-items: center; justify-content: center; position: relative;
         }
-        .slot:hover { background: #9b9b9b; } 
 
-        /* 图标改为硬币 */
         .coin-icon { font-size: 70px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2;}
-
         .label { color: #404040; font-size: 20px; margin-top: 15px; font-weight: bold; text-shadow: 1px 1px #fff;}
 
         .total { 
@@ -64,82 +52,44 @@
             font-family: 'VT323', sans-serif; 
         }
 
-        /* 信号灯 */
         .status-bar {
-            background: #000; color: #fff;
-            padding: 5px 10px; border-radius: 4px;
+            background: #000; color: #fff; padding: 5px 10px; border-radius: 4px;
             font-size: 14px; display: inline-flex; align-items: center;
             margin-top: 10px; border: 2px solid #555;
         }
         .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
         .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
 
-        .message { 
-            color: #004400; margin-top: 10px; font-size: 18px; height: 24px; 
-            text-shadow: 1px 1px #fff; font-weight: bold;
-        }
+        .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
 
-        /* ------------------- 像素画与动画区 ------------------- */
-        
-        /* 地面 */
-        .ground {
-            position: absolute; bottom: 0; width: 100%; height: 60px;
-            background: #5D4037; 
-            border-top: 10px solid #4CAF50; 
-            z-index: 10;
-        }
+        /* 手动刷新按钮 */
+        .retry-btn { margin-top:10px; padding: 5px 10px; background: #3498db; color: white; border: 2px solid #000; cursor: pointer; display: none; }
 
-        /* 史蒂夫 */
-        .steve {
-            position: absolute; bottom: 45px; left: 10%;
-            width: 40px; height: 90px;
-            z-index: 5;
-            animation: breathe 2s ease-in-out infinite;
-        }
+        /* 动画区 */
+        .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 10; }
+        .steve { position: absolute; bottom: 45px; left: 10%; width: 40px; height: 90px; z-index: 5; animation: breathe 2s ease-in-out infinite; }
         .steve-head { width: 40px; height: 40px; background: #F8B090; position: absolute; top: 0; }
         .steve-hair { width: 40px; height: 10px; background: #452613; position: absolute; top: 0; }
         .steve-body { width: 40px; height: 30px; background: #00AAAA; position: absolute; top: 40px; }
         .steve-pants { width: 40px; height: 20px; background: #303090; position: absolute; top: 70px; }
-        
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
 
-        /* 苦力怕 */
-        .creeper {
-            position: absolute; bottom: 45px; right: -50px;
-            width: 30px; height: 80px;
-            z-index: 6;
-            animation: patrol 12s linear infinite;
-        }
-        .creeper-head { 
-            width: 30px; height: 30px; background: #00AA00; position: absolute; top: 0; 
-            border: 2px solid #005500; 
-        }
+        .creeper { position: absolute; bottom: 45px; right: -50px; width: 30px; height: 80px; z-index: 6; animation: patrol 12s linear infinite; }
+        .creeper-head { width: 30px; height: 30px; background: #00AA00; position: absolute; top: 0; border: 2px solid #005500; }
         .face-eye-l { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; left: 4px; }
         .face-eye-r { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; right: 4px; }
         .face-mouth { width: 10px; height: 8px; background: #000; position: absolute; top: 18px; left: 10px; }
         .face-mouth-legs { width: 4px; height: 4px; background: #000; position: absolute; top: 24px; left: 10px; box-shadow: 6px 0 0 #000; }
-
         .creeper-body { width: 30px; height: 30px; background: #00AA00; position: absolute; top: 30px; }
         .creeper-legs { width: 30px; height: 20px; background: transparent; position: absolute; top: 60px; }
         .leg-f { width: 10px; height: 20px; background: #00AA00; position: absolute; left: 0; animation: walk 0.5s infinite alternate; }
         .leg-b { width: 10px; height: 20px; background: #00AA00; position: absolute; right: 0; animation: walk 0.5s infinite alternate-reverse; }
-
-        @keyframes patrol {
-            0% { right: -50px; transform: scaleX(1); }
-            45% { right: 60%; transform: scaleX(1); }
-            50% { right: 60%; transform: scaleX(-1); } 
-            95% { right: -50px; transform: scaleX(-1); }
-            100% { right: -50px; transform: scaleX(1); }
-        }
+        @keyframes patrol { 0% { right: -50px; transform: scaleX(1); } 45% { right: 60%; transform: scaleX(1); } 50% { right: 60%; transform: scaleX(-1); } 95% { right: -50px; transform: scaleX(-1); } 100% { right: -50px; transform: scaleX(1); } }
         @keyframes walk { from { transform: translateY(0); } to { transform: translateY(-3px); } }
-
-        /* 特效动画 */
         .celebrate { animation: jump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #f1c40f !important; text-shadow: 4px 4px 0 #b7950b !important; }
         @keyframes jump { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
-        
         .confetti { position: fixed; top: -50px; z-index: 999; animation: fall linear forwards; pointer-events: none; font-size: 30px;}
         @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
-
     </style>
 </head>
 <body>
@@ -157,29 +107,16 @@
 
             <div class="status-bar">
                 <div id="light" class="light"></div> 
-                <span id="connStatus">正在连接...</span>
+                <span id="connStatus">启动中...</span>
             </div>
             
+            <button id="retryBtn" class="retry-btn" onclick="checkCloud(false)">点我重试</button>
             <div id="statusMsg" class="message"></div>
         </div>
     </div>
 
-    <div class="steve">
-        <div class="steve-head"></div><div class="steve-hair"></div>
-        <div class="steve-body"></div><div class="steve-pants"></div>
-    </div>
-
-    <div class="creeper">
-        <div class="creeper-head">
-            <div class="face-eye-l"></div><div class="face-eye-r"></div>
-            <div class="face-mouth"></div><div class="face-mouth-legs"></div>
-        </div>
-        <div class="creeper-body"></div>
-        <div class="creeper-legs">
-            <div class="leg-f"></div><div class="leg-b"></div>
-        </div>
-    </div>
-
+    <div class="steve"><div class="steve-head"></div><div class="steve-hair"></div><div class="steve-body"></div><div class="steve-pants"></div></div>
+    <div class="creeper"><div class="creeper-head"><div class="face-eye-l"></div><div class="face-eye-r"></div><div class="face-mouth"></div><div class="face-mouth-legs"></div></div><div class="creeper-body"></div><div class="creeper-legs"><div class="leg-f"></div><div class="leg-b"></div></div></div>
     <div class="ground"></div>
 
     <script>
@@ -194,43 +131,28 @@
         const statusMsg = document.getElementById('statusMsg');
         const light = document.getElementById('light');
         const connStatus = document.getElementById('connStatus');
+        const retryBtn = document.getElementById('retryBtn');
         
         let lastCoins = null; 
 
-        // 1. 初始化 GoEasy
-        const goEasy = GoEasy.getInstance({
-            host: 'hangzhou.goeasy.io', 
-            appkey: GOEASY_KEY,
-            modules: ['pubsub']
+        // 核心修改：页面加载后，不管 GoEasy 连没连上，立即尝试加载金币
+        document.addEventListener('DOMContentLoaded', () => {
+            checkCloud(false);
+            initGoEasy();
         });
 
-        // 2. 连接
-        goEasy.connect({
-            onSuccess: function () {
-                light.classList.add('online');
-                connStatus.innerText = "信号正常";
-                checkCloud(false);
-            },
-            onFailed: function (error) {
-                connStatus.innerText = "离线";
-            }
-        });
-
-        // 3. 监听
-        goEasy.pubsub.subscribe({
-            channel: "andy_channel",
-            onMessage: function (message) {
-                console.log("收到信号！");
-                checkCloud(true); 
-            }
-        });
-
-        // 4. 查数据
+        // 查数据逻辑
         async function checkCloud(forceAnim = false) {
+            connStatus.innerText = "正在读取存档...";
+            retryBtn.style.display = "none";
+            
             try {
                 let response = await fetch(BASE_URL + '/latest', {
                     headers: { 'X-Master-Key': API_KEY }
                 });
+                
+                if(!response.ok) throw new Error("服务器无响应");
+                
                 let data = await response.json();
                 let cloudCoins = data.record.coins || 0;
                 let usedIds = data.record.transactions || [];
@@ -241,4 +163,109 @@
 
                 if (cloudCoins > lastCoins || (forceAnim && cloudCoins > lastCoins)) {
                     let diff = cloudCoins - lastCoins;
-                    showSuccessAnimation
+                    showSuccessAnimation(diff); 
+                } else if (cloudCoins < lastCoins) {
+                    statusMsg.innerText = `使用了 ${lastCoins - cloudCoins} 币`;
+                    statusMsg.style.color = "#8b0000";
+                    setTimeout(() => statusMsg.innerText = "", 3000);
+                }
+
+                totalDisplay.innerText = cloudCoins;
+                lastCoins = cloudCoins;
+                localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                
+                // 恢复正常状态文字
+                if(light.classList.contains('online')){
+                    connStatus.innerText = "信号正常";
+                } else {
+                    connStatus.innerText = "数据已同步 (信号断开)";
+                }
+
+                handleUrlParams(usedIds, cloudCoins);
+
+            } catch (error) {
+                console.error(error);
+                connStatus.innerText = "读取失败";
+                statusMsg.innerText = "网络有点卡";
+                statusMsg.style.color = "red";
+                retryBtn.style.display = "inline-block"; // 显示重试按钮
+            }
+        }
+
+        // 初始化信号逻辑
+        function initGoEasy() {
+            try {
+                const goEasy = GoEasy.getInstance({
+                    host: 'hangzhou.goeasy.io', 
+                    appkey: GOEASY_KEY,
+                    modules: ['pubsub']
+                });
+
+                goEasy.connect({
+                    onSuccess: function () {
+                        light.classList.add('online');
+                        connStatus.innerText = "信号正常";
+                    },
+                    onFailed: function (error) {
+                        connStatus.innerText = "信号连接失败";
+                    }
+                });
+
+                goEasy.pubsub.subscribe({
+                    channel: "andy_channel",
+                    onMessage: function (message) {
+                        console.log("收到信号！");
+                        checkCloud(true); 
+                    }
+                });
+            } catch(e) {
+                console.log("信号模块错误");
+            }
+        }
+
+        function showSuccessAnimation(amount) {
+            statusMsg.innerText = `成就达成！币 +${amount}`;
+            statusMsg.style.color = "#00aa00";
+            totalDisplay.classList.remove('celebrate');
+            void totalDisplay.offsetWidth; 
+            totalDisplay.classList.add('celebrate');
+            setTimeout(() => totalDisplay.classList.remove('celebrate'), 2000);
+            createConfetti();
+            setTimeout(() => statusMsg.innerText = "", 4000);
+        }
+
+        function createConfetti() {
+            const emojis = ['🪙', '🪙', '🟩', '⚔️', '🧨', '🍖'];
+            for (let i = 0; i < 40; i++) {
+                const el = document.createElement('div');
+                el.classList.add('confetti');
+                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.fontSize = (Math.random() * 20 + 20) + 'px';
+                el.style.animationDuration = (Math.random() * 2 + 1.5) + 's'; 
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 4000);
+            }
+        }
+
+        async function handleUrlParams(usedIds, currentCloudCoins) {
+            const params = new URLSearchParams(window.location.search);
+            const addAmount = parseInt(params.get('add'));
+            const transId = params.get('id');
+
+            if (addAmount && transId && !usedIds.includes(transId)) {
+                statusMsg.innerText = "正在存币...";
+                let newCoins = currentCloudCoins + addAmount;
+                usedIds.push(transId);
+                await fetch(BASE_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                    body: JSON.stringify({ coins: newCoins, transactions: usedIds })
+                });
+                lastCoins = newCoins - addAmount; 
+                checkCloud(true); 
+            }
+        }
+    </script>
+</body>
+</html>

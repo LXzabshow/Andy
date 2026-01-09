@@ -51,12 +51,20 @@
         .s-body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1;}
         .s-pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
         
-        /* ⚔️ 修复后的武器：钻石剑 */
+        /* ⚔️ 完美修复的武器：钻石剑 */
         .s-sword { 
-            position: absolute; top: 45px; right: -30px; font-size: 60px; 
-            /* 关键修复：调整旋转中心到剑柄，并设置初始斜持角度 */
-            transform-origin: 50% 100%; transform: rotate(30deg); 
-            z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000);
+            position: absolute; 
+            /* 调整位置，让剑柄对准手部 */
+            top: 35px; right: -40px; 
+            font-size: 60px; 
+            /* 关键1：scaleX(-1) 水平翻转，解决拿反的问题 */
+            /* 关键2：rotate(45deg) 调整初始角度为斜向上持剑 */
+            transform: scaleX(-1) rotate(45deg); 
+            /* 关键3：旋转中心设为左下角（翻转后的剑柄位置） */
+            transform-origin: 20% 80%; 
+            z-index: 4; 
+            display: none; 
+            filter: drop-shadow(2px 2px 0 #000);
         }
         
         /* 苦力怕 */
@@ -98,12 +106,13 @@
         @keyframes walkAcross { 0% { left: -100px; } 100% { left: 120%; } }
         @keyframes walkAcrossReverse { 0% { right: -100px; } 100% { right: 120%; } }
 
-        /* ⚔️ 修复后的攻击动画：向下挥砍 */
+        /* ⚔️ 优化后的挥砍动画：带水平翻转的旋转 */
         .anim-attack { animation: swordSwing 0.35s ease-out forwards; }
         @keyframes swordSwing { 
-            0% { transform: rotate(30deg); } 
-            50% { transform: rotate(-70deg); } /* 向下砍 */
-            100% { transform: rotate(30deg); } 
+            /* 注意：scaleX(-1) 必须全程保留，否则剑会瞬间翻面 */
+            0% { transform: scaleX(-1) rotate(45deg); } 
+            50% { transform: scaleX(-1) rotate(-60deg); } /* 向下猛砍 */
+            100% { transform: scaleX(-1) rotate(45deg); } /* 收刀 */
         }
         
         .anim-hurt { animation: hurtFlash 0.3s steps(2) infinite; }
@@ -223,8 +232,6 @@
         function startGame() {
             document.getElementById('start-overlay').style.display='none';
             checkDayNight();
-            
-            // 强制加载并播放音频
             try {
                 bgm.load();
                 bgm.volume = 0.4;
@@ -272,14 +279,11 @@
             }
         }
 
-        // 🎬 剧场 A：挥剑砍怪 (加币)
         function playAttackSequence(amount, finalCoins) {
             isAnimating = true;
             uiLayer.style.opacity = '0'; 
-            
             steve.classList.remove('breathe'); 
             creeper.classList.remove('patrol'); 
-            
             steve.style.left = "35%"; steve.style.bottom = "80px"; steve.style.transform = "scaleX(1)";
             creeper.style.right = "35%"; creeper.style.bottom = "80px"; creeper.style.transform = "scaleX(1)";
             
@@ -305,11 +309,9 @@
             }, 3000);
         }
 
-        // 🎬 剧场 B：自爆 (扣币)
         function playExplodeSequence(amount, finalCoins) {
             isAnimating = true;
             uiLayer.style.opacity = '0';
-            
             steve.style.left = "-100px"; 
             creeper.classList.remove('patrol');
             creeper.style.right = "45%"; creeper.style.bottom = "50px"; creeper.style.transition = "all 0.5s";
@@ -338,23 +340,17 @@
 
         function resetStage() {
             uiLayer.style.opacity = '1';
-            
             steve.style = ""; steve.classList.add('breathe');
             document.querySelector('.s-sword').style.display = 'none';
             document.querySelector('.s-sword').classList.remove('anim-attack');
-            
             creeper.style = ""; creeper.style.display = 'block'; creeper.style.opacity = '1';
             creeper.classList.remove('anim-hurt'); creeper.classList.remove('anim-swell');
             creeper.classList.add('patrol');
-
             isAnimating = false;
             lastCoins = parseInt(totalDisplay.innerText);
         }
 
-        function updateValue(coins) {
-            totalDisplay.innerText = coins;
-            updateRank(coins);
-        }
+        function updateValue(coins) { totalDisplay.innerText = coins; updateRank(coins); }
 
         function createParticles(count, char) {
             for (let i = 0; i < count; i++) {
@@ -376,15 +372,12 @@
             const hour = new Date().getHours();
             const pig = document.getElementById('pig');
             const zombie = document.getElementById('zombie');
-            
             if (hour >= 18 || hour < 6) {
                 document.body.classList.add('night');
-                pig.style.display = 'none'; 
-                zombie.style.display = 'block'; 
+                pig.style.display = 'none'; zombie.style.display = 'block'; 
             } else {
                 document.body.classList.remove('night');
-                pig.style.display = 'block'; 
-                zombie.style.display = 'none'; 
+                pig.style.display = 'block'; zombie.style.display = 'none'; 
             }
         }
         function updateRank(coins) {

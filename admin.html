@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家长控制台 - 杭州节点版</title>
-    <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
+    <title>家长控制台 - 修复版</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #222; color: #eee; text-align: center; max-width: 500px; margin: 0 auto;}
         .box { background: #333; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
@@ -16,7 +15,7 @@
         .btn-sub { background: #c0392b; color: white; }
         input { padding: 12px; border-radius: 5px; border: none; width: 60%; text-align: center; background: #444; color: white; font-size: 16px;}
         .manual-group { background: #444; padding: 15px; border-radius: 8px; margin-top: 20px;}
-        #log { color: #888; font-size: 12px; margin-top: 15px; min-height: 20px; line-height: 1.5; }
+        #log { color: #888; font-size: 12px; margin-top: 15px; min-height: 20px; line-height: 1.5; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -41,15 +40,13 @@
         <div id="log">等待指令...</div>
     </div>
 
+    <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
+
     <script>
-        // ==========================================
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
-        
-        // 🌟 重点确认：这里是杭州节点
-        const GOEASY_HOST = 'hangzhou.goeasy.io'; 
-        // ==========================================
+        const GOEASY_HOST = 'hangzhou.goeasy.io'; // 杭州节点
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
         const display = document.getElementById('currentCoins');
@@ -58,20 +55,40 @@
 
         let goEasy = null;
 
-        // 初始化 GoEasy
-        try {
-            goEasy = GoEasy.getInstance({
-                host: GOEASY_HOST, 
-                appkey: GOEASY_KEY,
-                modules: ['pubsub']
-            });
-            goEasy.connect({
-                onSuccess: () => { log.innerText = "✅ 信号系统连接正常"; },
-                onFailed: (err) => { log.innerText = "❌ 信号连接失败: " + err.content; }
-            });
-        } catch (e) {
-            log.innerText = "GoEasy 初始化错误";
-        }
+        // 核心修改：更稳健的初始化检查
+        window.onload = function() {
+            if(prompt("请输入家长密码") !== PASS) { 
+                document.body.innerHTML = "<h3 style='color:red'>密码错误</h3>"; 
+                return;
+            }
+
+            // 1. 读取金币
+            getCoins();
+
+            // 2. 初始化 GoEasy
+            if (typeof GoEasy === 'undefined') {
+                log.innerText = "❌ 错误：GoEasy工具包加载失败。\n请检查网络，或刷新页面重试。";
+                return;
+            }
+
+            try {
+                goEasy = GoEasy.getInstance({
+                    host: GOEASY_HOST, 
+                    appkey: GOEASY_KEY,
+                    modules: ['pubsub']
+                });
+                goEasy.connect({
+                    onSuccess: () => { 
+                        log.innerText = "✅ 系统连接正常 (杭州节点)"; 
+                    },
+                    onFailed: (err) => { 
+                        log.innerText = "❌ 信号连接失败: " + err.content + "\n请尝试刷新"; 
+                    }
+                });
+            } catch (e) {
+                log.innerText = "❌ 初始化异常: " + e.message;
+            }
+        };
 
         async function getCoins() {
             try {
@@ -86,7 +103,6 @@
             log.innerText = "正在写入云端...";
             let currentRecord = null;
 
-            // 1. 先尝试保存金币
             try {
                 let record = await getCoins();
                 let newCoins = record.coins + amount;
@@ -105,15 +121,18 @@
                 return;
             }
 
-            // 2. 尝试发送通知
             try {
-                log.innerText += "\n正在呼叫孩子端...";
-                goEasy.publish({
-                    channel: "andy_channel",
-                    message: "update",
-                    onSuccess: () => log.innerText = `✅ 全部成功！余额: ${currentRecord}`,
-                    onFailed: (err) => log.innerText = `⚠️ 金币存了，但通知失败: ${err.content}`
-                });
+                if(goEasy) {
+                    log.innerText += "\n正在呼叫孩子端...";
+                    goEasy.publish({
+                        channel: "andy_channel",
+                        message: "update",
+                        onSuccess: () => log.innerText = `✅ 全部成功！余额: ${currentRecord}`,
+                        onFailed: (err) => log.innerText = `⚠️ 金币存了，但通知失败: ${err.content}`
+                    });
+                } else {
+                    log.innerText += "\n⚠️ 信号未连接，无法通知孩子";
+                }
             } catch (e) {
                 log.innerText += "\n⚠️ 信号发送模块出错";
             }
@@ -123,8 +142,6 @@
             let val = parseInt(document.getElementById('manualInput').value);
             if(val) modifyCoins(val * sign);
         }
-
-        if(prompt("请输入家长密码") !== PASS) { document.body.innerHTML = "<h3 style='color:red'>密码错误</h3>"; } else { getCoins(); }
     </script>
 </body>
 </html>

@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家长控制台 - 修复版</title>
+    <title>家长控制台 - 慢速网络版</title>
+    <script src="https://cdn.goeasy.io/goeasy-2.14.17.min.js"></script>
+    
     <style>
         body { font-family: sans-serif; padding: 20px; background: #222; color: #eee; text-align: center; max-width: 500px; margin: 0 auto;}
         .box { background: #333; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
@@ -37,22 +39,14 @@
             <button class="btn-sub" style="width: 45%;" onclick="manualMod(-1)">扣除</button>
         </div>
         
-        <div id="log">等待指令...</div>
+        <div id="log">等待网络资源...</div>
     </div>
-
-    <script src="https://cdn.goeasy.io/goeasy-2.14.17.min.js"></script>
-    
-    <script>
-        if (typeof GoEasy === 'undefined') {
-            document.write('<script src="https://unpkg.com/goeasy@2.14.17/dist/goeasy.min.js"><\/script>');
-        }
-    </script>
 
     <script>
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
-        const GOEASY_HOST = 'hangzhou.goeasy.io'; // 杭州节点
+        const GOEASY_HOST = 'hangzhou.goeasy.io';
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
         const display = document.getElementById('currentCoins');
@@ -60,19 +54,37 @@
         const PASS = "8888"; 
 
         let goEasy = null;
+        let checkCount = 0;
 
         window.onload = function() {
             if(prompt("请输入家长密码") !== PASS) { 
                 document.body.innerHTML = "<h3 style='color:red'>密码错误</h3>"; return;
             }
-            getCoins(); 
+            
+            // 1. 先读取金币 (这个不依赖 GoEasy)
+            getCoins();
+            log.innerText = "⏳ 正在加载通信模块...";
 
-            // 再次检查是否加载成功
-            if (typeof GoEasy === 'undefined') {
-                log.innerText = "❌ 严重错误：\n所有线路均无法加载GoEasy工具。\n请检查您的网络防火墙设置。";
-                return;
-            }
+            // 2. 启动【慢速轮询机制】
+            // 每秒检查一次，最多检查 10 次 (10秒)
+            let checkTimer = setInterval(() => {
+                checkCount++;
+                
+                if (typeof GoEasy !== 'undefined') {
+                    // 成功加载！停止检查，开始初始化
+                    clearInterval(checkTimer);
+                    initGoEasy();
+                } else {
+                    console.log("等待 GoEasy 加载... " + checkCount);
+                    if (checkCount >= 10) {
+                        clearInterval(checkTimer);
+                        log.innerText = "❌ 超时：通信模块加载失败。\n请尝试刷新页面。";
+                    }
+                }
+            }, 1000); 
+        };
 
+        function initGoEasy() {
             try {
                 goEasy = GoEasy.getInstance({
                     host: GOEASY_HOST, 
@@ -80,13 +92,13 @@
                     modules: ['pubsub']
                 });
                 goEasy.connect({
-                    onSuccess: () => { log.innerText = "✅ 系统连接正常 (新版本)"; },
-                    onFailed: (err) => { log.innerText = "❌ 连接失败: " + err.content; }
+                    onSuccess: () => { log.innerText = "✅ 系统连接正常"; },
+                    onFailed: (err) => { log.innerText = "❌ 信号连接失败: " + err.content; }
                 });
             } catch (e) {
                 log.innerText = "❌ 初始化异常: " + e.message;
             }
-        };
+        }
 
         async function getCoins() {
             try {
@@ -115,16 +127,19 @@
                 log.innerText = "❌ 严重错误：金币保存失败！"; return;
             }
 
-            try {
-                if(goEasy) {
-                    log.innerText += "\n正在呼叫孩子端...";
+            // 尝试发送通知
+            if(goEasy) {
+                log.innerText += "\n正在呼叫孩子端...";
+                try {
                     goEasy.publish({
                         channel: "andy_channel", message: "update",
                         onSuccess: () => log.innerText = `✅ 全部成功！余额: ${currentRecord}`,
                         onFailed: (err) => log.innerText = `⚠️ 金币存了，但通知失败: ${err.content}`
                     });
-                } else { log.innerText += "\n⚠️ 信号未连接"; }
-            } catch (e) { log.innerText += "\n⚠️ 信号模块出错"; }
+                } catch(e) { log.innerText += "\n⚠️ 发送出错"; }
+            } else {
+                log.innerText += "\n⚠️ 信号未连接 (不影响金币保存)"; 
+            }
         }
 
         function manualMod(sign) {

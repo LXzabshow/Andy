@@ -3,22 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家长控制台</title>
+    <title>家长控制台 - 杭州节点版</title>
     <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #222; color: #eee; text-align: center; max-width: 500px; margin: 0 auto;}
         .box { background: #333; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .big-num { font-size: 60px; font-weight: bold; margin: 20px 0; color: #ffb700; text-shadow: 0 0 10px rgba(255, 183, 0, 0.3);}
-        
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;}
         button { padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.1s;}
         button:active { transform: scale(0.96); }
         .btn-add { background: #27ae60; color: white; }
         .btn-sub { background: #c0392b; color: white; }
-        
         input { padding: 12px; border-radius: 5px; border: none; width: 60%; text-align: center; background: #444; color: white; font-size: 16px;}
         .manual-group { background: #444; padding: 15px; border-radius: 8px; margin-top: 20px;}
-        #log { color: #888; font-size: 12px; margin-top: 15px; height: 16px;}
+        #log { color: #888; font-size: 12px; margin-top: 15px; min-height: 20px; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -45,10 +43,12 @@
 
     <script>
         // ==========================================
-        // ✅ 你的密钥已全部填入
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
+        
+        // 🌟 重点确认：这里是杭州节点
+        const GOEASY_HOST = 'hangzhou.goeasy.io'; 
         // ==========================================
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
@@ -56,12 +56,22 @@
         const log = document.getElementById('log');
         const PASS = "8888"; 
 
-        const goEasy = GoEasy.getInstance({
-            host: 'hangzhou.goeasy.io', 
-            appkey: GOEASY_KEY,
-            modules: ['pubsub']
-        });
-        goEasy.connect({ onSuccess: () => console.log("GoEasy Ready") });
+        let goEasy = null;
+
+        // 初始化 GoEasy
+        try {
+            goEasy = GoEasy.getInstance({
+                host: GOEASY_HOST, 
+                appkey: GOEASY_KEY,
+                modules: ['pubsub']
+            });
+            goEasy.connect({
+                onSuccess: () => { log.innerText = "✅ 信号系统连接正常"; },
+                onFailed: (err) => { log.innerText = "❌ 信号连接失败: " + err.content; }
+            });
+        } catch (e) {
+            log.innerText = "GoEasy 初始化错误";
+        }
 
         async function getCoins() {
             try {
@@ -74,6 +84,9 @@
 
         async function modifyCoins(amount) {
             log.innerText = "正在写入云端...";
+            let currentRecord = null;
+
+            // 1. 先尝试保存金币
             try {
                 let record = await getCoins();
                 let newCoins = record.coins + amount;
@@ -85,16 +98,25 @@
                 });
                 
                 display.innerText = newCoins;
-                log.innerText = "数据已保存，正在发送信号...";
+                currentRecord = newCoins;
+                log.innerText = "✅ 金币保存成功！";
+            } catch (e) { 
+                log.innerText = "❌ 严重错误：金币保存失败！";
+                return;
+            }
 
+            // 2. 尝试发送通知
+            try {
+                log.innerText += "\n正在呼叫孩子端...";
                 goEasy.publish({
                     channel: "andy_channel",
                     message: "update",
-                    onSuccess: () => log.innerText = "✅ 成功！信号已发送",
-                    onFailed: () => log.innerText = "⚠️ 保存成功但信号发送失败"
+                    onSuccess: () => log.innerText = `✅ 全部成功！余额: ${currentRecord}`,
+                    onFailed: (err) => log.innerText = `⚠️ 金币存了，但通知失败: ${err.content}`
                 });
-
-            } catch (e) { log.innerText = "❌ 操作失败"; }
+            } catch (e) {
+                log.innerText += "\n⚠️ 信号发送模块出错";
+            }
         }
 
         function manualMod(sign) {

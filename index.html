@@ -6,51 +6,111 @@
     <title>Andy的冒险背包</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
-        /* 样式保持不变 */
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #76b5fe; font-family: 'VT323', monospace; text-align: center; margin: 0; padding: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background-color 2s ease; }
-        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(white 1px, transparent 1px); background-size: 50px 50px, 100px 100px; background-position: 0 0, 25px 25px; opacity: 0; transition: opacity 2s; z-index: 0; pointer-events: none; }
-        body.night .stars { opacity: 0.5; } body.night { background-color: #1a0b2e; }
-        #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; box-shadow: inset 4px 4px #aaa, inset -4px -4px #444; text-transform: uppercase; margin-top: 20px; }
-        .mc-btn:active { background: #555; border-color: #aaa; transform: scale(0.95); }
-        .ui-container { margin-top: 8vh; width: 90%; max-width: 400px; z-index: 100; position: relative; }
+        body { 
+            background-color: #76b5fe; font-family: 'VT323', monospace; 
+            text-align: center; margin: 0; padding: 0; overflow: hidden; height: 100vh; 
+            display: flex; flex-direction: column; align-items: center; 
+            transition: background-color 2s ease; 
+        }
+        
+        /* ------------------- 场景与背景 ------------------- */
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(white 1px, transparent 1px); background-size: 50px 50px; opacity: 0; transition: opacity 2s; z-index: 0; pointer-events: none; }
+        body.night .stars { opacity: 0.5; } 
+        body.night { background-color: #1a0b2e; }
+        
+        .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 10; }
+
+        /* ------------------- UI 界面 ------------------- */
+        .ui-container { margin-top: 8vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.3s;}
         .card { background-color: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 20px; position: relative; }
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
-        .rank-badge { background: #333; color: #f1c40f; padding: 2px 10px; border: 2px solid #fff; display: inline-block; margin-bottom: 15px; font-size: 18px; border-radius: 4px; box-shadow: 2px 2px 0 rgba(0,0,0,0.3); }
+        
+        .rank-badge { background: #333; color: #f1c40f; padding: 2px 10px; border: 2px solid #fff; display: inline-block; margin-bottom: 15px; font-size: 18px; border-radius: 4px; }
+        
         .slot { background: #8b8b8b; width: 120px; height: 120px; margin: 0 auto; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
         .slot:active .coin-icon { transform: scale(0.8); }
         .coin-icon { font-size: 70px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
+        
         .label { color: #404040; font-size: 20px; margin-top: 15px; font-weight: bold; text-shadow: 1px 1px #fff;}
         .total { font-size: 80px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 5px 0; line-height: 1; }
+        
         .status-bar { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 14px; display: inline-flex; align-items: center; margin-top: 10px; border: 2px solid #555; }
         .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
         .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
-        .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 10; }
-        .steve { position: absolute; bottom: 45px; left: 10%; width: 40px; height: 90px; z-index: 5; animation: breathe 2s ease-in-out infinite; }
-        .steve-head { width: 40px; height: 40px; background: #F8B090; position: absolute; top: 0; }
-        .steve-hair { width: 40px; height: 10px; background: #452613; position: absolute; top: 0; }
-        .steve-body { width: 40px; height: 30px; background: #00AAAA; position: absolute; top: 40px; }
-        .steve-pants { width: 40px; height: 20px; background: #303090; position: absolute; top: 70px; }
+
+        /* ------------------- 战斗剧场角色 ------------------- */
+        .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; overflow: hidden;}
+        
+        /* 史蒂夫 */
+        .actor-steve { position: absolute; bottom: 50px; left: -100px; width: 60px; height: 135px; transition: transform 0.1s; }
+        .s-head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2;}
+        .s-hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3;}
+        .s-body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1;}
+        .s-pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
+        /* 钻石剑 */
+        .s-sword { 
+            position: absolute; top: 50px; right: -40px; font-size: 60px; 
+            transform-origin: 0% 100%; transform: rotate(0deg); 
+            z-index: 4; display: none; /* 平时隐藏 */
+        }
+        
+        /* 苦力怕 */
+        .actor-creeper { position: absolute; bottom: 50px; right: -100px; width: 45px; height: 120px; transition: filter 0.1s;}
+        .c-head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
+        .c-face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8;}
+        .c-body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; }
+        .c-legs { width: 45px; height: 30px; position: absolute; top: 90px; }
+        .c-leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0;}
+        
+        /* ------------------- 动画关键帧 ------------------- */
+        /* 史蒂夫闲置呼吸 */
+        .breathe { animation: breathe 2s ease-in-out infinite; }
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
-        .creeper { position: absolute; bottom: 45px; right: -50px; width: 30px; height: 80px; z-index: 6; animation: patrol 15s linear infinite; }
-        .creeper-head { width: 30px; height: 30px; background: #00AA00; position: absolute; top: 0; border: 2px solid #005500; }
-        .face-eye-l { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; left: 4px; }
-        .face-eye-r { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; right: 4px; }
-        .face-mouth { width: 10px; height: 8px; background: #000; position: absolute; top: 18px; left: 10px; }
-        .face-mouth-legs { width: 4px; height: 4px; background: #000; position: absolute; top: 24px; left: 10px; box-shadow: 6px 0 0 #000; }
-        .creeper-body { width: 30px; height: 30px; background: #00AA00; position: absolute; top: 30px; }
-        .creeper-legs { width: 30px; height: 20px; background: transparent; position: absolute; top: 60px; }
-        .leg-f { width: 10px; height: 20px; background: #00AA00; position: absolute; left: 0; animation: walk 0.5s infinite alternate; }
-        .leg-b { width: 10px; height: 20px; background: #00AA00; position: absolute; right: 0; animation: walk 0.5s infinite alternate-reverse; }
-        @keyframes patrol { 0% { right: -50px; transform: scaleX(1); } 45% { right: 60%; transform: scaleX(1); } 50% { right: 60%; transform: scaleX(-1); } 95% { right: -50px; transform: scaleX(-1); } 100% { right: -50px; transform: scaleX(1); } }
-        @keyframes walk { from { transform: translateY(0); } to { transform: translateY(-3px); } }
-        .celebrate { animation: jump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #f1c40f !important; text-shadow: 4px 4px 0 #b7950b !important; }
-        @keyframes jump { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
-        .confetti { position: fixed; top: -50px; z-index: 999; animation: fall linear forwards; pointer-events: none; font-size: 30px;}
-        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+        
+        /* 苦力怕巡逻 */
+        .patrol { animation: patrol 15s linear infinite; }
+        @keyframes patrol { 
+            0% { right: -60px; transform: scaleX(1); } 
+            45% { right: 110%; transform: scaleX(1); } 
+            50% { right: 110%; transform: scaleX(-1); } 
+            95% { right: -60px; transform: scaleX(-1); } 
+            100% { right: -60px; transform: scaleX(1); } 
+        }
+
+        /* 攻击动作 */
+        .anim-attack { animation: swordSwing 0.3s ease-out forwards; }
+        @keyframes swordSwing { 0% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }
+        
+        /* 受伤闪红 */
+        .anim-hurt { animation: hurtFlash 0.3s steps(2) infinite; }
+        @keyframes hurtFlash { 0% { filter: sepia(1) hue-rotate(-50deg) saturate(5); } 100% { filter: none; } }
+
+        /* 膨胀自爆 */
+        .anim-swell { animation: swell 2.5s ease-in forwards; }
+        @keyframes swell { 
+            0% { transform: scale(1); filter: brightness(1); } 
+            20% { transform: scale(1.1); filter: brightness(1.2); }
+            40% { transform: scale(1); filter: brightness(1); }
+            60% { transform: scale(1.3); filter: brightness(1.5); }
+            80% { transform: scale(1.1); filter: brightness(1); }
+            95% { transform: scale(2.5); filter: brightness(100); opacity: 1;}
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        /* 屏幕震动 */
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+
+        /* 启动蒙版 */
+        #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; box-shadow: inset 4px 4px #aaa, inset -4px -4px #444; text-transform: uppercase; margin-top: 20px; }
+        
+        /* 粒子 */
+        .confetti { position: fixed; top: 50%; left: 50%; z-index: 999; animation: explode-particle 1s ease-out forwards; pointer-events: none; font-size: 30px;}
+        @keyframes explode-particle { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(720deg); opacity: 0; } }
     </style>
 </head>
 <body>
@@ -58,16 +118,18 @@
 
     <div id="start-overlay">
         <h1 style="text-shadow: 4px 4px #000; font-size: 40px; margin-bottom:10px;">Andy的世界</h1>
-        <p style="opacity: 0.8; font-size: 16px;">Server: Online | Ping: 18ms</p>
+        <p style="opacity: 0.8; font-size: 16px;">Mode: 60s Auto-Sync</p>
         <button class="mc-btn" onclick="document.getElementById('start-overlay').style.display='none'; startGame()">进入游戏</button>
     </div>
 
     <audio id="bgm" loop><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/music/game/calm1.ogg" type="audio/ogg"></audio>
     <audio id="sfx-levelup"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/levelup.ogg" type="audio/ogg"></audio>
-    <audio id="sfx-damage"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/damage/hit1.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-explode"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/explode.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-hit"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/damage/hit1.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-fuse"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/fuse.ogg" type="audio/ogg"></audio>
     <audio id="sfx-click"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/click.ogg" type="audio/ogg"></audio>
 
-    <div class="ui-container">
+    <div class="ui-container" id="uiLayer">
         <div class="card">
             <div class="mute-btn" onclick="toggleMute()">🔊</div>
             <h2>Andy的背包</h2>
@@ -75,44 +137,49 @@
             <div class="slot" onclick="clickCoin()"><div class="coin-icon" id="icon">🪙</div></div>
             <div class="label">当前拥有币</div>
             <div id="totalDisplay" class="total">...</div>
-            <div class="status-bar"><div id="light" class="light"></div><span id="connStatus">正在生成地形...</span></div>
+            <div class="status-bar"><div id="light" class="light online"></div><span id="connStatus">正在同步数据...</span></div>
             <div id="statusMsg" class="message"></div>
         </div>
     </div>
 
-    <div class="steve"><div class="steve-head"></div><div class="steve-hair"></div><div class="steve-body"></div><div class="steve-pants"></div></div>
-    <div class="creeper"><div class="creeper-head"><div class="face-eye-l"></div><div class="face-eye-r"></div><div class="face-mouth"></div><div class="face-mouth-legs"></div></div><div class="creeper-body"></div><div class="creeper-legs"><div class="leg-f"></div><div class="leg-b"></div></div></div>
+    <div class="stage">
+        <div id="steve" class="actor-steve breathe">
+            <div class="s-head"></div><div class="s-hair"></div>
+            <div class="s-body"></div><div class="s-pants"></div>
+            <div class="s-sword">💎</div> </div>
+        <div id="creeper" class="actor-creeper patrol">
+            <div class="c-head"><div class="c-face"></div></div>
+            <div class="c-body"></div>
+            <div class="c-legs"><div class="c-leg" style="left:0"></div><div class="c-leg" style="right:0"></div></div>
+        </div>
+    </div>
+
     <div class="ground"></div>
 
-    <script src="https://cdn.goeasy.io/goeasy-2.14.17.min.js"></script>
-    
     <script>
-        if (typeof GoEasy === 'undefined') {
-            document.write('<script src="https://unpkg.com/goeasy@2.14.17/dist/goeasy.min.js"><\/script>');
-        }
-    </script>
-
-    <script>
-        window.onerror = function(msg) { alert("错误: " + msg); return true; };
-
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
-        const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
-        const GOEASY_HOST = 'hangzhou.goeasy.io';
-
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        
+        const uiLayer = document.getElementById('uiLayer');
         const totalDisplay = document.getElementById('totalDisplay');
         const statusMsg = document.getElementById('statusMsg');
-        const light = document.getElementById('light');
         const connStatus = document.getElementById('connStatus');
         const rankBadge = document.getElementById('rankBadge');
+        const steve = document.getElementById('steve');
+        const creeper = document.getElementById('creeper');
         
+        // 音频
         const bgm = document.getElementById('bgm');
-        const sfxLevelUp = document.getElementById('sfx-levelup');
-        const sfxDamage = document.getElementById('sfx-damage');
+        const sfxLevelUp = document.getElementById('sfx-levelup'); // 加币音
+        const sfxExplode = document.getElementById('sfx-explode'); // 爆炸音
+        const sfxHit = document.getElementById('sfx-hit'); // 挥剑音
+        const sfxFuse = document.getElementById('sfx-fuse'); // 嘶嘶声
         const sfxClick = document.getElementById('sfx-click');
+        
         let isMuted = false;
-        let lastCoins = null; 
+        let lastCoins = null;
+        let isAnimating = false; // 防止动画冲突
 
         const RANKS = [
             { limit: 0, title: "🪵 新手伐木工" },
@@ -124,160 +191,202 @@
         ];
 
         function startGame() {
-            try {
-                checkDayNight(); 
-                if(bgm) { bgm.volume = 0.4; bgm.play().catch(e => {}); }
-                checkCloud(false);
-                initGoEasy();
-            } catch(e) {}
+            checkDayNight();
+            if(bgm) { bgm.volume = 0.4; bgm.play().catch(e => {}); }
+            syncData();
+            // 🌟 核心修改：每 60秒 (60000毫秒) 读取一次
+            setInterval(syncData, 60000);
         }
 
+        async function syncData() {
+            if(isAnimating) return; // 如果正在播放动画，这次先跳过
+            connStatus.innerText = "正在同步...";
+            
+            try {
+                let res = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
+                let data = await res.json();
+                let cloudCoins = data.record.coins || 0;
+
+                if (lastCoins === null) {
+                    lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins'));
+                    if(isNaN(lastCoins)) lastCoins = cloudCoins; 
+                }
+
+                if (cloudCoins > lastCoins) {
+                    // 💰 加钱：触发史蒂夫砍怪特效
+                    let diff = cloudCoins - lastCoins;
+                    playAttackSequence(diff, cloudCoins);
+                } else if (cloudCoins < lastCoins) {
+                    // 💥 扣钱：触发自爆特效
+                    let diff = lastCoins - cloudCoins;
+                    playExplodeSequence(diff, cloudCoins);
+                } else {
+                    connStatus.innerText = "数据已同步";
+                    totalDisplay.innerText = cloudCoins;
+                    updateRank(cloudCoins);
+                }
+                
+                // 更新缓存
+                if(cloudCoins !== lastCoins) {
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                }
+
+            } catch (error) {
+                console.error(error);
+                connStatus.innerText = "连接中..."; 
+            }
+        }
+
+        // 🎬 剧场 A：史蒂夫砍怪 (加币)
+        function playAttackSequence(amount, finalCoins) {
+            isAnimating = true;
+            uiLayer.style.opacity = '0'; // 隐藏UI，展示舞台
+            
+            // 1. 演员就位
+            steve.classList.remove('breathe'); // 停止呼吸动画
+            creeper.classList.remove('patrol'); // 停止巡逻
+            
+            steve.style.left = "35%"; steve.style.bottom = "80px"; steve.style.transform = "scaleX(1)";
+            creeper.style.right = "35%"; creeper.style.bottom = "80px"; creeper.style.transform = "scaleX(1)";
+            
+            document.querySelector('.s-sword').style.display = 'block'; // 亮剑
+
+            // 2. 挥剑 & 受伤 (0.5秒后)
+            setTimeout(() => {
+                document.querySelector('.s-sword').classList.add('anim-attack');
+                playSound('hit');
+                setTimeout(() => {
+                    creeper.classList.add('anim-hurt');
+                }, 150);
+            }, 500);
+
+            // 3. 怪物死亡 & 爆金币 (1.5秒后)
+            setTimeout(() => {
+                creeper.style.display = 'none'; // 消失
+                createParticles(100, '💰'); // 爆金币
+                playSound('levelup');
+                
+                statusMsg.innerText = `击杀奖励！+${amount}`;
+                statusMsg.style.color = "#00aa00";
+            }, 1200);
+
+            // 4. 恢复 UI (3秒后)
+            setTimeout(() => {
+                updateValue(finalCoins);
+                resetStage();
+            }, 3000);
+        }
+
+        // 🎬 剧场 B：苦力怕自爆 (扣币)
+        function playExplodeSequence(amount, finalCoins) {
+            isAnimating = true;
+            uiLayer.style.opacity = '0';
+            
+            // 1. 演员就位
+            steve.style.left = "-100px"; // 史蒂夫躲起来
+            creeper.classList.remove('patrol');
+            
+            // 苦力怕跑到中间
+            creeper.style.right = "45%"; creeper.style.bottom = "50px"; creeper.style.transition = "all 0.5s";
+
+            // 2. 膨胀与嘶嘶声
+            setTimeout(() => {
+                playSound('fuse');
+                creeper.classList.add('anim-swell'); // 变大变白
+            }, 500);
+
+            // 3. 爆炸！
+            setTimeout(() => {
+                creeper.style.opacity = '0';
+                document.body.classList.add('shake'); // 屏幕震动
+                createParticles(50, '⬛'); // 炸出黑烟
+                createParticles(50, '🟥'); // 炸出伤害
+                playSound('explode');
+                
+                statusMsg.innerText = `遭遇爆炸！损失 ${amount}`;
+                statusMsg.style.color = "#8b0000";
+            }, 2500);
+
+            // 4. 恢复
+            setTimeout(() => {
+                document.body.classList.remove('shake');
+                updateValue(finalCoins);
+                resetStage();
+            }, 4000);
+        }
+
+        function resetStage() {
+            uiLayer.style.opacity = '1';
+            
+            // 重置史蒂夫
+            steve.style = ""; 
+            steve.classList.add('breathe');
+            document.querySelector('.s-sword').style.display = 'none';
+            document.querySelector('.s-sword').classList.remove('anim-attack');
+            
+            // 重置苦力怕
+            creeper.style = "";
+            creeper.style.display = 'block';
+            creeper.style.opacity = '1';
+            creeper.classList.remove('anim-hurt');
+            creeper.classList.remove('anim-swell');
+            creeper.classList.add('patrol');
+
+            isAnimating = false;
+            lastCoins = parseInt(totalDisplay.innerText); // 确保逻辑同步
+        }
+
+        function updateValue(coins) {
+            totalDisplay.innerText = coins;
+            updateRank(coins);
+        }
+
+        function createParticles(count, char) {
+            for (let i = 0; i < count; i++) {
+                const el = document.createElement('div');
+                el.classList.add('confetti');
+                el.innerText = char;
+                // 随机爆炸方向
+                const angle = Math.random() * 360;
+                const dist = 50 + Math.random() * 100;
+                const tx = Math.cos(angle * Math.PI / 180) * dist + 'vw';
+                const ty = Math.sin(angle * Math.PI / 180) * dist + 'vh';
+                el.style.setProperty('--tx', tx);
+                el.style.setProperty('--ty', ty);
+                
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 1000);
+            }
+        }
+
+        // --- 辅助功能 ---
         function checkDayNight() {
             const hour = new Date().getHours();
             if (hour >= 18 || hour < 6) document.body.classList.add('night');
             else document.body.classList.remove('night');
         }
-
         function updateRank(coins) {
             let currentTitle = RANKS[0].title;
-            for(let rank of RANKS) {
-                if(coins >= rank.limit) currentTitle = rank.title;
-            }
+            for(let rank of RANKS) { if(coins >= rank.limit) currentTitle = rank.title; }
             rankBadge.innerText = currentTitle;
         }
-
         function clickCoin() {
-            if(!isMuted && sfxClick) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); }
+            if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); }
             if(navigator.vibrate) navigator.vibrate(20);
         }
-
         function toggleMute() {
             isMuted = !isMuted;
-            if(isMuted) {
-                if(bgm) bgm.pause();
-                document.querySelector('.mute-btn').innerText = '🔇';
-            } else {
-                if(bgm) bgm.play();
-                document.querySelector('.mute-btn').innerText = '🔊';
-            }
+            bgm[isMuted ? 'pause' : 'play']();
+            document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊';
         }
-
         function playSound(type) {
             if(isMuted) return;
             try {
-                if(type === 'up' && sfxLevelUp) { sfxLevelUp.currentTime = 0; sfxLevelUp.play(); } 
-                else if (type === 'down' && sfxDamage) { sfxDamage.currentTime = 0; sfxDamage.play(); }
+                if(type === 'levelup') { sfxLevelUp.currentTime=0; sfxLevelUp.play(); }
+                if(type === 'explode') { sfxExplode.currentTime=0; sfxExplode.play(); }
+                if(type === 'hit') { sfxHit.currentTime=0; sfxHit.play(); }
+                if(type === 'fuse') { sfxFuse.currentTime=0; sfxFuse.play(); }
             } catch(e){}
-        }
-
-        async function checkCloud(forceAnim = false) {
-            if(connStatus.innerText.includes("生成")) connStatus.innerText = "正在读取存档...";
-            
-            try {
-                let response = await fetch(BASE_URL + '/latest', {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
-                let data = await response.json();
-                let cloudCoins = data.record.coins || 0;
-                let usedIds = data.record.transactions || [];
-
-                if (lastCoins === null) {
-                    lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins')) || cloudCoins;
-                }
-
-                if (cloudCoins > lastCoins || (forceAnim && cloudCoins > lastCoins)) {
-                    let diff = cloudCoins - lastCoins;
-                    showSuccessAnimation(diff); 
-                } else if (cloudCoins < lastCoins) {
-                    statusMsg.innerText = `交易成功! 支付 ${lastCoins - cloudCoins} 币`;
-                    statusMsg.style.color = "#8b0000";
-                    playSound('down'); 
-                    setTimeout(() => statusMsg.innerText = "", 3000);
-                }
-
-                totalDisplay.innerText = cloudCoins;
-                lastCoins = cloudCoins;
-                localStorage.setItem('andy_last_seen_coins', cloudCoins);
-                updateRank(cloudCoins);
-
-                if(light.classList.contains('online')) connStatus.innerText = "服务器在线";
-                else connStatus.innerText = "背包整理完毕";
-
-                handleUrlParams(usedIds, cloudCoins);
-            } catch (error) {
-                connStatus.innerText = "与服务器断开连接";
-                statusMsg.innerText = "读取数据失败...";
-                statusMsg.style.color = "red";
-            }
-        }
-
-        function initGoEasy() {
-            if(typeof GoEasy === 'undefined') return;
-            try {
-                const goEasy = GoEasy.getInstance({
-                    host: GOEASY_HOST,  
-                    appkey: GOEASY_KEY,
-                    modules: ['pubsub']
-                });
-
-                goEasy.connect({
-                    onSuccess: function () {
-                        light.classList.add('online');
-                        if(!connStatus.innerText.includes("断开")) connStatus.innerText = "服务器在线";
-                    },
-                    onFailed: function (error) { connStatus.innerText = "离线模式"; }
-                });
-
-                goEasy.pubsub.subscribe({
-                    channel: "andy_channel",
-                    onMessage: function (message) { checkCloud(true); }
-                });
-            } catch(e) {}
-        }
-
-        function showSuccessAnimation(amount) {
-            statusMsg.innerText = `获得战利品！币 +${amount}`;
-            statusMsg.style.color = "#00aa00";
-            playSound('up');
-            totalDisplay.classList.remove('celebrate');
-            void totalDisplay.offsetWidth; 
-            totalDisplay.classList.add('celebrate');
-            setTimeout(() => totalDisplay.classList.remove('celebrate'), 2000);
-            createConfetti();
-            setTimeout(() => statusMsg.innerText = "", 4000);
-        }
-
-        function createConfetti() {
-            const emojis = ['🪙', '🪙', '🟩', '⚔️', '🧨', '🍖'];
-            for (let i = 0; i < 40; i++) {
-                const el = document.createElement('div');
-                el.classList.add('confetti');
-                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-                el.style.left = Math.random() * 100 + 'vw';
-                el.style.fontSize = (Math.random() * 20 + 20) + 'px';
-                el.style.animationDuration = (Math.random() * 2 + 1.5) + 's'; 
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 4000);
-            }
-        }
-
-        async function handleUrlParams(usedIds, currentCloudCoins) {
-            const params = new URLSearchParams(window.location.search);
-            const addAmount = parseInt(params.get('add'));
-            const transId = params.get('id');
-
-            if (addAmount && transId && !usedIds.includes(transId)) {
-                statusMsg.innerText = "正在放入末影箱...";
-                let newCoins = currentCloudCoins + addAmount;
-                usedIds.push(transId);
-                await fetch(BASE_URL, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-                    body: JSON.stringify({ coins: newCoins, transactions: usedIds })
-                });
-                lastCoins = newCoins - addAmount; 
-                checkCloud(true); 
-            }
         }
     </script>
 </body>

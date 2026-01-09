@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家长控制台 - 修复版</title>
+    <title>家长控制台 - 杭州最终版</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #222; color: #eee; text-align: center; max-width: 500px; margin: 0 auto;}
         .box { background: #333; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
@@ -46,7 +46,9 @@
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
-        const GOEASY_HOST = 'hangzhou.goeasy.io'; // 杭州节点
+        
+        // ✅ 确认无误：使用杭州节点
+        const GOEASY_HOST = 'hangzhou.goeasy.io';
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
         const display = document.getElementById('currentCoins');
@@ -55,19 +57,15 @@
 
         let goEasy = null;
 
-        // 核心修改：更稳健的初始化检查
         window.onload = function() {
             if(prompt("请输入家长密码") !== PASS) { 
-                document.body.innerHTML = "<h3 style='color:red'>密码错误</h3>"; 
-                return;
+                document.body.innerHTML = "<h3 style='color:red'>密码错误</h3>"; return;
             }
+            getCoins(); 
 
-            // 1. 读取金币
-            getCoins();
-
-            // 2. 初始化 GoEasy
+            // 增强版检查：如果 SDK 没加载，给出明确提示
             if (typeof GoEasy === 'undefined') {
-                log.innerText = "❌ 错误：GoEasy工具包加载失败。\n请检查网络，或刷新页面重试。";
+                log.innerText = "❌ 错误：您的网络屏蔽了GoEasy工具包。\n👉 请尝试：关闭Wi-Fi，使用手机流量刷新页面。";
                 return;
             }
 
@@ -78,12 +76,8 @@
                     modules: ['pubsub']
                 });
                 goEasy.connect({
-                    onSuccess: () => { 
-                        log.innerText = "✅ 系统连接正常 (杭州节点)"; 
-                    },
-                    onFailed: (err) => { 
-                        log.innerText = "❌ 信号连接失败: " + err.content + "\n请尝试刷新"; 
-                    }
+                    onSuccess: () => { log.innerText = "✅ 信号系统连接正常 (杭州)"; },
+                    onFailed: (err) => { log.innerText = "❌ 连接失败: " + err.content; }
                 });
             } catch (e) {
                 log.innerText = "❌ 初始化异常: " + e.message;
@@ -102,40 +96,31 @@
         async function modifyCoins(amount) {
             log.innerText = "正在写入云端...";
             let currentRecord = null;
-
             try {
                 let record = await getCoins();
                 let newCoins = record.coins + amount;
-                
                 await fetch(BASE_URL, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
                     body: JSON.stringify({ coins: newCoins, transactions: record.transactions })
                 });
-                
                 display.innerText = newCoins;
                 currentRecord = newCoins;
                 log.innerText = "✅ 金币保存成功！";
             } catch (e) { 
-                log.innerText = "❌ 严重错误：金币保存失败！";
-                return;
+                log.innerText = "❌ 严重错误：金币保存失败！"; return;
             }
 
             try {
                 if(goEasy) {
                     log.innerText += "\n正在呼叫孩子端...";
                     goEasy.publish({
-                        channel: "andy_channel",
-                        message: "update",
+                        channel: "andy_channel", message: "update",
                         onSuccess: () => log.innerText = `✅ 全部成功！余额: ${currentRecord}`,
                         onFailed: (err) => log.innerText = `⚠️ 金币存了，但通知失败: ${err.content}`
                     });
-                } else {
-                    log.innerText += "\n⚠️ 信号未连接，无法通知孩子";
-                }
-            } catch (e) {
-                log.innerText += "\n⚠️ 信号发送模块出错";
-            }
+                } else { log.innerText += "\n⚠️ 信号未连接"; }
+            } catch (e) { log.innerText += "\n⚠️ 信号模块出错"; }
         }
 
         function manualMod(sign) {

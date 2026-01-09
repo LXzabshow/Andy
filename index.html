@@ -5,92 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Andy的冒险背包</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    
     <style>
+        /* 样式保持不变，节省篇幅，直接复制之前的即可 */
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { 
-            background-color: #76b5fe; 
-            font-family: 'VT323', monospace; 
-            text-align: center; margin: 0; padding: 0;
-            overflow: hidden; height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
-            transition: background-color 2s ease;
-        }
-        
-        .stars {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(white 1px, transparent 1px);
-            background-size: 50px 50px, 100px 100px;
-            background-position: 0 0, 25px 25px;
-            opacity: 0; transition: opacity 2s; z-index: 0; pointer-events: none;
-        }
-        body.night .stars { opacity: 0.5; }
-        body.night { background-color: #1a0b2e; }
-
-        #start-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 9999;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            color: white;
-        }
-        .mc-btn {
-            background: #727272; border: 4px solid #fff;
-            padding: 15px 30px; font-size: 24px; color: white;
-            font-family: 'VT323', monospace; cursor: pointer;
-            box-shadow: inset 4px 4px #aaa, inset -4px -4px #444;
-            text-transform: uppercase; margin-top: 20px;
-        }
+        body { background-color: #76b5fe; font-family: 'VT323', monospace; text-align: center; margin: 0; padding: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background-color 2s ease; }
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(white 1px, transparent 1px); background-size: 50px 50px, 100px 100px; background-position: 0 0, 25px 25px; opacity: 0; transition: opacity 2s; z-index: 0; pointer-events: none; }
+        body.night .stars { opacity: 0.5; } body.night { background-color: #1a0b2e; }
+        #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; box-shadow: inset 4px 4px #aaa, inset -4px -4px #444; text-transform: uppercase; margin-top: 20px; }
         .mc-btn:active { background: #555; border-color: #aaa; transform: scale(0.95); }
-
-        .ui-container {
-            margin-top: 8vh; width: 90%; max-width: 400px;
-            z-index: 100; position: relative;
-        }
-
-        .card { 
-            background-color: #c6c6c6; border: 4px solid #000;
-            box-shadow: inset 4px 4px #fff, inset -4px -4px #555; 
-            padding: 20px; position: relative; 
-        }
-
+        .ui-container { margin-top: 8vh; width: 90%; max-width: 400px; z-index: 100; position: relative; }
+        .card { background-color: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 20px; position: relative; }
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
-
-        .rank-badge {
-            background: #333; color: #f1c40f; padding: 2px 10px;
-            border: 2px solid #fff; display: inline-block;
-            margin-bottom: 15px; font-size: 18px; border-radius: 4px;
-            box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
-        }
-
-        .slot {
-            background: #8b8b8b; width: 120px; height: 120px; margin: 0 auto;
-            border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff;
-            display: flex; align-items: center; justify-content: center; position: relative;
-            cursor: pointer;
-        }
+        .rank-badge { background: #333; color: #f1c40f; padding: 2px 10px; border: 2px solid #fff; display: inline-block; margin-bottom: 15px; font-size: 18px; border-radius: 4px; box-shadow: 2px 2px 0 rgba(0,0,0,0.3); }
+        .slot { background: #8b8b8b; width: 120px; height: 120px; margin: 0 auto; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
         .slot:active .coin-icon { transform: scale(0.8); }
-
         .coin-icon { font-size: 70px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
-        
         .label { color: #404040; font-size: 20px; margin-top: 15px; font-weight: bold; text-shadow: 1px 1px #fff;}
-
-        .total { 
-            font-size: 80px; color: #fff; font-weight: bold; 
-            text-shadow: 4px 4px 0px #333; margin: 5px 0; line-height: 1;
-        }
-
-        .status-bar {
-            background: #000; color: #fff; padding: 5px 10px; border-radius: 4px;
-            font-size: 14px; display: inline-flex; align-items: center;
-            margin-top: 10px; border: 2px solid #555;
-        }
+        .total { font-size: 80px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 5px 0; line-height: 1; }
+        .status-bar { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 14px; display: inline-flex; align-items: center; margin-top: 10px; border: 2px solid #555; }
         .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
         .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
-
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
-
         .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 10; }
         .steve { position: absolute; bottom: 45px; left: 10%; width: 40px; height: 90px; z-index: 5; animation: breathe 2s ease-in-out infinite; }
         .steve-head { width: 40px; height: 40px; background: #F8B090; position: absolute; top: 0; }
@@ -98,7 +35,6 @@
         .steve-body { width: 40px; height: 30px; background: #00AAAA; position: absolute; top: 40px; }
         .steve-pants { width: 40px; height: 20px; background: #303090; position: absolute; top: 70px; }
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
-        
         .creeper { position: absolute; bottom: 45px; right: -50px; width: 30px; height: 80px; z-index: 6; animation: patrol 15s linear infinite; }
         .creeper-head { width: 30px; height: 30px; background: #00AA00; position: absolute; top: 0; border: 2px solid #005500; }
         .face-eye-l { width: 6px; height: 6px; background: #000; position: absolute; top: 8px; left: 4px; }
@@ -111,7 +47,6 @@
         .leg-b { width: 10px; height: 20px; background: #00AA00; position: absolute; right: 0; animation: walk 0.5s infinite alternate-reverse; }
         @keyframes patrol { 0% { right: -50px; transform: scaleX(1); } 45% { right: 60%; transform: scaleX(1); } 50% { right: 60%; transform: scaleX(-1); } 95% { right: -50px; transform: scaleX(-1); } 100% { right: -50px; transform: scaleX(1); } }
         @keyframes walk { from { transform: translateY(0); } to { transform: translateY(-3px); } }
-
         .celebrate { animation: jump 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #f1c40f !important; text-shadow: 4px 4px 0 #b7950b !important; }
         @keyframes jump { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
         .confetti { position: fixed; top: -50px; z-index: 999; animation: fall linear forwards; pointer-events: none; font-size: 30px;}
@@ -152,16 +87,13 @@
     <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
 
     <script>
-        window.onerror = function(msg) {
-            alert("错误: " + msg);
-            return true;
-        };
+        window.onerror = function(msg) { alert("错误: " + msg); return true; };
 
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
         
-        // 🌟 重点确认：这里是杭州节点
+        // ✅ 确认无误：使用杭州节点
         const GOEASY_HOST = 'hangzhou.goeasy.io';
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
@@ -279,7 +211,7 @@
             if(typeof GoEasy === 'undefined') return;
             try {
                 const goEasy = GoEasy.getInstance({
-                    host: GOEASY_HOST,  // 🌟 使用杭州节点
+                    host: GOEASY_HOST,  // ✅ 使用杭州节点
                     appkey: GOEASY_KEY,
                     modules: ['pubsub']
                 });

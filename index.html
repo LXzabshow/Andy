@@ -50,10 +50,12 @@
         .s-hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3;}
         .s-body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1;}
         .s-pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
-        /* 武器：钻石剑 */
+        
+        /* ⚔️ 修复后的武器：钻石剑 */
         .s-sword { 
-            position: absolute; top: 50px; right: -40px; font-size: 60px; 
-            transform-origin: 0% 100%; transform: rotate(0deg); 
+            position: absolute; top: 45px; right: -30px; font-size: 60px; 
+            /* 关键修复：调整旋转中心到剑柄，并设置初始斜持角度 */
+            transform-origin: 50% 100%; transform: rotate(30deg); 
             z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000);
         }
         
@@ -65,18 +67,18 @@
         .c-legs { width: 45px; height: 30px; position: absolute; top: 90px; }
         .c-leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0;}
 
-        /* 小猪 (Pig) - 简单的CSS像素画 */
+        /* 小猪 */
         .actor-pig { position: absolute; bottom: 50px; left: -80px; width: 50px; height: 30px; z-index: 52; animation: walkAcross 20s linear infinite; animation-delay: 2s; }
         .p-head { width: 20px; height: 20px; background: #F0A5A5; position: absolute; left: 0; top: 0; }
         .p-nose { width: 8px; height: 6px; background: #D16D6D; position: absolute; left: -4px; top: 8px; }
         .p-body { width: 35px; height: 20px; background: #F0A5A5; position: absolute; left: 15px; top: 5px; }
         .p-leg { width: 8px; height: 10px; background: #D16D6D; position: absolute; top: 20px; }
         
-        /* 僵尸 (Zombie) */
+        /* 僵尸 */
         .actor-zombie { position: absolute; bottom: 50px; right: -80px; width: 45px; height: 120px; z-index: 53; animation: walkAcrossReverse 25s linear infinite; animation-delay: 10s; display: none; }
         .z-head { width: 45px; height: 45px; background: #00A080; position: absolute; top: 0; }
         .z-body { width: 45px; height: 45px; background: #008080; position: absolute; top: 45px; }
-        .z-arms { width: 45px; height: 12px; background: #00A080; position: absolute; top: 50px; left: -20px; box-shadow: 20px 0 #00A080; } /* 举起的手 */
+        .z-arms { width: 45px; height: 12px; background: #00A080; position: absolute; top: 50px; left: -20px; box-shadow: 20px 0 #00A080; }
         .z-legs { width: 45px; height: 30px; position: absolute; top: 90px; }
         .z-leg { width: 20px; height: 30px; background: #303090; position: absolute; bottom:0; }
 
@@ -93,17 +95,16 @@
             100% { right: -60px; transform: scaleX(1); } 
         }
 
-        @keyframes walkAcross { 
-            0% { left: -100px; } 
-            100% { left: 120%; } 
-        }
-        @keyframes walkAcrossReverse { 
-            0% { right: -100px; } 
-            100% { right: 120%; } 
-        }
+        @keyframes walkAcross { 0% { left: -100px; } 100% { left: 120%; } }
+        @keyframes walkAcrossReverse { 0% { right: -100px; } 100% { right: 120%; } }
 
-        .anim-attack { animation: swordSwing 0.3s ease-out forwards; }
-        @keyframes swordSwing { 0% { transform: rotate(0deg); } 50% { transform: rotate(60deg) translate(10px, 10px); } 100% { transform: rotate(0deg); } }
+        /* ⚔️ 修复后的攻击动画：向下挥砍 */
+        .anim-attack { animation: swordSwing 0.35s ease-out forwards; }
+        @keyframes swordSwing { 
+            0% { transform: rotate(30deg); } 
+            50% { transform: rotate(-70deg); } /* 向下砍 */
+            100% { transform: rotate(30deg); } 
+        }
         
         .anim-hurt { animation: hurtFlash 0.3s steps(2) infinite; }
         @keyframes hurtFlash { 0% { filter: sepia(1) hue-rotate(-50deg) saturate(5); } 100% { filter: none; } }
@@ -162,7 +163,8 @@
         <div id="steve" class="actor-steve breathe">
             <div class="s-head"></div><div class="s-hair"></div>
             <div class="s-body"></div><div class="s-pants"></div>
-            <div class="s-sword">🗡️</div> </div>
+            <div class="s-sword">🗡️</div> 
+        </div>
         
         <div id="creeper" class="actor-creeper patrol">
             <div class="c-head"><div class="c-face"></div></div>
@@ -222,18 +224,15 @@
             document.getElementById('start-overlay').style.display='none';
             checkDayNight();
             
-            // 核心修改：强制加载并播放音频（解决手机端静音）
+            // 强制加载并播放音频
             try {
                 bgm.load();
                 bgm.volume = 0.4;
                 bgm.play().catch(e => console.log("请点击屏幕播放声音"));
-                
-                // 预加载音效，防止第一次不响
                 sfxLevelUp.load(); sfxExplode.load(); sfxHit.load();
             } catch(e){}
 
             syncData();
-            // 省流：每60秒检查一次
             setInterval(syncData, 60000);
         }
 
@@ -278,7 +277,6 @@
             isAnimating = true;
             uiLayer.style.opacity = '0'; 
             
-            // 演员就位
             steve.classList.remove('breathe'); 
             creeper.classList.remove('patrol'); 
             
@@ -381,12 +379,12 @@
             
             if (hour >= 18 || hour < 6) {
                 document.body.classList.add('night');
-                pig.style.display = 'none'; // 猪去睡觉了
-                zombie.style.display = 'block'; // 僵尸出来了
+                pig.style.display = 'none'; 
+                zombie.style.display = 'block'; 
             } else {
                 document.body.classList.remove('night');
-                pig.style.display = 'block'; // 猪出来了
-                zombie.style.display = 'none'; // 僵尸烧死了
+                pig.style.display = 'block'; 
+                zombie.style.display = 'none'; 
             }
         }
         function updateRank(coins) {

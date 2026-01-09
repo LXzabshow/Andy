@@ -27,7 +27,6 @@
         body.night .stars { opacity: 0.5; }
         body.night { background-color: #1a0b2e; }
 
-        /* 启动蒙版 */
         #start-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 9999;
@@ -124,7 +123,7 @@
 
     <div id="start-overlay">
         <h1 style="text-shadow: 4px 4px #000; font-size: 40px; margin-bottom:10px;">Andy的世界</h1>
-        <p style="opacity: 0.8; font-size: 16px;">Server: Online | Ping: 20ms</p>
+        <p style="opacity: 0.8; font-size: 16px;">Server: Online | Ping: 18ms</p>
         <button class="mc-btn" onclick="document.getElementById('start-overlay').style.display='none'; startGame()">进入游戏</button>
     </div>
 
@@ -153,17 +152,17 @@
     <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
 
     <script>
-        // 全局错误捕获，防止孩子端因为报错而白屏
-        window.onerror = function(msg, url, line) {
-            alert("发生错误: " + msg + "\n如果一直出现，请让爸爸检查代码。");
+        window.onerror = function(msg) {
+            alert("错误: " + msg);
             return true;
         };
 
-        // ==========================================
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
-        // ==========================================
+        
+        // 🌟 重点确认：这里是杭州节点
+        const GOEASY_HOST = 'hangzhou.goeasy.io';
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
         const totalDisplay = document.getElementById('totalDisplay');
@@ -189,24 +188,12 @@
         ];
 
         function startGame() {
-            // 业务逻辑
             try {
                 checkDayNight(); 
-                
-                // 尝试播放音乐，如果失败（比如网络慢）不阻塞后续逻辑
-                if(bgm) {
-                    bgm.volume = 0.4;
-                    bgm.play().catch(e => console.log("BGM无法播放，可能是浏览器限制"));
-                }
-                
-                // 启动数据加载
+                if(bgm) { bgm.volume = 0.4; bgm.play().catch(e => {}); }
                 checkCloud(false);
-                
-                // 启动信号连接
                 initGoEasy();
-            } catch(e) {
-                console.log("启动部分失败: " + e.message);
-            }
+            } catch(e) {}
         }
 
         function checkDayNight() {
@@ -224,10 +211,7 @@
         }
 
         function clickCoin() {
-            if(!isMuted && sfxClick) {
-                sfxClick.currentTime = 0;
-                sfxClick.play().catch(e=>{});
-            }
+            if(!isMuted && sfxClick) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); }
             if(navigator.vibrate) navigator.vibrate(20);
         }
 
@@ -292,13 +276,10 @@
         }
 
         function initGoEasy() {
-            if(typeof GoEasy === 'undefined') {
-                console.log("GoEasy SDK未加载，跳过实时信号");
-                return;
-            }
+            if(typeof GoEasy === 'undefined') return;
             try {
                 const goEasy = GoEasy.getInstance({
-                    host: 'hangzhou.goeasy.io', 
+                    host: GOEASY_HOST,  // 🌟 使用杭州节点
                     appkey: GOEASY_KEY,
                     modules: ['pubsub']
                 });

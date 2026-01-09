@@ -6,7 +6,7 @@
     <title>Andy的冒险背包</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
-        /* 样式保持不变，节省篇幅，直接复制之前的即可 */
+        /* 样式保持不变 */
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: #76b5fe; font-family: 'VT323', monospace; text-align: center; margin: 0; padding: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background-color 2s ease; }
         .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(white 1px, transparent 1px); background-size: 50px 50px, 100px 100px; background-position: 0 0, 25px 25px; opacity: 0; transition: opacity 2s; z-index: 0; pointer-events: none; }
@@ -84,7 +84,13 @@
     <div class="creeper"><div class="creeper-head"><div class="face-eye-l"></div><div class="face-eye-r"></div><div class="face-mouth"></div><div class="face-mouth-legs"></div></div><div class="creeper-body"></div><div class="creeper-legs"><div class="leg-f"></div><div class="leg-b"></div></div></div>
     <div class="ground"></div>
 
-    <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
+    <script src="https://cdn.goeasy.io/goeasy-2.14.17.min.js"></script>
+    
+    <script>
+        if (typeof GoEasy === 'undefined') {
+            document.write('<script src="https://unpkg.com/goeasy@2.14.17/dist/goeasy.min.js"><\/script>');
+        }
+    </script>
 
     <script>
         window.onerror = function(msg) { alert("错误: " + msg); return true; };
@@ -92,8 +98,6 @@
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
-        
-        // ✅ 确认无误：使用杭州节点
         const GOEASY_HOST = 'hangzhou.goeasy.io';
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
@@ -211,7 +215,7 @@
             if(typeof GoEasy === 'undefined') return;
             try {
                 const goEasy = GoEasy.getInstance({
-                    host: GOEASY_HOST,  // ✅ 使用杭州节点
+                    host: GOEASY_HOST,  
                     appkey: GOEASY_KEY,
                     modules: ['pubsub']
                 });

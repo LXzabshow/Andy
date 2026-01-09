@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家长控制台 - 杭州最终版</title>
+    <title>家长控制台 - 修复版</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #222; color: #eee; text-align: center; max-width: 500px; margin: 0 auto;}
         .box { background: #333; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
@@ -40,15 +40,19 @@
         <div id="log">等待指令...</div>
     </div>
 
-    <script type="text/javascript" src="https://cdn.goeasy.io/goeasy-2.11.13.min.js"></script>
+    <script src="https://cdn.goeasy.io/goeasy-2.14.17.min.js"></script>
+    
+    <script>
+        if (typeof GoEasy === 'undefined') {
+            document.write('<script src="https://unpkg.com/goeasy@2.14.17/dist/goeasy.min.js"><\/script>');
+        }
+    </script>
 
     <script>
         const BIN_ID = '695f1cbed0ea881f405c1aab'; 
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const GOEASY_KEY = 'BC-493c3acc54de4c4bbe9fd9fdb8fcfb0c'; 
-        
-        // ✅ 确认无误：使用杭州节点
-        const GOEASY_HOST = 'hangzhou.goeasy.io';
+        const GOEASY_HOST = 'hangzhou.goeasy.io'; // 杭州节点
 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
         const display = document.getElementById('currentCoins');
@@ -63,9 +67,9 @@
             }
             getCoins(); 
 
-            // 增强版检查：如果 SDK 没加载，给出明确提示
+            // 再次检查是否加载成功
             if (typeof GoEasy === 'undefined') {
-                log.innerText = "❌ 错误：您的网络屏蔽了GoEasy工具包。\n👉 请尝试：关闭Wi-Fi，使用手机流量刷新页面。";
+                log.innerText = "❌ 严重错误：\n所有线路均无法加载GoEasy工具。\n请检查您的网络防火墙设置。";
                 return;
             }
 
@@ -76,7 +80,7 @@
                     modules: ['pubsub']
                 });
                 goEasy.connect({
-                    onSuccess: () => { log.innerText = "✅ 信号系统连接正常 (杭州)"; },
+                    onSuccess: () => { log.innerText = "✅ 系统连接正常 (新版本)"; },
                     onFailed: (err) => { log.innerText = "❌ 连接失败: " + err.content; }
                 });
             } catch (e) {

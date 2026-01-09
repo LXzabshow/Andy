@@ -41,36 +41,49 @@
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
 
-        /* ------------------- 战斗剧场角色 ------------------- */
+        /* ------------------- 角色系统 ------------------- */
         .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; overflow: hidden;}
         
         /* 史蒂夫 */
-        .actor-steve { position: absolute; bottom: 50px; left: -100px; width: 60px; height: 135px; transition: transform 0.1s; }
+        .actor-steve { position: absolute; bottom: 50px; left: -100px; width: 60px; height: 135px; transition: transform 0.1s; z-index: 60;}
         .s-head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2;}
         .s-hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3;}
         .s-body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1;}
         .s-pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
-        /* 钻石剑 */
+        /* 武器：钻石剑 */
         .s-sword { 
             position: absolute; top: 50px; right: -40px; font-size: 60px; 
             transform-origin: 0% 100%; transform: rotate(0deg); 
-            z-index: 4; display: none; /* 平时隐藏 */
+            z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000);
         }
         
         /* 苦力怕 */
-        .actor-creeper { position: absolute; bottom: 50px; right: -100px; width: 45px; height: 120px; transition: filter 0.1s;}
+        .actor-creeper { position: absolute; bottom: 50px; right: -100px; width: 45px; height: 120px; transition: filter 0.1s; z-index: 55;}
         .c-head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
         .c-face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8;}
         .c-body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; }
         .c-legs { width: 45px; height: 30px; position: absolute; top: 90px; }
         .c-leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0;}
+
+        /* 小猪 (Pig) - 简单的CSS像素画 */
+        .actor-pig { position: absolute; bottom: 50px; left: -80px; width: 50px; height: 30px; z-index: 52; animation: walkAcross 20s linear infinite; animation-delay: 2s; }
+        .p-head { width: 20px; height: 20px; background: #F0A5A5; position: absolute; left: 0; top: 0; }
+        .p-nose { width: 8px; height: 6px; background: #D16D6D; position: absolute; left: -4px; top: 8px; }
+        .p-body { width: 35px; height: 20px; background: #F0A5A5; position: absolute; left: 15px; top: 5px; }
+        .p-leg { width: 8px; height: 10px; background: #D16D6D; position: absolute; top: 20px; }
         
-        /* ------------------- 动画关键帧 ------------------- */
-        /* 史蒂夫闲置呼吸 */
+        /* 僵尸 (Zombie) */
+        .actor-zombie { position: absolute; bottom: 50px; right: -80px; width: 45px; height: 120px; z-index: 53; animation: walkAcrossReverse 25s linear infinite; animation-delay: 10s; display: none; }
+        .z-head { width: 45px; height: 45px; background: #00A080; position: absolute; top: 0; }
+        .z-body { width: 45px; height: 45px; background: #008080; position: absolute; top: 45px; }
+        .z-arms { width: 45px; height: 12px; background: #00A080; position: absolute; top: 50px; left: -20px; box-shadow: 20px 0 #00A080; } /* 举起的手 */
+        .z-legs { width: 45px; height: 30px; position: absolute; top: 90px; }
+        .z-leg { width: 20px; height: 30px; background: #303090; position: absolute; bottom:0; }
+
+        /* ------------------- 动画 ------------------- */
         .breathe { animation: breathe 2s ease-in-out infinite; }
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
         
-        /* 苦力怕巡逻 */
         .patrol { animation: patrol 15s linear infinite; }
         @keyframes patrol { 
             0% { right: -60px; transform: scaleX(1); } 
@@ -80,15 +93,21 @@
             100% { right: -60px; transform: scaleX(1); } 
         }
 
-        /* 攻击动作 */
+        @keyframes walkAcross { 
+            0% { left: -100px; } 
+            100% { left: 120%; } 
+        }
+        @keyframes walkAcrossReverse { 
+            0% { right: -100px; } 
+            100% { right: 120%; } 
+        }
+
         .anim-attack { animation: swordSwing 0.3s ease-out forwards; }
-        @keyframes swordSwing { 0% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }
+        @keyframes swordSwing { 0% { transform: rotate(0deg); } 50% { transform: rotate(60deg) translate(10px, 10px); } 100% { transform: rotate(0deg); } }
         
-        /* 受伤闪红 */
         .anim-hurt { animation: hurtFlash 0.3s steps(2) infinite; }
         @keyframes hurtFlash { 0% { filter: sepia(1) hue-rotate(-50deg) saturate(5); } 100% { filter: none; } }
 
-        /* 膨胀自爆 */
         .anim-swell { animation: swell 2.5s ease-in forwards; }
         @keyframes swell { 
             0% { transform: scale(1); filter: brightness(1); } 
@@ -100,15 +119,12 @@
             100% { transform: scale(3); opacity: 0; }
         }
 
-        /* 屏幕震动 */
         .shake { animation: shake 0.5s; }
         @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
 
-        /* 启动蒙版 */
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
         .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; box-shadow: inset 4px 4px #aaa, inset -4px -4px #444; text-transform: uppercase; margin-top: 20px; }
         
-        /* 粒子 */
         .confetti { position: fixed; top: 50%; left: 50%; z-index: 999; animation: explode-particle 1s ease-out forwards; pointer-events: none; font-size: 30px;}
         @keyframes explode-particle { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(720deg); opacity: 0; } }
     </style>
@@ -118,8 +134,8 @@
 
     <div id="start-overlay">
         <h1 style="text-shadow: 4px 4px #000; font-size: 40px; margin-bottom:10px;">Andy的世界</h1>
-        <p style="opacity: 0.8; font-size: 16px;">Mode: 60s Auto-Sync</p>
-        <button class="mc-btn" onclick="document.getElementById('start-overlay').style.display='none'; startGame()">进入游戏</button>
+        <p style="opacity: 0.8; font-size: 16px;">点击按钮激活声音</p>
+        <button class="mc-btn" onclick="startGame()">开始冒险</button>
     </div>
 
     <audio id="bgm" loop><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/music/game/calm1.ogg" type="audio/ogg"></audio>
@@ -146,11 +162,24 @@
         <div id="steve" class="actor-steve breathe">
             <div class="s-head"></div><div class="s-hair"></div>
             <div class="s-body"></div><div class="s-pants"></div>
-            <div class="s-sword">💎</div> </div>
+            <div class="s-sword">🗡️</div> </div>
+        
         <div id="creeper" class="actor-creeper patrol">
             <div class="c-head"><div class="c-face"></div></div>
             <div class="c-body"></div>
             <div class="c-legs"><div class="c-leg" style="left:0"></div><div class="c-leg" style="right:0"></div></div>
+        </div>
+
+        <div id="pig" class="actor-pig">
+            <div class="p-head"><div class="p-nose"></div></div>
+            <div class="p-body"></div>
+            <div class="p-leg" style="left:0"></div><div class="p-leg" style="left:25px"></div>
+        </div>
+
+        <div id="zombie" class="actor-zombie">
+            <div class="z-head"></div>
+            <div class="z-body"></div><div class="z-arms"></div>
+            <div class="z-legs"><div class="z-leg" style="left:0"></div><div class="z-leg" style="right:0"></div></div>
         </div>
     </div>
 
@@ -169,17 +198,16 @@
         const steve = document.getElementById('steve');
         const creeper = document.getElementById('creeper');
         
-        // 音频
         const bgm = document.getElementById('bgm');
-        const sfxLevelUp = document.getElementById('sfx-levelup'); // 加币音
-        const sfxExplode = document.getElementById('sfx-explode'); // 爆炸音
-        const sfxHit = document.getElementById('sfx-hit'); // 挥剑音
-        const sfxFuse = document.getElementById('sfx-fuse'); // 嘶嘶声
+        const sfxLevelUp = document.getElementById('sfx-levelup');
+        const sfxExplode = document.getElementById('sfx-explode'); 
+        const sfxHit = document.getElementById('sfx-hit'); 
+        const sfxFuse = document.getElementById('sfx-fuse'); 
         const sfxClick = document.getElementById('sfx-click');
         
         let isMuted = false;
         let lastCoins = null;
-        let isAnimating = false; // 防止动画冲突
+        let isAnimating = false;
 
         const RANKS = [
             { limit: 0, title: "🪵 新手伐木工" },
@@ -191,15 +219,26 @@
         ];
 
         function startGame() {
+            document.getElementById('start-overlay').style.display='none';
             checkDayNight();
-            if(bgm) { bgm.volume = 0.4; bgm.play().catch(e => {}); }
+            
+            // 核心修改：强制加载并播放音频（解决手机端静音）
+            try {
+                bgm.load();
+                bgm.volume = 0.4;
+                bgm.play().catch(e => console.log("请点击屏幕播放声音"));
+                
+                // 预加载音效，防止第一次不响
+                sfxLevelUp.load(); sfxExplode.load(); sfxHit.load();
+            } catch(e){}
+
             syncData();
-            // 🌟 核心修改：每 60秒 (60000毫秒) 读取一次
+            // 省流：每60秒检查一次
             setInterval(syncData, 60000);
         }
 
         async function syncData() {
-            if(isAnimating) return; // 如果正在播放动画，这次先跳过
+            if(isAnimating) return;
             connStatus.innerText = "正在同步...";
             
             try {
@@ -213,11 +252,9 @@
                 }
 
                 if (cloudCoins > lastCoins) {
-                    // 💰 加钱：触发史蒂夫砍怪特效
                     let diff = cloudCoins - lastCoins;
                     playAttackSequence(diff, cloudCoins);
                 } else if (cloudCoins < lastCoins) {
-                    // 💥 扣钱：触发自爆特效
                     let diff = lastCoins - cloudCoins;
                     playExplodeSequence(diff, cloudCoins);
                 } else {
@@ -226,7 +263,6 @@
                     updateRank(cloudCoins);
                 }
                 
-                // 更新缓存
                 if(cloudCoins !== lastCoins) {
                     localStorage.setItem('andy_last_seen_coins', cloudCoins);
                 }
@@ -237,77 +273,64 @@
             }
         }
 
-        // 🎬 剧场 A：史蒂夫砍怪 (加币)
+        // 🎬 剧场 A：挥剑砍怪 (加币)
         function playAttackSequence(amount, finalCoins) {
             isAnimating = true;
-            uiLayer.style.opacity = '0'; // 隐藏UI，展示舞台
+            uiLayer.style.opacity = '0'; 
             
-            // 1. 演员就位
-            steve.classList.remove('breathe'); // 停止呼吸动画
-            creeper.classList.remove('patrol'); // 停止巡逻
+            // 演员就位
+            steve.classList.remove('breathe'); 
+            creeper.classList.remove('patrol'); 
             
             steve.style.left = "35%"; steve.style.bottom = "80px"; steve.style.transform = "scaleX(1)";
             creeper.style.right = "35%"; creeper.style.bottom = "80px"; creeper.style.transform = "scaleX(1)";
             
-            document.querySelector('.s-sword').style.display = 'block'; // 亮剑
+            document.querySelector('.s-sword').style.display = 'block'; 
 
-            // 2. 挥剑 & 受伤 (0.5秒后)
             setTimeout(() => {
                 document.querySelector('.s-sword').classList.add('anim-attack');
                 playSound('hit');
-                setTimeout(() => {
-                    creeper.classList.add('anim-hurt');
-                }, 150);
+                setTimeout(() => { creeper.classList.add('anim-hurt'); }, 150);
             }, 500);
 
-            // 3. 怪物死亡 & 爆金币 (1.5秒后)
             setTimeout(() => {
-                creeper.style.display = 'none'; // 消失
-                createParticles(100, '💰'); // 爆金币
+                creeper.style.display = 'none'; 
+                createParticles(100, '💰'); 
                 playSound('levelup');
-                
                 statusMsg.innerText = `击杀奖励！+${amount}`;
                 statusMsg.style.color = "#00aa00";
             }, 1200);
 
-            // 4. 恢复 UI (3秒后)
             setTimeout(() => {
                 updateValue(finalCoins);
                 resetStage();
             }, 3000);
         }
 
-        // 🎬 剧场 B：苦力怕自爆 (扣币)
+        // 🎬 剧场 B：自爆 (扣币)
         function playExplodeSequence(amount, finalCoins) {
             isAnimating = true;
             uiLayer.style.opacity = '0';
             
-            // 1. 演员就位
-            steve.style.left = "-100px"; // 史蒂夫躲起来
+            steve.style.left = "-100px"; 
             creeper.classList.remove('patrol');
-            
-            // 苦力怕跑到中间
             creeper.style.right = "45%"; creeper.style.bottom = "50px"; creeper.style.transition = "all 0.5s";
 
-            // 2. 膨胀与嘶嘶声
             setTimeout(() => {
                 playSound('fuse');
-                creeper.classList.add('anim-swell'); // 变大变白
+                creeper.classList.add('anim-swell'); 
             }, 500);
 
-            // 3. 爆炸！
             setTimeout(() => {
                 creeper.style.opacity = '0';
-                document.body.classList.add('shake'); // 屏幕震动
-                createParticles(50, '⬛'); // 炸出黑烟
-                createParticles(50, '🟥'); // 炸出伤害
+                document.body.classList.add('shake'); 
+                createParticles(50, '⬛'); 
+                createParticles(50, '🟥'); 
                 playSound('explode');
-                
                 statusMsg.innerText = `遭遇爆炸！损失 ${amount}`;
                 statusMsg.style.color = "#8b0000";
             }, 2500);
 
-            // 4. 恢复
             setTimeout(() => {
                 document.body.classList.remove('shake');
                 updateValue(finalCoins);
@@ -318,22 +341,16 @@
         function resetStage() {
             uiLayer.style.opacity = '1';
             
-            // 重置史蒂夫
-            steve.style = ""; 
-            steve.classList.add('breathe');
+            steve.style = ""; steve.classList.add('breathe');
             document.querySelector('.s-sword').style.display = 'none';
             document.querySelector('.s-sword').classList.remove('anim-attack');
             
-            // 重置苦力怕
-            creeper.style = "";
-            creeper.style.display = 'block';
-            creeper.style.opacity = '1';
-            creeper.classList.remove('anim-hurt');
-            creeper.classList.remove('anim-swell');
+            creeper.style = ""; creeper.style.display = 'block'; creeper.style.opacity = '1';
+            creeper.classList.remove('anim-hurt'); creeper.classList.remove('anim-swell');
             creeper.classList.add('patrol');
 
             isAnimating = false;
-            lastCoins = parseInt(totalDisplay.innerText); // 确保逻辑同步
+            lastCoins = parseInt(totalDisplay.innerText);
         }
 
         function updateValue(coins) {
@@ -346,24 +363,31 @@
                 const el = document.createElement('div');
                 el.classList.add('confetti');
                 el.innerText = char;
-                // 随机爆炸方向
                 const angle = Math.random() * 360;
                 const dist = 50 + Math.random() * 100;
                 const tx = Math.cos(angle * Math.PI / 180) * dist + 'vw';
                 const ty = Math.sin(angle * Math.PI / 180) * dist + 'vh';
                 el.style.setProperty('--tx', tx);
                 el.style.setProperty('--ty', ty);
-                
                 document.body.appendChild(el);
                 setTimeout(() => el.remove(), 1000);
             }
         }
 
-        // --- 辅助功能 ---
         function checkDayNight() {
             const hour = new Date().getHours();
-            if (hour >= 18 || hour < 6) document.body.classList.add('night');
-            else document.body.classList.remove('night');
+            const pig = document.getElementById('pig');
+            const zombie = document.getElementById('zombie');
+            
+            if (hour >= 18 || hour < 6) {
+                document.body.classList.add('night');
+                pig.style.display = 'none'; // 猪去睡觉了
+                zombie.style.display = 'block'; // 僵尸出来了
+            } else {
+                document.body.classList.remove('night');
+                pig.style.display = 'block'; // 猪出来了
+                zombie.style.display = 'none'; // 僵尸烧死了
+            }
         }
         function updateRank(coins) {
             let currentTitle = RANKS[0].title;

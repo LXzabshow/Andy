@@ -41,102 +41,93 @@
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
 
-        /* ------------------- 角色系统 ------------------- */
+        /* ------------------- 角色系统 (CSS 像素画) ------------------- */
         .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; overflow: hidden;}
         
-        /* 史蒂夫 */
-        .actor-steve { position: absolute; bottom: 50px; left: -100px; width: 60px; height: 135px; transition: transform 0.1s; z-index: 60;}
-        .s-head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2;}
-        .s-hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3;}
-        .s-body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1;}
-        .s-pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
-        
-        /* ⚔️ 完美修复的武器：钻石剑 */
-        .s-sword { 
-            position: absolute; 
-            /* 调整位置，让剑柄对准手部 */
-            top: 35px; right: -40px; 
-            font-size: 60px; 
-            /* 关键1：scaleX(-1) 水平翻转，解决拿反的问题 */
-            /* 关键2：rotate(45deg) 调整初始角度为斜向上持剑 */
-            transform: scaleX(-1) rotate(45deg); 
-            /* 关键3：旋转中心设为左下角（翻转后的剑柄位置） */
-            transform-origin: 20% 80%; 
-            z-index: 4; 
-            display: none; 
-            filter: drop-shadow(2px 2px 0 #000);
+        /* 通用角色容器 */
+        .actor { position: absolute; bottom: 50px; transition: transform 0.1s; }
+
+        /* 史蒂夫 (Steve) */
+        .steve-skin .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
+        .steve-skin .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
+        .steve-skin .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; }
+        .steve-skin .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
+
+        /* 苦力怕 (Creeper) */
+        .creeper-skin { width: 45px; height: 120px; }
+        .creeper-skin .head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
+        .creeper-skin .face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8; }
+        .creeper-skin .body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; }
+        .creeper-skin .legs { width: 45px; height: 30px; position: absolute; top: 90px; }
+        .creeper-skin .leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0; }
+
+        /* 村民 (Villager) */
+        .villager-skin { width: 50px; height: 140px; }
+        .villager-skin .head { width: 50px; height: 60px; background: #d09b7c; position: absolute; top: 0; }
+        .villager-skin .nose { width: 10px; height: 18px; background: #d09b7c; position: absolute; top: 30px; left: 20px; border: 1px solid #a3755b; z-index: 5;}
+        .villager-skin .body { width: 50px; height: 80px; background: #684831; position: absolute; top: 60px; } /* 棕色长袍 */
+        .villager-skin .arms { width: 50px; height: 15px; background: #684831; position: absolute; top: 75px; left: 0; box-shadow: inset 0 0 5px rgba(0,0,0,0.3); }
+
+        /* 骷髅 (Skeleton) */
+        .skeleton-skin { width: 40px; height: 135px; }
+        .skeleton-skin .head { width: 40px; height: 40px; background: #e0e0e0; position: absolute; top: 0; }
+        .skeleton-skin .face { position: absolute; top: 10px; left: 6px; width: 28px; height: 24px; opacity: 0.6; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); }
+        .skeleton-skin .body { width: 40px; height: 45px; background: #e0e0e0; position: absolute; top: 40px; opacity: 0.8; }
+        .skeleton-skin .legs { width: 40px; height: 50px; position: absolute; top: 85px; }
+        .skeleton-skin .leg { width: 10px; height: 50px; background: #e0e0e0; position: absolute; bottom:0; }
+
+        /* 僵尸 (Zombie) */
+        .zombie-skin { width: 50px; height: 135px; }
+        .zombie-skin .head { width: 50px; height: 50px; background: #00A080; position: absolute; top: 0; }
+        .zombie-skin .body { width: 50px; height: 45px; background: #008080; position: absolute; top: 50px; }
+        .zombie-skin .arms { width: 50px; height: 12px; background: #00A080; position: absolute; top: 55px; left: -10px; box-shadow: 10px 0 #00A080; }
+        .zombie-skin .pants { width: 50px; height: 40px; background: #303090; position: absolute; top: 95px; }
+
+        /* 小猪 (Pig) */
+        .pig-skin { width: 50px; height: 30px; }
+        .pig-skin .head { width: 20px; height: 20px; background: #F0A5A5; position: absolute; left: 0; top: 0; }
+        .pig-skin .nose { width: 8px; height: 6px; background: #D16D6D; position: absolute; left: -4px; top: 8px; }
+        .pig-skin .body { width: 35px; height: 20px; background: #F0A5A5; position: absolute; left: 15px; top: 5px; }
+        .pig-skin .leg { width: 8px; height: 10px; background: #D16D6D; position: absolute; top: 20px; }
+
+        /* 武器 */
+        .sword { 
+            position: absolute; top: 35px; right: -40px; font-size: 50px; 
+            transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; 
+            z-index: 10; display: none; filter: drop-shadow(2px 2px 0 #000);
         }
-        
-        /* 苦力怕 */
-        .actor-creeper { position: absolute; bottom: 50px; right: -100px; width: 45px; height: 120px; transition: filter 0.1s; z-index: 55;}
-        .c-head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
-        .c-face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8;}
-        .c-body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; }
-        .c-legs { width: 45px; height: 30px; position: absolute; top: 90px; }
-        .c-leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0;}
+        .villager-sword { top: 70px !important; right: -30px !important; display: block !important;} /* 村民的剑 */
 
-        /* 小猪 */
-        .actor-pig { position: absolute; bottom: 50px; left: -80px; width: 50px; height: 30px; z-index: 52; animation: walkAcross 20s linear infinite; animation-delay: 2s; }
-        .p-head { width: 20px; height: 20px; background: #F0A5A5; position: absolute; left: 0; top: 0; }
-        .p-nose { width: 8px; height: 6px; background: #D16D6D; position: absolute; left: -4px; top: 8px; }
-        .p-body { width: 35px; height: 20px; background: #F0A5A5; position: absolute; left: 15px; top: 5px; }
-        .p-leg { width: 8px; height: 10px; background: #D16D6D; position: absolute; top: 20px; }
-        
-        /* 僵尸 */
-        .actor-zombie { position: absolute; bottom: 50px; right: -80px; width: 45px; height: 120px; z-index: 53; animation: walkAcrossReverse 25s linear infinite; animation-delay: 10s; display: none; }
-        .z-head { width: 45px; height: 45px; background: #00A080; position: absolute; top: 0; }
-        .z-body { width: 45px; height: 45px; background: #008080; position: absolute; top: 45px; }
-        .z-arms { width: 45px; height: 12px; background: #00A080; position: absolute; top: 50px; left: -20px; box-shadow: 20px 0 #00A080; }
-        .z-legs { width: 45px; height: 30px; position: absolute; top: 90px; }
-        .z-leg { width: 20px; height: 30px; background: #303090; position: absolute; bottom:0; }
-
-        /* ------------------- 动画 ------------------- */
+        /* ------------------- 动画关键帧 ------------------- */
         .breathe { animation: breathe 2s ease-in-out infinite; }
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
-        
-        .patrol { animation: patrol 15s linear infinite; }
-        @keyframes patrol { 
-            0% { right: -60px; transform: scaleX(1); } 
-            45% { right: 110%; transform: scaleX(1); } 
-            50% { right: 110%; transform: scaleX(-1); } 
-            95% { right: -60px; transform: scaleX(-1); } 
-            100% { right: -60px; transform: scaleX(1); } 
-        }
 
-        @keyframes walkAcross { 0% { left: -100px; } 100% { left: 120%; } }
-        @keyframes walkAcrossReverse { 0% { right: -100px; } 100% { right: 120%; } }
-
-        /* ⚔️ 优化后的挥砍动画：带水平翻转的旋转 */
+        /* 战斗剧场动画：史蒂夫 */
         .anim-attack { animation: swordSwing 0.35s ease-out forwards; }
-        @keyframes swordSwing { 
-            /* 注意：scaleX(-1) 必须全程保留，否则剑会瞬间翻面 */
-            0% { transform: scaleX(-1) rotate(45deg); } 
-            50% { transform: scaleX(-1) rotate(-60deg); } /* 向下猛砍 */
-            100% { transform: scaleX(-1) rotate(45deg); } /* 收刀 */
-        }
+        @keyframes swordSwing { 0% { transform: scaleX(-1) rotate(45deg); } 50% { transform: scaleX(-1) rotate(-60deg); } 100% { transform: scaleX(-1) rotate(45deg); } }
         
         .anim-hurt { animation: hurtFlash 0.3s steps(2) infinite; }
         @keyframes hurtFlash { 0% { filter: sepia(1) hue-rotate(-50deg) saturate(5); } 100% { filter: none; } }
 
         .anim-swell { animation: swell 2.5s ease-in forwards; }
-        @keyframes swell { 
-            0% { transform: scale(1); filter: brightness(1); } 
-            20% { transform: scale(1.1); filter: brightness(1.2); }
-            40% { transform: scale(1); filter: brightness(1); }
-            60% { transform: scale(1.3); filter: brightness(1.5); }
-            80% { transform: scale(1.1); filter: brightness(1); }
-            95% { transform: scale(2.5); filter: brightness(100); opacity: 1;}
-            100% { transform: scale(3); opacity: 0; }
-        }
+        @keyframes swell { 0% { transform: scale(1); filter: brightness(1); } 95% { transform: scale(2.5); filter: brightness(100); opacity: 1;} 100% { transform: scale(3); opacity: 0; } }
 
         .shake { animation: shake 0.5s; }
-        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 20% { transform: translate(-3px, 0px); } 40% { transform: translate(1px, -1px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(-1px, -1px); } 100% { transform: translate(1px, -2px); } }
 
-        #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; box-shadow: inset 4px 4px #aaa, inset -4px -4px #444; text-transform: uppercase; margin-top: 20px; }
-        
+        /* 奔跑动画 */
+        .run-l-to-r { animation: runLeftToRight 8s linear forwards; }
+        @keyframes runLeftToRight { 0% { left: -150px; } 100% { left: 120vw; } }
+
+        .run-r-to-l { animation: runRightToLeft 8s linear forwards; }
+        @keyframes runRightToLeft { 0% { right: -150px; } 100% { right: 120vw; } }
+
+        /* UI层动画 */
         .confetti { position: fixed; top: 50%; left: 50%; z-index: 999; animation: explode-particle 1s ease-out forwards; pointer-events: none; font-size: 30px;}
         @keyframes explode-particle { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(720deg); opacity: 0; } }
+        
+        #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; box-shadow: inset 4px 4px #aaa, inset -4px -4px #444; text-transform: uppercase; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -168,29 +159,12 @@
         </div>
     </div>
 
-    <div class="stage">
-        <div id="steve" class="actor-steve breathe">
-            <div class="s-head"></div><div class="s-hair"></div>
-            <div class="s-body"></div><div class="s-pants"></div>
-            <div class="s-sword">🗡️</div> 
+    <div class="stage" id="stage">
+        <div id="hero-steve" class="actor steve-skin breathe" style="left: -200px; display: none; z-index: 100;">
+            <div class="head"></div><div class="hair"></div><div class="body"></div><div class="pants"></div><div class="sword">🗡️</div>
         </div>
-        
-        <div id="creeper" class="actor-creeper patrol">
-            <div class="c-head"><div class="c-face"></div></div>
-            <div class="c-body"></div>
-            <div class="c-legs"><div class="c-leg" style="left:0"></div><div class="c-leg" style="right:0"></div></div>
-        </div>
-
-        <div id="pig" class="actor-pig">
-            <div class="p-head"><div class="p-nose"></div></div>
-            <div class="p-body"></div>
-            <div class="p-leg" style="left:0"></div><div class="p-leg" style="left:25px"></div>
-        </div>
-
-        <div id="zombie" class="actor-zombie">
-            <div class="z-head"></div>
-            <div class="z-body"></div><div class="z-arms"></div>
-            <div class="z-legs"><div class="z-leg" style="left:0"></div><div class="z-leg" style="right:0"></div></div>
+        <div id="hero-creeper" class="actor creeper-skin" style="right: -200px; display: none; z-index: 99;">
+            <div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>
         </div>
     </div>
 
@@ -206,8 +180,9 @@
         const statusMsg = document.getElementById('statusMsg');
         const connStatus = document.getElementById('connStatus');
         const rankBadge = document.getElementById('rankBadge');
-        const steve = document.getElementById('steve');
-        const creeper = document.getElementById('creeper');
+        const stage = document.getElementById('stage');
+        const heroSteve = document.getElementById('hero-steve');
+        const heroCreeper = document.getElementById('hero-creeper');
         
         const bgm = document.getElementById('bgm');
         const sfxLevelUp = document.getElementById('sfx-levelup');
@@ -218,31 +193,106 @@
         
         let isMuted = false;
         let lastCoins = null;
-        let isAnimating = false;
+        let isAnimating = false; // 是否正在播放金币特效
+        let ambientInterval = null;
 
+        // 🌟 称号配置表 (0-20, 21-50, 51-100, 101-200, 201-300, 301-600, 601-1000, 1001-2000, 2001-5000, 5001+)
         const RANKS = [
             { limit: 0, title: "🪵 新手伐木工" },
-            { limit: 50, title: "🪨 熟练采石匠" },
-            { limit: 150, title: "⚔️ 铁甲卫士" },
-            { limit: 300, title: "🏆 黄金领主" },
-            { limit: 500, title: "💎 钻石大神" },
-            { limit: 1000, title: "🐲 末影屠龙者" }
+            { limit: 21, title: "⛏️ 熟练采石匠" },
+            { limit: 51, title: "🛡️ 铁甲卫士" },
+            { limit: 101, title: "⚡ 红石工程师" },
+            { limit: 201, title: "🏆 黄金领主" },
+            { limit: 301, title: "💎 钻石大神" }, /* 重点：301-600 */
+            { limit: 601, title: "🔥 下界合金战神" },
+            { limit: 1001, title: "🐲 末影屠龙者" },
+            { limit: 2001, title: "🌌 虚空行者" },
+            { limit: 5001, title: "💻 指令方块主宰" }
         ];
 
         function startGame() {
             document.getElementById('start-overlay').style.display='none';
             checkDayNight();
             try {
-                bgm.load();
-                bgm.volume = 0.4;
-                bgm.play().catch(e => console.log("请点击屏幕播放声音"));
+                bgm.load(); bgm.volume = 0.4; bgm.play().catch(e => {});
                 sfxLevelUp.load(); sfxExplode.load(); sfxHit.load();
             } catch(e){}
 
             syncData();
-            setInterval(syncData, 60000);
+            setInterval(syncData, 60000); // 1分钟同步
+            
+            // 启动背景剧场：每12秒上演一出好戏
+            playAmbientScenario();
+            setInterval(playAmbientScenario, 12000);
         }
 
+        // --- 🎭 背景剧场导演系统 ---
+        function playAmbientScenario() {
+            if (isAnimating) return; // 如果正在加减币，暂停背景戏
+
+            // 随机挑选一个剧本 (0-2)
+            const scenario = Math.floor(Math.random() * 3);
+            
+            // 剧本 A: 😱 苦力怕 追 村民 (左 -> 右)
+            if (scenario === 0) {
+                spawnActor('villager-skin', 'left', 0, 8); // 村民跑得快
+                setTimeout(() => {
+                    spawnActor('creeper-skin', 'left', 0, 9); // 苦力怕追
+                }, 1000);
+            }
+            
+            // 剧本 B: ⚔️ 武装村民 追 骷髅 (右 -> 左)
+            else if (scenario === 1) {
+                spawnActor('skeleton-skin', 'right', 0, 8); // 骷髅逃跑
+                setTimeout(() => {
+                    spawnActor('villager-skin', 'right', 1, 8); // 村民拿剑追
+                }, 800);
+            }
+            
+            // 剧本 C: 🧟 僵尸 追 小猪 (左 -> 右, 仅限晚上) / 小猪散步 (白天)
+            else {
+                const isNight = document.body.classList.contains('night');
+                if (isNight) {
+                    spawnActor('pig-skin', 'left', 0, 10);
+                    setTimeout(() => { spawnActor('zombie-skin', 'left', 0, 11); }, 1500);
+                } else {
+                    spawnActor('pig-skin', 'left', 0, 15); // 白天猪猪慢慢走
+                }
+            }
+        }
+
+        // 生成路人演员
+        function spawnActor(skinClass, direction, hasSword, duration) {
+            const el = document.createElement('div');
+            el.className = `actor ${skinClass}`;
+            el.style.zIndex = 10; // 背景层
+            
+            // 拼装身体
+            if(skinClass.includes('steve')) el.innerHTML = '<div class="head"></div><div class="hair"></div><div class="body"></div><div class="pants"></div>';
+            else if(skinClass.includes('creeper')) el.innerHTML = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
+            else if(skinClass.includes('villager')) el.innerHTML = `<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>${hasSword?'<div class="sword villager-sword">🗡️</div>':''}`;
+            else if(skinClass.includes('skeleton')) el.innerHTML = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
+            else if(skinClass.includes('zombie')) el.innerHTML = '<div class="head"></div><div class="body"></div><div class="arms"></div><div class="pants"></div>';
+            else if(skinClass.includes('pig')) el.innerHTML = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="leg" style="left:0"></div><div class="leg" style="left:25px"></div>';
+
+            // 设置动画
+            if (direction === 'left') {
+                el.style.left = '-100px';
+                el.style.transform = 'scaleX(1)'; // 面朝右
+                el.style.animation = `runLeftToRight ${duration}s linear forwards`;
+            } else {
+                el.style.right = '-100px';
+                el.style.transform = 'scaleX(-1)'; // 面朝左
+                el.style.animation = `runRightToLeft ${duration}s linear forwards`;
+            }
+
+            stage.appendChild(el);
+
+            // 跑完自动销毁
+            setTimeout(() => { el.remove(); }, duration * 1000);
+        }
+
+        // --- 核心同步逻辑 ---
         async function syncData() {
             if(isAnimating) return;
             connStatus.innerText = "正在同步...";
@@ -272,31 +322,31 @@
                 if(cloudCoins !== lastCoins) {
                     localStorage.setItem('andy_last_seen_coins', cloudCoins);
                 }
-
-            } catch (error) {
-                console.error(error);
-                connStatus.innerText = "连接中..."; 
-            }
+            } catch (error) { console.error(error); connStatus.innerText = "连接中..."; }
         }
 
+        // 🎬 剧场 A：挥剑砍怪 (加币)
         function playAttackSequence(amount, finalCoins) {
             isAnimating = true;
             uiLayer.style.opacity = '0'; 
-            steve.classList.remove('breathe'); 
-            creeper.classList.remove('patrol'); 
-            steve.style.left = "35%"; steve.style.bottom = "80px"; steve.style.transform = "scaleX(1)";
-            creeper.style.right = "35%"; creeper.style.bottom = "80px"; creeper.style.transform = "scaleX(1)";
+            
+            // 召唤主角
+            heroSteve.style.display = 'block';
+            heroCreeper.style.display = 'block';
+            
+            heroSteve.style.left = "35%"; heroSteve.style.bottom = "80px"; heroSteve.style.transform = "scaleX(1)";
+            heroCreeper.style.right = "35%"; heroCreeper.style.bottom = "80px"; heroCreeper.style.transform = "scaleX(1)";
             
             document.querySelector('.s-sword').style.display = 'block'; 
 
             setTimeout(() => {
                 document.querySelector('.s-sword').classList.add('anim-attack');
                 playSound('hit');
-                setTimeout(() => { creeper.classList.add('anim-hurt'); }, 150);
+                setTimeout(() => { heroCreeper.classList.add('anim-hurt'); }, 150);
             }, 500);
 
             setTimeout(() => {
-                creeper.style.display = 'none'; 
+                heroCreeper.style.display = 'none'; 
                 createParticles(100, '💰'); 
                 playSound('levelup');
                 statusMsg.innerText = `击杀奖励！+${amount}`;
@@ -309,20 +359,22 @@
             }, 3000);
         }
 
+        // 🎬 剧场 B：自爆 (扣币)
         function playExplodeSequence(amount, finalCoins) {
             isAnimating = true;
             uiLayer.style.opacity = '0';
-            steve.style.left = "-100px"; 
-            creeper.classList.remove('patrol');
-            creeper.style.right = "45%"; creeper.style.bottom = "50px"; creeper.style.transition = "all 0.5s";
+            
+            heroCreeper.style.display = 'block';
+            heroCreeper.classList.remove('anim-hurt');
+            heroCreeper.style.right = "45%"; heroCreeper.style.bottom = "50px"; heroCreeper.style.transition = "all 0.5s";
 
             setTimeout(() => {
                 playSound('fuse');
-                creeper.classList.add('anim-swell'); 
+                heroCreeper.classList.add('anim-swell'); 
             }, 500);
 
             setTimeout(() => {
-                creeper.style.opacity = '0';
+                heroCreeper.style.opacity = '0';
                 document.body.classList.add('shake'); 
                 createParticles(50, '⬛'); 
                 createParticles(50, '🟥'); 
@@ -340,49 +392,42 @@
 
         function resetStage() {
             uiLayer.style.opacity = '1';
-            steve.style = ""; steve.classList.add('breathe');
+            heroSteve.style.display = 'none';
             document.querySelector('.s-sword').style.display = 'none';
             document.querySelector('.s-sword').classList.remove('anim-attack');
-            creeper.style = ""; creeper.style.display = 'block'; creeper.style.opacity = '1';
-            creeper.classList.remove('anim-hurt'); creeper.classList.remove('anim-swell');
-            creeper.classList.add('patrol');
+            
+            heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1';
+            heroCreeper.classList.remove('anim-hurt'); heroCreeper.classList.remove('anim-swell');
+
             isAnimating = false;
             lastCoins = parseInt(totalDisplay.innerText);
         }
 
         function updateValue(coins) { totalDisplay.innerText = coins; updateRank(coins); }
-
         function createParticles(count, char) {
             for (let i = 0; i < count; i++) {
                 const el = document.createElement('div');
-                el.classList.add('confetti');
-                el.innerText = char;
-                const angle = Math.random() * 360;
-                const dist = 50 + Math.random() * 100;
-                const tx = Math.cos(angle * Math.PI / 180) * dist + 'vw';
-                const ty = Math.sin(angle * Math.PI / 180) * dist + 'vh';
-                el.style.setProperty('--tx', tx);
-                el.style.setProperty('--ty', ty);
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 1000);
+                el.classList.add('confetti'); el.innerText = char;
+                const angle = Math.random() * 360; const dist = 50 + Math.random() * 100;
+                el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw');
+                el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh');
+                document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
             }
         }
-
         function checkDayNight() {
             const hour = new Date().getHours();
-            const pig = document.getElementById('pig');
-            const zombie = document.getElementById('zombie');
-            if (hour >= 18 || hour < 6) {
-                document.body.classList.add('night');
-                pig.style.display = 'none'; zombie.style.display = 'block'; 
-            } else {
-                document.body.classList.remove('night');
-                pig.style.display = 'block'; zombie.style.display = 'none'; 
-            }
+            if (hour >= 18 || hour < 6) document.body.classList.add('night');
+            else document.body.classList.remove('night');
         }
         function updateRank(coins) {
             let currentTitle = RANKS[0].title;
-            for(let rank of RANKS) { if(coins >= rank.limit) currentTitle = rank.title; }
+            // 倒序查找，确保匹配到最高符合的等级
+            for (let i = RANKS.length - 1; i >= 0; i--) {
+                if (coins >= RANKS[i].limit) {
+                    currentTitle = RANKS[i].title;
+                    break;
+                }
+            }
             rankBadge.innerText = currentTitle;
         }
         function clickCoin() {

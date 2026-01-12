@@ -14,14 +14,15 @@
             transition: background-color 2s ease; 
         }
         
-        /* ------------------- 场景与背景 ------------------- */
+        /* --- 环境层 --- */
         .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(white 1px, transparent 1px); background-size: 50px 50px; opacity: 0; transition: opacity 2s; z-index: 0; pointer-events: none; }
         body.night .stars { opacity: 0.5; } 
         body.night { background-color: #1a0b2e; }
         
-        .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 10; }
+        /* 地面高度固定 60px，Z轴设为20，遮挡脚部 */
+        .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 20; }
 
-        /* ------------------- UI 界面 ------------------- */
+        /* --- UI 层 (Z轴 100，最上层) --- */
         .ui-container { margin-top: 8vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.3s;}
         .card { background-color: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 20px; position: relative; }
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
@@ -41,70 +42,74 @@
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
 
-        /* ------------------- 角色系统 (CSS 像素画) ------------------- */
-        .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; overflow: hidden;}
+        /* --- 角色层 (Z轴 15-50，位于地面和天空之间) --- */
+        .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 15;}
+
+        /* 通用角色样式修正：bottom: 55px 确保站在草地上方一点点，不被埋 */
+        .actor { position: absolute; bottom: 55px; transition: transform 0.1s; z-index: 30; }
         
-        /* 通用角色容器 */
-        .actor { position: absolute; bottom: 50px; transition: transform 0.1s; }
-
-        /* 史蒂夫 (Steve) */
-        .steve-skin .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
-        .steve-skin .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
-        .steve-skin .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; }
-        .steve-skin .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
-
-        /* 苦力怕 (Creeper) */
-        .creeper-skin { width: 45px; height: 120px; }
-        .creeper-skin .head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
-        .creeper-skin .face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8; }
-        .creeper-skin .body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; }
-        .creeper-skin .legs { width: 45px; height: 30px; position: absolute; top: 90px; }
-        .creeper-skin .leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0; }
-
-        /* 村民 (Villager) */
-        .villager-skin { width: 50px; height: 140px; }
-        .villager-skin .head { width: 50px; height: 60px; background: #d09b7c; position: absolute; top: 0; }
-        .villager-skin .nose { width: 10px; height: 18px; background: #d09b7c; position: absolute; top: 30px; left: 20px; border: 1px solid #a3755b; z-index: 5;}
-        .villager-skin .body { width: 50px; height: 80px; background: #684831; position: absolute; top: 60px; } /* 棕色长袍 */
-        .villager-skin .arms { width: 50px; height: 15px; background: #684831; position: absolute; top: 75px; left: 0; box-shadow: inset 0 0 5px rgba(0,0,0,0.3); }
-
-        /* 骷髅 (Skeleton) */
-        .skeleton-skin { width: 40px; height: 135px; }
-        .skeleton-skin .head { width: 40px; height: 40px; background: #e0e0e0; position: absolute; top: 0; }
-        .skeleton-skin .face { position: absolute; top: 10px; left: 6px; width: 28px; height: 24px; opacity: 0.6; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); }
-        .skeleton-skin .body { width: 40px; height: 45px; background: #e0e0e0; position: absolute; top: 40px; opacity: 0.8; }
-        .skeleton-skin .legs { width: 40px; height: 50px; position: absolute; top: 85px; }
-        .skeleton-skin .leg { width: 10px; height: 50px; background: #e0e0e0; position: absolute; bottom:0; }
-
-        /* 僵尸 (Zombie) */
-        .zombie-skin { width: 50px; height: 135px; }
-        .zombie-skin .head { width: 50px; height: 50px; background: #00A080; position: absolute; top: 0; }
-        .zombie-skin .body { width: 50px; height: 45px; background: #008080; position: absolute; top: 50px; }
-        .zombie-skin .arms { width: 50px; height: 12px; background: #00A080; position: absolute; top: 55px; left: -10px; box-shadow: 10px 0 #00A080; }
-        .zombie-skin .pants { width: 50px; height: 40px; background: #303090; position: absolute; top: 95px; }
-
-        /* 小猪 (Pig) */
-        .pig-skin { width: 50px; height: 30px; }
-        .pig-skin .head { width: 20px; height: 20px; background: #F0A5A5; position: absolute; left: 0; top: 0; }
-        .pig-skin .nose { width: 8px; height: 6px; background: #D16D6D; position: absolute; left: -4px; top: 8px; }
-        .pig-skin .body { width: 35px; height: 20px; background: #F0A5A5; position: absolute; left: 15px; top: 5px; }
-        .pig-skin .leg { width: 8px; height: 10px; background: #D16D6D; position: absolute; top: 20px; }
-
-        /* 武器 */
-        .sword { 
-            position: absolute; top: 35px; right: -40px; font-size: 50px; 
+        /* 角色皮肤定义 */
+        /* 史蒂夫 */
+        .skin-steve { width: 60px; height: 135px; }
+        .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
+        .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
+        .skin-steve .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; }
+        .skin-steve .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
+        .skin-steve .sword { 
+            position: absolute; top: 35px; right: -40px; font-size: 60px; 
             transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; 
-            z-index: 10; display: none; filter: drop-shadow(2px 2px 0 #000);
+            z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000);
         }
-        .villager-sword { top: 70px !important; right: -30px !important; display: block !important;} /* 村民的剑 */
+
+        /* 苦力怕 */
+        .skin-creeper { width: 45px; height: 120px; }
+        .skin-creeper .head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
+        .skin-creeper .face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8; }
+        .skin-creeper .body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; }
+        .skin-creeper .legs { width: 45px; height: 30px; position: absolute; top: 90px; }
+        .skin-creeper .leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0; }
+
+        /* 村民 */
+        .skin-villager { width: 50px; height: 140px; }
+        .skin-villager .head { width: 50px; height: 60px; background: #d09b7c; position: absolute; top: 0; }
+        .skin-villager .nose { width: 10px; height: 18px; background: #d09b7c; position: absolute; top: 30px; left: 20px; border: 1px solid #a3755b; z-index: 5;}
+        .skin-villager .body { width: 50px; height: 80px; background: #684831; position: absolute; top: 60px; }
+        .skin-villager .arms { width: 50px; height: 15px; background: #684831; position: absolute; top: 75px; left: 0; box-shadow: inset 0 0 5px rgba(0,0,0,0.3); }
+        .skin-villager .sword { position: absolute; top: 70px; right: -30px; font-size: 40px; transform: scaleX(-1) rotate(45deg); z-index: 10; display: block;}
+
+        /* 骷髅 */
+        .skin-skeleton { width: 40px; height: 135px; }
+        .skin-skeleton .head { width: 40px; height: 40px; background: #e0e0e0; position: absolute; top: 0; }
+        .skin-skeleton .face { position: absolute; top: 10px; left: 6px; width: 28px; height: 24px; opacity: 0.6; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); }
+        .skin-skeleton .body { width: 40px; height: 45px; background: #e0e0e0; position: absolute; top: 40px; opacity: 0.8; }
+        .skin-skeleton .legs { width: 40px; height: 50px; position: absolute; top: 85px; }
+        .skin-skeleton .leg { width: 10px; height: 50px; background: #e0e0e0; position: absolute; bottom:0; }
+
+        /* 僵尸 */
+        .skin-zombie { width: 50px; height: 135px; }
+        .skin-zombie .head { width: 50px; height: 50px; background: #00A080; position: absolute; top: 0; }
+        .skin-zombie .body { width: 50px; height: 45px; background: #008080; position: absolute; top: 50px; }
+        .skin-zombie .arms { width: 50px; height: 12px; background: #00A080; position: absolute; top: 55px; left: -10px; box-shadow: 10px 0 #00A080; }
+        .skin-zombie .legs { width: 50px; height: 40px; position: absolute; top: 95px; }
+        .skin-zombie .leg { width: 20px; height: 40px; background: #303090; position: absolute; bottom:0; }
+
+        /* 小猪 */
+        .skin-pig { width: 50px; height: 30px; bottom: 60px !important;} /* 猪比较矮，位置微调 */
+        .skin-pig .head { width: 20px; height: 20px; background: #F0A5A5; position: absolute; left: 0; top: 0; }
+        .skin-pig .nose { width: 8px; height: 6px; background: #D16D6D; position: absolute; left: -4px; top: 8px; }
+        .skin-pig .body { width: 35px; height: 20px; background: #F0A5A5; position: absolute; left: 15px; top: 5px; }
+        .skin-pig .leg { width: 8px; height: 10px; background: #D16D6D; position: absolute; top: 20px; }
 
         /* ------------------- 动画关键帧 ------------------- */
         .breathe { animation: breathe 2s ease-in-out infinite; }
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
-
-        /* 战斗剧场动画：史蒂夫 */
+        
         .anim-attack { animation: swordSwing 0.35s ease-out forwards; }
-        @keyframes swordSwing { 0% { transform: scaleX(-1) rotate(45deg); } 50% { transform: scaleX(-1) rotate(-60deg); } 100% { transform: scaleX(-1) rotate(45deg); } }
+        @keyframes swordSwing { 
+            0% { transform: scaleX(-1) rotate(45deg); } 
+            50% { transform: scaleX(-1) rotate(-60deg); } 
+            100% { transform: scaleX(-1) rotate(45deg); } 
+        }
         
         .anim-hurt { animation: hurtFlash 0.3s steps(2) infinite; }
         @keyframes hurtFlash { 0% { filter: sepia(1) hue-rotate(-50deg) saturate(5); } 100% { filter: none; } }
@@ -122,12 +127,11 @@
         .run-r-to-l { animation: runRightToLeft 8s linear forwards; }
         @keyframes runRightToLeft { 0% { right: -150px; } 100% { right: 120vw; } }
 
-        /* UI层动画 */
-        .confetti { position: fixed; top: 50%; left: 50%; z-index: 999; animation: explode-particle 1s ease-out forwards; pointer-events: none; font-size: 30px;}
-        @keyframes explode-particle { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(720deg); opacity: 0; } }
-        
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
         .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; box-shadow: inset 4px 4px #aaa, inset -4px -4px #444; text-transform: uppercase; margin-top: 20px; }
+        
+        .confetti { position: fixed; top: 50%; left: 50%; z-index: 999; animation: explode-particle 1s ease-out forwards; pointer-events: none; font-size: 30px;}
+        @keyframes explode-particle { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(720deg); opacity: 0; } }
     </style>
 </head>
 <body>
@@ -154,16 +158,16 @@
             <div class="slot" onclick="clickCoin()"><div class="coin-icon" id="icon">🪙</div></div>
             <div class="label">当前拥有币</div>
             <div id="totalDisplay" class="total">...</div>
-            <div class="status-bar"><div id="light" class="light online"></div><span id="connStatus">正在同步数据...</span></div>
+            <div class="status-bar"><div id="light" class="light online"></div><span id="connStatus">等待同步...</span></div>
             <div id="statusMsg" class="message"></div>
         </div>
     </div>
 
     <div class="stage" id="stage">
-        <div id="hero-steve" class="actor steve-skin breathe" style="left: -200px; display: none; z-index: 100;">
+        <div id="hero-steve" class="actor skin-steve breathe" style="left: -200px; display: none; z-index: 100;">
             <div class="head"></div><div class="hair"></div><div class="body"></div><div class="pants"></div><div class="sword">🗡️</div>
         </div>
-        <div id="hero-creeper" class="actor creeper-skin" style="right: -200px; display: none; z-index: 99;">
+        <div id="hero-creeper" class="actor skin-creeper" style="right: -200px; display: none; z-index: 99;">
             <div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>
         </div>
     </div>
@@ -194,16 +198,16 @@
         let isMuted = false;
         let lastCoins = null;
         let isAnimating = false; // 是否正在播放金币特效
-        let ambientInterval = null;
+        let isFirstRun = true;   // 🌟 修复：首次运行标记
 
-        // 🌟 称号配置表 (0-20, 21-50, 51-100, 101-200, 201-300, 301-600, 601-1000, 1001-2000, 2001-5000, 5001+)
+        // 称号配置表
         const RANKS = [
             { limit: 0, title: "🪵 新手伐木工" },
             { limit: 21, title: "⛏️ 熟练采石匠" },
             { limit: 51, title: "🛡️ 铁甲卫士" },
             { limit: 101, title: "⚡ 红石工程师" },
             { limit: 201, title: "🏆 黄金领主" },
-            { limit: 301, title: "💎 钻石大神" }, /* 重点：301-600 */
+            { limit: 301, title: "💎 钻石大神" }, 
             { limit: 601, title: "🔥 下界合金战神" },
             { limit: 1001, title: "🐲 末影屠龙者" },
             { limit: 2001, title: "🌌 虚空行者" },
@@ -221,7 +225,7 @@
             syncData();
             setInterval(syncData, 60000); // 1分钟同步
             
-            // 启动背景剧场：每12秒上演一出好戏
+            // 启动背景剧场
             playAmbientScenario();
             setInterval(playAmbientScenario, 12000);
         }
@@ -230,65 +234,56 @@
         function playAmbientScenario() {
             if (isAnimating) return; // 如果正在加减币，暂停背景戏
 
-            // 随机挑选一个剧本 (0-2)
             const scenario = Math.floor(Math.random() * 3);
             
-            // 剧本 A: 😱 苦力怕 追 村民 (左 -> 右)
+            // 剧本 A: 苦力怕 追 村民
             if (scenario === 0) {
-                spawnActor('villager-skin', 'left', 0, 8); // 村民跑得快
-                setTimeout(() => {
-                    spawnActor('creeper-skin', 'left', 0, 9); // 苦力怕追
-                }, 1000);
+                spawnActor('skin-villager', 'left', 0, 8);
+                setTimeout(() => { spawnActor('skin-creeper', 'left', 0, 9); }, 1000);
             }
-            
-            // 剧本 B: ⚔️ 武装村民 追 骷髅 (右 -> 左)
+            // 剧本 B: 武装村民 追 骷髅
             else if (scenario === 1) {
-                spawnActor('skeleton-skin', 'right', 0, 8); // 骷髅逃跑
-                setTimeout(() => {
-                    spawnActor('villager-skin', 'right', 1, 8); // 村民拿剑追
-                }, 800);
+                spawnActor('skin-skeleton', 'right', 0, 8);
+                setTimeout(() => { spawnActor('skin-villager', 'right', 1, 8); }, 800);
             }
-            
-            // 剧本 C: 🧟 僵尸 追 小猪 (左 -> 右, 仅限晚上) / 小猪散步 (白天)
+            // 剧本 C: 僵尸 / 小猪
             else {
                 const isNight = document.body.classList.contains('night');
                 if (isNight) {
-                    spawnActor('pig-skin', 'left', 0, 10);
-                    setTimeout(() => { spawnActor('zombie-skin', 'left', 0, 11); }, 1500);
+                    spawnActor('skin-pig', 'left', 0, 10);
+                    setTimeout(() => { spawnActor('skin-zombie', 'left', 0, 11); }, 1500);
                 } else {
-                    spawnActor('pig-skin', 'left', 0, 15); // 白天猪猪慢慢走
+                    spawnActor('skin-pig', 'left', 0, 15);
                 }
             }
         }
 
-        // 生成路人演员
         function spawnActor(skinClass, direction, hasSword, duration) {
             const el = document.createElement('div');
             el.className = `actor ${skinClass}`;
-            el.style.zIndex = 10; // 背景层
+            el.style.zIndex = 10; 
             
-            // 拼装身体
-            if(skinClass.includes('steve')) el.innerHTML = '<div class="head"></div><div class="hair"></div><div class="body"></div><div class="pants"></div>';
-            else if(skinClass.includes('creeper')) el.innerHTML = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
-            else if(skinClass.includes('villager')) el.innerHTML = `<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>${hasSword?'<div class="sword villager-sword">🗡️</div>':''}`;
-            else if(skinClass.includes('skeleton')) el.innerHTML = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
-            else if(skinClass.includes('zombie')) el.innerHTML = '<div class="head"></div><div class="body"></div><div class="arms"></div><div class="pants"></div>';
-            else if(skinClass.includes('pig')) el.innerHTML = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="leg" style="left:0"></div><div class="leg" style="left:25px"></div>';
+            // 动态构建 HTML
+            let inner = '';
+            if(skinClass.includes('steve')) inner = '<div class="head"></div><div class="hair"></div><div class="body"></div><div class="pants"></div>';
+            else if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
+            else if(skinClass.includes('villager')) inner = `<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>${hasSword?'<div class="sword">🗡️</div>':''}`;
+            else if(skinClass.includes('skeleton')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
+            else if(skinClass.includes('zombie')) inner = '<div class="head"></div><div class="body"></div><div class="arms"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
+            else if(skinClass.includes('pig')) inner = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="leg" style="left:0"></div><div class="leg" style="left:25px"></div>';
+            
+            el.innerHTML = inner;
 
-            // 设置动画
             if (direction === 'left') {
                 el.style.left = '-100px';
-                el.style.transform = 'scaleX(1)'; // 面朝右
+                el.style.transform = 'scaleX(1)';
                 el.style.animation = `runLeftToRight ${duration}s linear forwards`;
             } else {
                 el.style.right = '-100px';
-                el.style.transform = 'scaleX(-1)'; // 面朝左
+                el.style.transform = 'scaleX(-1)';
                 el.style.animation = `runRightToLeft ${duration}s linear forwards`;
             }
-
             stage.appendChild(el);
-
-            // 跑完自动销毁
             setTimeout(() => { el.remove(); }, duration * 1000);
         }
 
@@ -302,9 +297,15 @@
                 let data = await res.json();
                 let cloudCoins = data.record.coins || 0;
 
-                if (lastCoins === null) {
-                    lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins'));
-                    if(isNaN(lastCoins)) lastCoins = cloudCoins; 
+                // 🌟 修复：首次加载逻辑优化
+                if (lastCoins === null || isFirstRun) {
+                    lastCoins = cloudCoins;
+                    totalDisplay.innerText = cloudCoins;
+                    updateRank(cloudCoins);
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                    connStatus.innerText = "数据已同步";
+                    isFirstRun = false;
+                    return; // 首次运行，直接结束，不触发动画
                 }
 
                 if (cloudCoins > lastCoins) {
@@ -330,17 +331,14 @@
             isAnimating = true;
             uiLayer.style.opacity = '0'; 
             
-            // 召唤主角
             heroSteve.style.display = 'block';
             heroCreeper.style.display = 'block';
-            
-            heroSteve.style.left = "35%"; heroSteve.style.bottom = "80px"; heroSteve.style.transform = "scaleX(1)";
-            heroCreeper.style.right = "35%"; heroCreeper.style.bottom = "80px"; heroCreeper.style.transform = "scaleX(1)";
-            
-            document.querySelector('.s-sword').style.display = 'block'; 
+            heroSteve.style.left = "35%"; heroSteve.style.bottom = "55px"; heroSteve.style.transform = "scaleX(1)";
+            heroCreeper.style.right = "35%"; heroCreeper.style.bottom = "55px"; heroCreeper.style.transform = "scaleX(1)";
+            document.querySelector('.skin-steve .sword').style.display = 'block'; 
 
             setTimeout(() => {
-                document.querySelector('.s-sword').classList.add('anim-attack');
+                document.querySelector('.skin-steve .sword').classList.add('anim-attack');
                 playSound('hit');
                 setTimeout(() => { heroCreeper.classList.add('anim-hurt'); }, 150);
             }, 500);
@@ -366,7 +364,7 @@
             
             heroCreeper.style.display = 'block';
             heroCreeper.classList.remove('anim-hurt');
-            heroCreeper.style.right = "45%"; heroCreeper.style.bottom = "50px"; heroCreeper.style.transition = "all 0.5s";
+            heroCreeper.style.right = "45%"; heroCreeper.style.bottom = "55px"; heroCreeper.style.transition = "all 0.5s";
 
             setTimeout(() => {
                 playSound('fuse');
@@ -376,8 +374,7 @@
             setTimeout(() => {
                 heroCreeper.style.opacity = '0';
                 document.body.classList.add('shake'); 
-                createParticles(50, '⬛'); 
-                createParticles(50, '🟥'); 
+                createParticles(50, '⬛'); createParticles(50, '🟥'); 
                 playSound('explode');
                 statusMsg.innerText = `遭遇爆炸！损失 ${amount}`;
                 statusMsg.style.color = "#8b0000";
@@ -393,8 +390,8 @@
         function resetStage() {
             uiLayer.style.opacity = '1';
             heroSteve.style.display = 'none';
-            document.querySelector('.s-sword').style.display = 'none';
-            document.querySelector('.s-sword').classList.remove('anim-attack');
+            document.querySelector('.skin-steve .sword').style.display = 'none';
+            document.querySelector('.skin-steve .sword').classList.remove('anim-attack');
             
             heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1';
             heroCreeper.classList.remove('anim-hurt'); heroCreeper.classList.remove('anim-swell');
@@ -421,12 +418,8 @@
         }
         function updateRank(coins) {
             let currentTitle = RANKS[0].title;
-            // 倒序查找，确保匹配到最高符合的等级
             for (let i = RANKS.length - 1; i >= 0; i--) {
-                if (coins >= RANKS[i].limit) {
-                    currentTitle = RANKS[i].title;
-                    break;
-                }
+                if (coins >= RANKS[i].limit) { currentTitle = RANKS[i].title; break; }
             }
             rankBadge.innerText = currentTitle;
         }

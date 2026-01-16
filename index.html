@@ -65,7 +65,6 @@
         .challenge-title { font-size: 28px; color: #333; margin-bottom: 10px; text-shadow: 1px 1px #fff; }
         .challenge-q { font-size: 24px; color: #000; margin: 20px 0; font-weight: bold; background: #fff; padding: 10px; border: 2px solid #555;}
         .challenge-reward { color: #00aa00; font-size: 20px; margin-bottom: 10px; }
-        /* 倒计时样式 */
         .challenge-timer { color: #c0392b; font-size: 24px; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; font-family: monospace;}
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; }
@@ -239,7 +238,6 @@
         let isMuted = false;
         let lastCoins = null;
         let isAnimating = false; 
-        let isFirstRun = true;   
         
         let ambientInterval = null; 
         let syncInterval = null;
@@ -247,7 +245,7 @@
         
         let activeEventData = null; 
         let timerInterval = null;
-        let chestFloatInterval = null; // 宝箱飞行控制
+        let chestFloatInterval = null; 
 
         const RANKS = [
             { limit: 0, title: "🪵 新手伐木工" },
@@ -280,7 +278,6 @@
             ambientInterval = setInterval(playAmbientScenario, 12000);
         }
 
-        // --- 宝箱随机飞行逻辑 ---
         function startFloatingChest() {
             if(chestFloatInterval) return; 
             moveChest(); 
@@ -296,17 +293,13 @@
 
         function moveChest() {
             if(chest.style.display === 'none') return;
-
-            // X轴：10% - 80% (避开左右边缘)
             const randomX = Math.floor(Math.random() * 70) + 10;
-            // Y轴：5% - 25% (始终在上方，不挡UI)
             const randomY = Math.floor(Math.random() * 20) + 5;
-
             chest.style.left = randomX + '%';
             chest.style.top = randomY + '%';
         }
 
-        // --- 核心同步逻辑 ---
+        // --- 核心同步逻辑 (修复刷新无动画问题) ---
         async function syncData() {
             connStatus.innerText = "正在同步...";
             
@@ -316,7 +309,6 @@
                 let cloudCoins = data.record.coins || 0;
                 let event = data.record.activeEvent;
 
-                // 宝箱显隐控制
                 if(event && event.expireTime > Date.now()) {
                     activeEventData = event;
                     if(chest.style.display !== 'block') {
@@ -330,18 +322,21 @@
                     if(cModal.style.display === 'flex') closeChallengeModal(); 
                 }
 
-                // 金币逻辑
-                if (lastCoins === null || isFirstRun) {
+                // 读取本地缓存
+                let localStr = localStorage.getItem('andy_last_seen_coins');
+
+                // 情况A：第一次打开，没有缓存 -> 静默
+                if (localStr === null) {
                     lastCoins = cloudCoins;
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
                     totalDisplay.innerText = cloudCoins;
                     updateRank(cloudCoins);
-                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
                     connStatus.innerText = "数据已同步";
-                    isFirstRun = false;
                     return; 
                 }
 
-                lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins'));
+                // 情况B：有缓存 -> 对比
+                lastCoins = parseInt(localStr);
 
                 if (cloudCoins > lastCoins) {
                     let diff = cloudCoins - lastCoins;
@@ -361,7 +356,6 @@
             } catch (error) { console.error(error); connStatus.innerText = "连接中..."; }
         }
 
-        // --- 宝箱弹窗逻辑 ---
         function openChallengeModal() {
             if(!activeEventData) return;
             cModal.style.display = 'flex';
@@ -388,13 +382,11 @@
                 stopFloatingChest();
                 return;
             }
-            // 🌟 倒计时格式优化：XX天 XX小时 XX分 XX秒
             let d = Math.floor(diff / (1000 * 60 * 60 * 24));
             let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             let s = Math.floor((diff % (1000 * 60)) / 1000);
             
-            // 补零美化
             let hStr = h < 10 ? "0" + h : h;
             let mStr = m < 10 ? "0" + m : m;
             let sStr = s < 10 ? "0" + s : s;
@@ -449,7 +441,6 @@
             }
         }
 
-        // --- 剧情与特效 ---
         function clearAmbientActors() {
             const ambients = document.querySelectorAll('.ambient-actor');
             ambients.forEach(el => el.remove());

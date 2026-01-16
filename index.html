@@ -65,7 +65,7 @@
         .challenge-title { font-size: 28px; color: #333; margin-bottom: 10px; text-shadow: 1px 1px #fff; }
         .challenge-q { font-size: 24px; color: #000; margin: 20px 0; font-weight: bold; background: #fff; padding: 10px; border: 2px solid #555;}
         .challenge-reward { color: #00aa00; font-size: 20px; margin-bottom: 10px; }
-        /* 倒计时样式优化：更醒目 */
+        /* 倒计时样式 */
         .challenge-timer { color: #c0392b; font-size: 24px; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; font-family: monospace;}
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; }
@@ -121,7 +121,7 @@
         .skin-pig .body { width: 35px; height: 20px; background: #F0A5A5; position: absolute; left: 15px; top: 5px; }
         .skin-pig .leg { width: 8px; height: 10px; background: #D16D6D; position: absolute; top: 20px; }
 
-        /* ------------------- 动画 ------------------- */
+        /* ------------------- 动画关键帧 ------------------- */
         .breathe { animation: breathe 2s ease-in-out infinite; }
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
         
@@ -163,7 +163,10 @@
         <button class="mc-btn" onclick="startGame()">开始冒险</button>
     </div>
 
-    <audio id="bgm" loop><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/music/game/calm1.ogg" type="audio/ogg"></audio>
+    <audio id="bgm" loop>
+        <source src="bgm.mp3" type="audio/mpeg">
+    </audio>
+    
     <audio id="sfx-levelup"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/levelup.ogg" type="audio/ogg"></audio>
     <audio id="sfx-explode"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/explode.ogg" type="audio/ogg"></audio>
     <audio id="sfx-hit"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/damage/hit1.ogg" type="audio/ogg"></audio>

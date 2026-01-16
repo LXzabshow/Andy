@@ -13,9 +13,21 @@
         button:active { transform: scale(0.96); }
         .btn-add { background: #27ae60; color: white; }
         .btn-sub { background: #c0392b; color: white; }
-        .btn-task { background: #2980b9; color: white; grid-column: span 2; margin-top: 10px;} /* 新增任务按钮 */
+        .btn-task { background: #2980b9; color: white; grid-column: span 2; margin-top: 10px;} 
         
         input { padding: 12px; border-radius: 5px; border: none; width: 60%; text-align: center; background: #444; color: white; font-size: 16px;}
+        
+        /* 🌟 核心修改：多行文本框样式 */
+        textarea { 
+            width: 100%; box-sizing: border-box; text-align: left;
+            padding: 12px; border-radius: 5px; border: none;
+            background: #444; color: white; font-size: 16px;
+            font-family: sans-serif; 
+            resize: vertical; /* 允许垂直拉伸 */
+            min-height: 100px; /* 默认高度变高 */
+            line-height: 1.5;
+        }
+
         .manual-group { background: #444; padding: 15px; border-radius: 8px; margin-top: 20px;}
         #log { color: #888; font-size: 12px; margin-top: 15px; min-height: 20px; line-height: 1.5; white-space: pre-wrap; }
 
@@ -55,15 +67,15 @@
             <button class="btn-sub" style="width: 45%;" onclick="manualMod(-1)">扣除</button>
         </div>
         
-        <div id="log">系统就绪 (任务版)</div>
+        <div id="log">系统就绪 (多行文本版)</div>
     </div>
 
     <div id="taskModal">
         <div class="modal-content">
             <h3>发布挑战</h3>
             <div class="form-group">
-                <label>1. 问题描述</label>
-                <input type="text" id="t_question" placeholder="例如：3 x 8 等于多少？">
+                <label>1. 问题描述 (可回车换行)</label>
+                <textarea id="t_question" placeholder="例如：&#10;1. 树上有3只鸟&#10;2. 飞走了1只&#10;问：还剩几只？"></textarea>
             </div>
             <div class="form-group">
                 <label>2. 标准答案</label>
@@ -93,7 +105,7 @@
         const log = document.getElementById('log');
         const PASS = "8888"; 
         
-        let currentData = null; // 缓存完整数据
+        let currentData = null;
 
         window.onload = function() {
             if(prompt("请输入家长密码") !== PASS) { 
@@ -120,7 +132,6 @@
                 let record = await getCoins();
                 let newCoins = record.coins + amount;
                 
-                // 保留原有的 activeEvent 字段
                 let payload = { 
                     coins: newCoins, 
                     transactions: record.transactions,
@@ -140,26 +151,22 @@
             }
         }
 
-        // --- 任务相关逻辑 ---
         async function openTaskModal() {
             const modal = document.getElementById('taskModal');
             modal.style.display = 'flex';
             
-            // 打开时先读取最新状态
             let record = await getCoins();
             const now = Date.now();
             
-            // 如果有未过期的任务，回显到输入框
             if(record.activeEvent && record.activeEvent.expireTime > now) {
+                // 回显多行文本
                 document.getElementById('t_question').value = record.activeEvent.question;
                 document.getElementById('t_answer').value = record.activeEvent.answer;
                 document.getElementById('t_reward').value = record.activeEvent.reward;
-                // 算出剩余大概几小时（向上取整）
                 let hoursLeft = Math.ceil((record.activeEvent.expireTime - now) / 3600000);
                 document.getElementById('t_hours').value = hoursLeft;
                 log.innerText = "📝 已加载当前进行中的任务";
             } else {
-                // 清空输入框
                 document.getElementById('t_question').value = "";
                 document.getElementById('t_answer').value = "";
                 document.getElementById('t_reward').value = "";
@@ -186,18 +193,17 @@
             try {
                 let record = await getCoins();
                 
-                // 构建任务对象
                 const eventData = {
-                    question: q,
+                    question: q, // 这里包含换行符
                     answer: a,
                     reward: r,
-                    expireTime: Date.now() + (h * 60 * 60 * 1000) // 计算过期时间戳
+                    expireTime: Date.now() + (h * 60 * 60 * 1000) 
                 };
 
                 let payload = { 
                     coins: record.coins, 
                     transactions: record.transactions,
-                    activeEvent: eventData // 更新任务字段
+                    activeEvent: eventData 
                 };
 
                 await fetch(BASE_URL, {

@@ -63,7 +63,17 @@
             padding: 20px; width: 85%; max-width: 350px; text-align: center;
         }
         .challenge-title { font-size: 28px; color: #333; margin-bottom: 10px; text-shadow: 1px 1px #fff; }
-        .challenge-q { font-size: 24px; color: #000; margin: 20px 0; font-weight: bold; background: #fff; padding: 10px; border: 2px solid #555;}
+        
+        /* 🌟 核心修改：问题显示区域样式 */
+        .challenge-q { 
+            font-size: 24px; color: #000; margin: 20px 0; font-weight: bold; 
+            background: #fff; padding: 10px; border: 2px solid #555;
+            white-space: pre-wrap; /* 关键：保留换行符 */
+            text-align: left;      /* 左对齐比较适合多行文本 */
+            max-height: 250px;     /* 防止问题太长撑爆屏幕 */
+            overflow-y: auto;      /* 如果太长可以滚动 */
+        }
+
         .challenge-reward { color: #00aa00; font-size: 20px; margin-bottom: 10px; }
         .challenge-timer { color: #c0392b; font-size: 24px; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; font-family: monospace;}
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
@@ -238,6 +248,7 @@
         let isMuted = false;
         let lastCoins = null;
         let isAnimating = false; 
+        let isFirstRun = true;   
         
         let ambientInterval = null; 
         let syncInterval = null;
@@ -299,7 +310,7 @@
             chest.style.top = randomY + '%';
         }
 
-        // --- 核心同步逻辑 (修复刷新无动画问题) ---
+        // --- 核心同步逻辑 ---
         async function syncData() {
             connStatus.innerText = "正在同步...";
             

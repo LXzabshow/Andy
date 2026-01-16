@@ -295,9 +295,9 @@
             setTimeout(() => { el.remove(); }, duration * 1000);
         }
 
-        // --- 同步逻辑 ---
+       // --- 核心同步逻辑 (修复刷新无动画问题) ---
         async function syncData() {
-            if(isAnimating) return;
+            if(isAnimating) return; // 如果正在播放动画，暂时不处理
             connStatus.innerText = "正在同步...";
             
             try {
@@ -305,32 +305,50 @@
                 let data = await res.json();
                 let cloudCoins = data.record.coins || 0;
 
-                if (lastCoins === null || isFirstRun) {
+                // 读取本地缓存（上次看到的金币数）
+                let localStr = localStorage.getItem('andy_last_seen_coins');
+
+                // 情况A：这台手机第一次打开（没有缓存），或者缓存被清空了
+                if (localStr === null) {
                     lastCoins = cloudCoins;
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                    
+                    // 直接静默显示，不播放动画
                     totalDisplay.innerText = cloudCoins;
                     updateRank(cloudCoins);
-                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
                     connStatus.innerText = "数据已同步";
-                    isFirstRun = false;
                     return; 
                 }
 
+                // 情况B：不是第一次，读取缓存
+                lastCoins = parseInt(localStr);
+
+                // 开始对比：云端 vs 本地缓存
                 if (cloudCoins > lastCoins) {
+                    // 💰 钱变多了 -> 播放砍怪动画
                     let diff = cloudCoins - lastCoins;
                     playAttackSequence(diff, cloudCoins);
                 } else if (cloudCoins < lastCoins) {
+                    // 💥 钱变少了 -> 播放自爆动画
                     let diff = lastCoins - cloudCoins;
                     playExplodeSequence(diff, cloudCoins);
                 } else {
+                    // 🤝 钱没变 -> 静默更新状态
                     connStatus.innerText = "数据已同步";
+                    // 确保显示数字正确（防止意外）
                     totalDisplay.innerText = cloudCoins;
                     updateRank(cloudCoins);
                 }
                 
+                // 只要不一样，就更新本地缓存，哪怕是静默更新
                 if(cloudCoins !== lastCoins) {
                     localStorage.setItem('andy_last_seen_coins', cloudCoins);
                 }
-            } catch (error) { console.error(error); connStatus.innerText = "连接中..."; }
+
+            } catch (error) {
+                console.error(error);
+                connStatus.innerText = "连接中..."; // 网络错误时不报错，只提示
+            }
         }
 
         // 🎬 剧场 A：挥剑砍怪 (加币)

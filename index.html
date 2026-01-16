@@ -64,18 +64,24 @@
         }
         .challenge-title { font-size: 28px; color: #333; margin-bottom: 10px; text-shadow: 1px 1px #fff; }
         
-        /* 🌟 核心修改：问题显示区域样式 */
+        /* 🌟 核心修改：字体调整为 14px，行高更紧凑 */
         .challenge-q { 
-            font-size: 24px; color: #000; margin: 20px 0; font-weight: bold; 
-            background: #fff; padding: 10px; border: 2px solid #555;
-            white-space: pre-wrap; /* 关键：保留换行符 */
-            text-align: left;      /* 左对齐比较适合多行文本 */
-            max-height: 250px;     /* 防止问题太长撑爆屏幕 */
-            overflow-y: auto;      /* 如果太长可以滚动 */
+            font-size: 14px; /* 原来是 24px */
+            color: #000; 
+            margin: 15px 0; 
+            font-weight: bold; 
+            background: #fff; 
+            padding: 8px; /* 稍微减少内边距 */
+            border: 2px solid #555;
+            white-space: pre-wrap; 
+            text-align: left;      
+            max-height: 250px;     
+            overflow-y: auto;      
+            line-height: 1.4; /* 增加一点行高，防止字挤在一起 */
         }
 
         .challenge-reward { color: #00aa00; font-size: 20px; margin-bottom: 10px; }
-        .challenge-timer { color: #c0392b; font-size: 24px; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; font-family: monospace;}
+        .challenge-timer { color: #c0392b; font-size: 20px; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; font-family: monospace;}
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; }
         .btn-close-modal { background: #c0392b; margin-left: 10px; }

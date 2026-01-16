@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家长控制台 - 稳定版</title>
+    <title>家长控制台 - 任务版</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #222; color: #eee; text-align: center; max-width: 500px; margin: 0 auto;}
         .box { background: #333; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
@@ -13,9 +13,26 @@
         button:active { transform: scale(0.96); }
         .btn-add { background: #27ae60; color: white; }
         .btn-sub { background: #c0392b; color: white; }
+        .btn-task { background: #2980b9; color: white; grid-column: span 2; margin-top: 10px;} /* 新增任务按钮 */
+        
         input { padding: 12px; border-radius: 5px; border: none; width: 60%; text-align: center; background: #444; color: white; font-size: 16px;}
         .manual-group { background: #444; padding: 15px; border-radius: 8px; margin-top: 20px;}
         #log { color: #888; font-size: 12px; margin-top: 15px; min-height: 20px; line-height: 1.5; white-space: pre-wrap; }
+
+        /* 任务弹窗 */
+        #taskModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 999; display: none;
+            justify-content: center; align-items: center;
+        }
+        .modal-content { background: #333; padding: 20px; border-radius: 10px; width: 85%; max-width: 400px; text-align: left; }
+        .modal-content h3 { margin-top: 0; text-align: center; color: #3498db; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #aaa; font-size: 14px;}
+        .form-group input { width: 100%; box-sizing: border-box; text-align: left; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-cancel { background: #7f8c8d; color: white; flex: 1; }
+        .btn-confirm { background: #27ae60; color: white; flex: 1; }
     </style>
 </head>
 <body>
@@ -28,6 +45,7 @@
             <button class="btn-add" onclick="modifyCoins(50)">+50 大奖</button>
             <button class="btn-sub" onclick="modifyCoins(-10)">-10 扣除</button>
             <button class="btn-sub" onclick="modifyCoins(-50)">-50 兑换</button>
+            <button class="btn-task" onclick="openTaskModal()">📜 发布随机悬赏任务</button>
         </div>
 
         <div class="manual-group">
@@ -37,7 +55,33 @@
             <button class="btn-sub" style="width: 45%;" onclick="manualMod(-1)">扣除</button>
         </div>
         
-        <div id="log">系统就绪 (纯净模式)</div>
+        <div id="log">系统就绪 (任务版)</div>
+    </div>
+
+    <div id="taskModal">
+        <div class="modal-content">
+            <h3>发布挑战</h3>
+            <div class="form-group">
+                <label>1. 问题描述</label>
+                <input type="text" id="t_question" placeholder="例如：3 x 8 等于多少？">
+            </div>
+            <div class="form-group">
+                <label>2. 标准答案</label>
+                <input type="text" id="t_answer" placeholder="例如：24">
+            </div>
+            <div class="form-group">
+                <label>3. 奖励币数</label>
+                <input type="number" id="t_reward" placeholder="例如：50">
+            </div>
+            <div class="form-group">
+                <label>4. 持续时间 (小时)</label>
+                <input type="number" id="t_hours" placeholder="例如：2">
+            </div>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeTaskModal()">取消</button>
+                <button class="btn-confirm" onclick="saveTask()">发布任务</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -48,6 +92,8 @@
         const display = document.getElementById('currentCoins');
         const log = document.getElementById('log');
         const PASS = "8888"; 
+        
+        let currentData = null; // 缓存完整数据
 
         window.onload = function() {
             if(prompt("请输入家长密码") !== PASS) { 
@@ -60,10 +106,11 @@
             log.innerText = "正在读取...";
             try {
                 let res = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
-                let data = await res.json();
-                display.innerText = data.record.coins;
+                let json = await res.json();
+                currentData = json.record;
+                display.innerText = currentData.coins;
                 log.innerText = "✅ 数据读取成功";
-                return data.record;
+                return currentData;
             } catch (e) { log.innerText = "❌ 读取失败，请检查网络"; }
         }
 
@@ -73,17 +120,96 @@
                 let record = await getCoins();
                 let newCoins = record.coins + amount;
                 
-                // 写入数据
+                // 保留原有的 activeEvent 字段
+                let payload = { 
+                    coins: newCoins, 
+                    transactions: record.transactions,
+                    activeEvent: record.activeEvent || null 
+                };
+                
                 await fetch(BASE_URL, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-                    body: JSON.stringify({ coins: newCoins, transactions: record.transactions })
+                    body: JSON.stringify(payload)
                 });
                 
                 display.innerText = newCoins;
-                log.innerText = `✅ 保存成功！当前: ${newCoins}\n(孩子端将在5秒内自动同步)`;
+                log.innerText = `✅ 保存成功！当前: ${newCoins}`;
             } catch (e) { 
                 log.innerText = "❌ 保存失败！请重试"; 
+            }
+        }
+
+        // --- 任务相关逻辑 ---
+        async function openTaskModal() {
+            const modal = document.getElementById('taskModal');
+            modal.style.display = 'flex';
+            
+            // 打开时先读取最新状态
+            let record = await getCoins();
+            const now = Date.now();
+            
+            // 如果有未过期的任务，回显到输入框
+            if(record.activeEvent && record.activeEvent.expireTime > now) {
+                document.getElementById('t_question').value = record.activeEvent.question;
+                document.getElementById('t_answer').value = record.activeEvent.answer;
+                document.getElementById('t_reward').value = record.activeEvent.reward;
+                // 算出剩余大概几小时（向上取整）
+                let hoursLeft = Math.ceil((record.activeEvent.expireTime - now) / 3600000);
+                document.getElementById('t_hours').value = hoursLeft;
+                log.innerText = "📝 已加载当前进行中的任务";
+            } else {
+                // 清空输入框
+                document.getElementById('t_question').value = "";
+                document.getElementById('t_answer').value = "";
+                document.getElementById('t_reward').value = "";
+                document.getElementById('t_hours').value = "";
+            }
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').style.display = 'none';
+        }
+
+        async function saveTask() {
+            const q = document.getElementById('t_question').value.trim();
+            const a = document.getElementById('t_answer').value.trim();
+            const r = parseInt(document.getElementById('t_reward').value);
+            const h = parseFloat(document.getElementById('t_hours').value);
+
+            if(!q || !a || !r || !h) {
+                alert("请填写所有内容！");
+                return;
+            }
+
+            log.innerText = "正在发布任务...";
+            try {
+                let record = await getCoins();
+                
+                // 构建任务对象
+                const eventData = {
+                    question: q,
+                    answer: a,
+                    reward: r,
+                    expireTime: Date.now() + (h * 60 * 60 * 1000) // 计算过期时间戳
+                };
+
+                let payload = { 
+                    coins: record.coins, 
+                    transactions: record.transactions,
+                    activeEvent: eventData // 更新任务字段
+                };
+
+                await fetch(BASE_URL, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                    body: JSON.stringify(payload)
+                });
+
+                log.innerText = "✅ 任务发布成功！孩子端即将收到宝箱。";
+                closeTaskModal();
+            } catch(e) {
+                log.innerText = "❌ 发布失败";
             }
         }
 

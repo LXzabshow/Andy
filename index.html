@@ -191,10 +191,9 @@
         let isAnimating = false; 
         let isFirstRun = true;   
         
-        // 🌟 状态控制，防止重复启动
         let ambientInterval = null; 
         let syncInterval = null;
-        let lastScenario = -1; // 记录上一次的剧情，防止重复
+        let lastScenario = -1; 
 
         const RANKS = [
             { limit: 0, title: "🪵 新手伐木工" },
@@ -217,41 +216,38 @@
                 sfxLevelUp.load(); sfxExplode.load(); sfxHit.load();
             } catch(e){}
 
-            // 防止多次点击导致定时器叠加
             if(ambientInterval) clearInterval(ambientInterval);
             if(syncInterval) clearInterval(syncInterval);
 
             syncData();
-            syncInterval = setInterval(syncData, 60000); // 1分钟同步
+            syncInterval = setInterval(syncData, 60000); 
             
-            // 启动背景剧场
             playAmbientScenario();
             ambientInterval = setInterval(playAmbientScenario, 12000);
         }
 
-        // --- 🎭 智能导演系统 ---
+        // --- 核心修复：清场功能 ---
+        function clearAmbientActors() {
+            const ambients = document.querySelectorAll('.ambient-actor');
+            ambients.forEach(el => el.remove());
+        }
+
+        // --- 智能导演 ---
         function playAmbientScenario() {
             if (isAnimating) return; 
 
-            // 🌟 核心逻辑：强制不重复
             let scenario;
-            do {
-                scenario = Math.floor(Math.random() * 3);
-            } while (scenario === lastScenario);
+            do { scenario = Math.floor(Math.random() * 3); } while (scenario === lastScenario);
+            lastScenario = scenario; 
             
-            lastScenario = scenario; // 记住这次的
-            
-            // 剧本 A: 苦力怕 追 村民
             if (scenario === 0) {
                 spawnActor('skin-villager', 'left', 0, 8);
                 setTimeout(() => { spawnActor('skin-creeper', 'left', 0, 9); }, 1000);
             }
-            // 剧本 B: 武装村民 追 骷髅
             else if (scenario === 1) {
                 spawnActor('skin-skeleton', 'right', 0, 8);
                 setTimeout(() => { spawnActor('skin-villager', 'right', 1, 8); }, 800);
             }
-            // 剧本 C: 僵尸 / 小猪
             else {
                 const isNight = document.body.classList.contains('night');
                 if (isNight) {
@@ -264,17 +260,19 @@
         }
 
         function spawnActor(skinClass, direction, hasSword, duration) {
+            // 如果正在加减钱，禁止生成新的路人
+            if (isAnimating) return;
+
             const el = document.createElement('div');
-            el.className = `actor ${skinClass}`;
+            // 🌟 加上 ambient-actor 标签，方便清场
+            el.className = `actor ambient-actor ${skinClass}`;
             el.style.zIndex = 10; 
             
-            // 🌟 增加随机深度：上下浮动 0-20px，避免走直线
             const randomOffset = Math.floor(Math.random() * 20);
             el.style.bottom = (55 + randomOffset) + 'px';
             
             let inner = '';
-            if(skinClass.includes('steve')) inner = '<div class="head"></div><div class="hair"></div><div class="body"></div><div class="pants"></div>';
-            else if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
+            if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
             else if(skinClass.includes('villager')) inner = `<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>${hasSword?'<div class="sword">🗡️</div>':''}`;
             else if(skinClass.includes('skeleton')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
             else if(skinClass.includes('zombie')) inner = '<div class="head"></div><div class="body"></div><div class="arms"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
@@ -295,9 +293,9 @@
             setTimeout(() => { el.remove(); }, duration * 1000);
         }
 
-       // --- 核心同步逻辑 (修复刷新无动画问题) ---
+        // --- 同步逻辑 ---
         async function syncData() {
-            if(isAnimating) return; // 如果正在播放动画，暂时不处理
+            if(isAnimating) return;
             connStatus.innerText = "正在同步...";
             
             try {
@@ -305,55 +303,43 @@
                 let data = await res.json();
                 let cloudCoins = data.record.coins || 0;
 
-                // 读取本地缓存（上次看到的金币数）
+                // 首次读取本地缓存
                 let localStr = localStorage.getItem('andy_last_seen_coins');
 
-                // 情况A：这台手机第一次打开（没有缓存），或者缓存被清空了
+                // 如果是第一次打开（无缓存），直接静默更新
                 if (localStr === null) {
                     lastCoins = cloudCoins;
                     localStorage.setItem('andy_last_seen_coins', cloudCoins);
-                    
-                    // 直接静默显示，不播放动画
                     totalDisplay.innerText = cloudCoins;
                     updateRank(cloudCoins);
                     connStatus.innerText = "数据已同步";
                     return; 
                 }
 
-                // 情况B：不是第一次，读取缓存
                 lastCoins = parseInt(localStr);
 
-                // 开始对比：云端 vs 本地缓存
                 if (cloudCoins > lastCoins) {
-                    // 💰 钱变多了 -> 播放砍怪动画
                     let diff = cloudCoins - lastCoins;
                     playAttackSequence(diff, cloudCoins);
                 } else if (cloudCoins < lastCoins) {
-                    // 💥 钱变少了 -> 播放自爆动画
                     let diff = lastCoins - cloudCoins;
                     playExplodeSequence(diff, cloudCoins);
                 } else {
-                    // 🤝 钱没变 -> 静默更新状态
                     connStatus.innerText = "数据已同步";
-                    // 确保显示数字正确（防止意外）
                     totalDisplay.innerText = cloudCoins;
                     updateRank(cloudCoins);
                 }
                 
-                // 只要不一样，就更新本地缓存，哪怕是静默更新
                 if(cloudCoins !== lastCoins) {
                     localStorage.setItem('andy_last_seen_coins', cloudCoins);
                 }
-
-            } catch (error) {
-                console.error(error);
-                connStatus.innerText = "连接中..."; // 网络错误时不报错，只提示
-            }
+            } catch (error) { console.error(error); connStatus.innerText = "连接中..."; }
         }
 
-        // 🎬 剧场 A：挥剑砍怪 (加币)
+        // 🎬 剧场 A：加币
         function playAttackSequence(amount, finalCoins) {
             isAnimating = true;
+            clearAmbientActors(); // 🌟 关键：清场！
             uiLayer.style.opacity = '0'; 
             
             heroSteve.style.display = 'block';
@@ -382,9 +368,10 @@
             }, 3000);
         }
 
-        // 🎬 剧场 B：自爆 (扣币)
+        // 🎬 剧场 B：扣币
         function playExplodeSequence(amount, finalCoins) {
             isAnimating = true;
+            clearAmbientActors(); // 🌟 关键：清场！
             uiLayer.style.opacity = '0';
             
             heroCreeper.style.display = 'block';

@@ -36,10 +36,9 @@
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
 
-        /* ------------------- 🎁 飞行宝箱 (优化版) ------------------- */
+        /* ------------------- 🎁 飞行宝箱 ------------------- */
         #treasure-chest {
             position: fixed; 
-            /* 初始位置 */
             top: 10%; 
             left: 50%;
             font-size: 60px;
@@ -47,13 +46,9 @@
             cursor: pointer;
             filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
             display: none; 
-            /* 关键：使用 transition 实现平滑飞行 */
             transition: top 4s ease-in-out, left 4s ease-in-out;
         }
-        /* 增加一个微小的自身抖动，看起来更像在飞 */
-        .chest-float-anim {
-            animation: bobbing 1s infinite alternate;
-        }
+        .chest-float-anim { animation: bobbing 1s infinite alternate; }
         @keyframes bobbing { from { transform: translateY(0); } to { transform: translateY(-5px); } }
 
         /* 挑战答题弹窗 */
@@ -70,7 +65,8 @@
         .challenge-title { font-size: 28px; color: #333; margin-bottom: 10px; text-shadow: 1px 1px #fff; }
         .challenge-q { font-size: 24px; color: #000; margin: 20px 0; font-weight: bold; background: #fff; padding: 10px; border: 2px solid #555;}
         .challenge-reward { color: #00aa00; font-size: 20px; margin-bottom: 10px; }
-        .challenge-timer { color: #c0392b; font-size: 20px; margin-bottom: 20px; font-weight: bold;}
+        /* 倒计时样式优化：更醒目 */
+        .challenge-timer { color: #c0392b; font-size: 24px; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; font-family: monospace;}
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; }
         .btn-close-modal { background: #c0392b; margin-left: 10px; }
@@ -283,11 +279,9 @@
 
         // --- 宝箱随机飞行逻辑 ---
         function startFloatingChest() {
-            // 如果已经在飞了，就不重复启动
             if(chestFloatInterval) return; 
-            
-            moveChest(); // 先动一下
-            chestFloatInterval = setInterval(moveChest, 3500); // 每3.5秒换个位置
+            moveChest(); 
+            chestFloatInterval = setInterval(moveChest, 3500); 
         }
 
         function stopFloatingChest() {
@@ -324,12 +318,12 @@
                     activeEventData = event;
                     if(chest.style.display !== 'block') {
                         chest.style.display = 'block';
-                        startFloatingChest(); // 启动飞行
+                        startFloatingChest(); 
                     }
                 } else {
                     activeEventData = null;
                     chest.style.display = 'none';
-                    stopFloatingChest(); // 停止计算
+                    stopFloatingChest(); 
                     if(cModal.style.display === 'flex') closeChallengeModal(); 
                 }
 
@@ -391,12 +385,18 @@
                 stopFloatingChest();
                 return;
             }
-            // 倒计时格式化: XX天 XX小时 XX分
+            // 🌟 倒计时格式优化：XX天 XX小时 XX分 XX秒
             let d = Math.floor(diff / (1000 * 60 * 60 * 24));
             let h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            let s = Math.floor((diff % (1000 * 60)) / 1000);
             
-            document.getElementById('c_timer').innerText = `剩余时间: ${d}天 ${h}小时 ${m}分`;
+            // 补零美化
+            let hStr = h < 10 ? "0" + h : h;
+            let mStr = m < 10 ? "0" + m : m;
+            let sStr = s < 10 ? "0" + s : s;
+            
+            document.getElementById('c_timer').innerText = `剩余时间: ${d}天 ${hStr}小时 ${mStr}分 ${sStr}秒`;
         }
 
         async function submitAnswer() {

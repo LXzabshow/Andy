@@ -18,28 +18,57 @@
         .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(white 1px, transparent 1px); background-size: 50px 50px; opacity: 0; transition: opacity 2s; z-index: 0; pointer-events: none; }
         body.night .stars { opacity: 0.5; } 
         body.night { background-color: #1a0b2e; }
-        
         .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 20; }
 
         /* ------------------- UI 界面 ------------------- */
         .ui-container { margin-top: 8vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.3s;}
         .card { background-color: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 20px; position: relative; }
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
-        
         .rank-badge { background: #333; color: #f1c40f; padding: 2px 10px; border: 2px solid #fff; display: inline-block; margin-bottom: 15px; font-size: 18px; border-radius: 4px; }
-        
         .slot { background: #8b8b8b; width: 120px; height: 120px; margin: 0 auto; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
         .slot:active .coin-icon { transform: scale(0.8); }
         .coin-icon { font-size: 70px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
-        
         .label { color: #404040; font-size: 20px; margin-top: 15px; font-weight: bold; text-shadow: 1px 1px #fff;}
         .total { font-size: 80px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 5px 0; line-height: 1; }
-        
         .status-bar { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 14px; display: inline-flex; align-items: center; margin-top: 10px; border: 2px solid #555; }
         .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
         .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
         .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
+
+        /* ------------------- 🎁 悬赏宝箱 ------------------- */
+        #treasure-chest {
+            position: fixed; 
+            top: 15%; /* 屏幕中上部 */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 60px; /* 大约是币图标的一半大 (币是70px+padding) */
+            z-index: 200;
+            cursor: pointer;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
+            animation: floatChest 3s ease-in-out infinite;
+            display: none; /* 默认隐藏 */
+        }
+        @keyframes floatChest { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -15px); } }
+
+        /* 挑战答题弹窗 (MC 风格) */
+        #challengeModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 300;
+            display: none; justify-content: center; align-items: center;
+        }
+        .challenge-card {
+            background: #c6c6c6; border: 4px solid #000;
+            box-shadow: inset 4px 4px #fff, inset -4px -4px #555;
+            padding: 20px; width: 85%; max-width: 350px; text-align: center;
+        }
+        .challenge-title { font-size: 28px; color: #333; margin-bottom: 10px; text-shadow: 1px 1px #fff; }
+        .challenge-q { font-size: 24px; color: #000; margin: 20px 0; font-weight: bold; background: #fff; padding: 10px; border: 2px solid #555;}
+        .challenge-reward { color: #00aa00; font-size: 20px; margin-bottom: 10px; }
+        .challenge-timer { color: #c0392b; font-size: 18px; margin-bottom: 20px; }
+        .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
+        .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; }
+        .btn-close-modal { background: #c0392b; margin-left: 10px; }
 
         /* ------------------- 角色系统 ------------------- */
         .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 15;}
@@ -141,6 +170,21 @@
     <audio id="sfx-fuse"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/fuse.ogg" type="audio/ogg"></audio>
     <audio id="sfx-click"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/click.ogg" type="audio/ogg"></audio>
 
+    <div id="treasure-chest" onclick="openChallengeModal()">🎁</div>
+
+    <div id="challengeModal">
+        <div class="challenge-card">
+            <div class="challenge-title">📜 冒险家挑战</div>
+            <div class="challenge-reward">奖励: <span id="c_reward">50</span> 币</div>
+            <div class="challenge-timer" id="c_timer">剩余时间: 00:00</div>
+            <div class="challenge-q" id="c_question">题目加载中...</div>
+            <input type="text" id="c_input" class="challenge-input" placeholder="输入答案">
+            <br>
+            <button class="btn-submit" onclick="submitAnswer()">确定</button>
+            <button class="btn-submit btn-close-modal" onclick="closeChallengeModal()">关闭</button>
+        </div>
+    </div>
+
     <div class="ui-container" id="uiLayer">
         <div class="card">
             <div class="mute-btn" onclick="toggleMute()">🔊</div>
@@ -179,6 +223,9 @@
         const heroSteve = document.getElementById('hero-steve');
         const heroCreeper = document.getElementById('hero-creeper');
         
+        const chest = document.getElementById('treasure-chest');
+        const cModal = document.getElementById('challengeModal');
+        
         const bgm = document.getElementById('bgm');
         const sfxLevelUp = document.getElementById('sfx-levelup');
         const sfxExplode = document.getElementById('sfx-explode'); 
@@ -194,6 +241,9 @@
         let ambientInterval = null; 
         let syncInterval = null;
         let lastScenario = -1; 
+        
+        let activeEventData = null; // 存储当前活动
+        let timerInterval = null;
 
         const RANKS = [
             { limit: 0, title: "🪵 新手伐木工" },
@@ -226,16 +276,150 @@
             ambientInterval = setInterval(playAmbientScenario, 12000);
         }
 
-        // --- 核心修复：清场功能 ---
+        // --- 核心同步逻辑 ---
+        async function syncData() {
+            // 注意：不在这里 return isAnimating，因为我们需要持续检查宝箱状态
+            connStatus.innerText = "正在同步...";
+            
+            try {
+                let res = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
+                let data = await res.json();
+                let cloudCoins = data.record.coins || 0;
+                let event = data.record.activeEvent;
+
+                // 处理宝箱逻辑
+                if(event && event.expireTime > Date.now()) {
+                    activeEventData = event;
+                    chest.style.display = 'block'; // 显示宝箱
+                } else {
+                    activeEventData = null;
+                    chest.style.display = 'none'; // 隐藏宝箱
+                    if(cModal.style.display === 'flex') closeChallengeModal(); // 如果过期时正好开着窗，关掉
+                }
+
+                // 金币逻辑
+                if (lastCoins === null || isFirstRun) {
+                    lastCoins = cloudCoins;
+                    totalDisplay.innerText = cloudCoins;
+                    updateRank(cloudCoins);
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                    connStatus.innerText = "数据已同步";
+                    isFirstRun = false;
+                    return; 
+                }
+
+                lastCoins = parseInt(localStorage.getItem('andy_last_seen_coins'));
+
+                if (cloudCoins > lastCoins) {
+                    let diff = cloudCoins - lastCoins;
+                    playAttackSequence(diff, cloudCoins);
+                } else if (cloudCoins < lastCoins) {
+                    let diff = lastCoins - cloudCoins;
+                    playExplodeSequence(diff, cloudCoins);
+                } else {
+                    connStatus.innerText = "数据已同步";
+                    totalDisplay.innerText = cloudCoins;
+                    updateRank(cloudCoins);
+                }
+                
+                if(cloudCoins !== lastCoins) {
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                }
+            } catch (error) { console.error(error); connStatus.innerText = "连接中..."; }
+        }
+
+        // --- 🎁 宝箱交互逻辑 ---
+        function openChallengeModal() {
+            if(!activeEventData) return;
+            
+            cModal.style.display = 'flex';
+            document.getElementById('c_question').innerText = activeEventData.question;
+            document.getElementById('c_reward').innerText = activeEventData.reward;
+            document.getElementById('c_input').value = "";
+            
+            // 启动倒计时
+            if(timerInterval) clearInterval(timerInterval);
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function closeChallengeModal() {
+            cModal.style.display = 'none';
+            if(timerInterval) clearInterval(timerInterval);
+        }
+
+        function updateTimer() {
+            if(!activeEventData) return;
+            let left = activeEventData.expireTime - Date.now();
+            if(left <= 0) {
+                closeChallengeModal();
+                chest.style.display = 'none';
+                return;
+            }
+            let m = Math.floor(left / 60000);
+            let s = Math.floor((left % 60000) / 1000);
+            document.getElementById('c_timer').innerText = `剩余时间: ${m}:${s < 10 ? '0'+s : s}`;
+        }
+
+        async function submitAnswer() {
+            if(!activeEventData) return;
+            const inputVal = document.getElementById('c_input').value.trim();
+            const correctVal = activeEventData.answer.trim();
+
+            if(inputVal === correctVal) {
+                // 答对了！
+                playSound('levelup');
+                createParticles(100, '💰');
+                createParticles(50, '✨'); // 额外烟花
+                
+                closeChallengeModal();
+                chest.style.display = 'none'; // 立即隐藏
+                statusMsg.innerText = `挑战成功！奖励 +${activeEventData.reward}`;
+                statusMsg.style.color = "#00aa00";
+
+                // 更新云端：加钱 + 删除任务
+                try {
+                    let recordRes = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
+                    let json = await recordRes.json();
+                    let record = json.record;
+                    
+                    let newCoins = record.coins + activeEventData.reward;
+                    
+                    let payload = {
+                        coins: newCoins,
+                        transactions: record.transactions,
+                        activeEvent: null // 删除任务
+                    };
+
+                    await fetch(BASE_URL, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    // 本地立即更新
+                    lastCoins = newCoins;
+                    totalDisplay.innerText = newCoins;
+                    updateRank(newCoins);
+                    localStorage.setItem('andy_last_seen_coins', newCoins);
+
+                } catch(e) { console.error("领奖失败", e); }
+
+            } else {
+                // 答错了
+                playSound('fuse'); // 播放嘶嘶声提示错误
+                alert("❌ 答案不对哦，请再想一想！");
+            }
+        }
+
+        // --- 剧情与特效 (保持不变) ---
         function clearAmbientActors() {
             const ambients = document.querySelectorAll('.ambient-actor');
             ambients.forEach(el => el.remove());
         }
 
-        // --- 智能导演 ---
         function playAmbientScenario() {
             if (isAnimating) return; 
-
             let scenario;
             do { scenario = Math.floor(Math.random() * 3); } while (scenario === lastScenario);
             lastScenario = scenario; 
@@ -260,14 +444,10 @@
         }
 
         function spawnActor(skinClass, direction, hasSword, duration) {
-            // 如果正在加减钱，禁止生成新的路人
             if (isAnimating) return;
-
             const el = document.createElement('div');
-            // 🌟 加上 ambient-actor 标签，方便清场
             el.className = `actor ambient-actor ${skinClass}`;
             el.style.zIndex = 10; 
-            
             const randomOffset = Math.floor(Math.random() * 20);
             el.style.bottom = (55 + randomOffset) + 'px';
             
@@ -277,7 +457,6 @@
             else if(skinClass.includes('skeleton')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
             else if(skinClass.includes('zombie')) inner = '<div class="head"></div><div class="body"></div><div class="arms"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
             else if(skinClass.includes('pig')) inner = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="leg" style="left:0"></div><div class="leg" style="left:25px"></div>';
-            
             el.innerHTML = inner;
 
             if (direction === 'left') {
@@ -293,53 +472,9 @@
             setTimeout(() => { el.remove(); }, duration * 1000);
         }
 
-        // --- 同步逻辑 ---
-        async function syncData() {
-            if(isAnimating) return;
-            connStatus.innerText = "正在同步...";
-            
-            try {
-                let res = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
-                let data = await res.json();
-                let cloudCoins = data.record.coins || 0;
-
-                // 首次读取本地缓存
-                let localStr = localStorage.getItem('andy_last_seen_coins');
-
-                // 如果是第一次打开（无缓存），直接静默更新
-                if (localStr === null) {
-                    lastCoins = cloudCoins;
-                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
-                    totalDisplay.innerText = cloudCoins;
-                    updateRank(cloudCoins);
-                    connStatus.innerText = "数据已同步";
-                    return; 
-                }
-
-                lastCoins = parseInt(localStr);
-
-                if (cloudCoins > lastCoins) {
-                    let diff = cloudCoins - lastCoins;
-                    playAttackSequence(diff, cloudCoins);
-                } else if (cloudCoins < lastCoins) {
-                    let diff = lastCoins - cloudCoins;
-                    playExplodeSequence(diff, cloudCoins);
-                } else {
-                    connStatus.innerText = "数据已同步";
-                    totalDisplay.innerText = cloudCoins;
-                    updateRank(cloudCoins);
-                }
-                
-                if(cloudCoins !== lastCoins) {
-                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
-                }
-            } catch (error) { console.error(error); connStatus.innerText = "连接中..."; }
-        }
-
-        // 🎬 剧场 A：加币
         function playAttackSequence(amount, finalCoins) {
             isAnimating = true;
-            clearAmbientActors(); // 🌟 关键：清场！
+            clearAmbientActors(); 
             uiLayer.style.opacity = '0'; 
             
             heroSteve.style.display = 'block';
@@ -368,10 +503,9 @@
             }, 3000);
         }
 
-        // 🎬 剧场 B：扣币
         function playExplodeSequence(amount, finalCoins) {
             isAnimating = true;
-            clearAmbientActors(); // 🌟 关键：清场！
+            clearAmbientActors(); 
             uiLayer.style.opacity = '0';
             
             heroCreeper.style.display = 'block';

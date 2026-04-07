@@ -103,14 +103,14 @@
         
         const display = document.getElementById('currentCoins');
         const log = document.getElementById('log');
-        const PASS = "8888"; 
+        //const PASS = "8888"; 
         
         let currentData = null;
 
         window.onload = function() {
-            if(prompt("请输入家长密码") !== PASS) { 
-                document.body.innerHTML = "<h3 style='color:red'>密码错误</h3>"; return;
-            }
+        //    if(prompt("请输入家长密码") !== PASS) { 
+        //        document.body.innerHTML = "<h3 style='color:red'>密码错误</h3>"; return;
+        //    }
             getCoins();
         };
 

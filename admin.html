@@ -41,15 +41,17 @@
         <div class="card">
             <div class="card-header"><h3>💰 资产余额</h3></div>
             <div id="currentCoins" class="big-num">...</div>
+            
             <div class="grid">
                 <button class="btn-add" onclick="modifyCoins(50, '额外大奖')">+50 大奖</button>
                 <button class="btn-sub" onclick="modifyCoins(-50, '兑换奖励')">-50 兑换</button>
             </div>
-            <div style="margin-top: 15px;">
-                <input type="number" id="manualInput" class="input-box" placeholder="自定义数额">
+            
+            <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 15px;">
+                <input type="number" id="manualInput" class="input-box" placeholder="输入自定义数额 (如: 20)">
                 <div class="grid">
-                    <button class="btn-add" onclick="manualMod(1)">惩罚(-)</button>
-                    <button class="btn-sub" onclick="manualMod(-1)">奖励(+)</button>
+                    <button class="btn-add" onclick="manualMod(1)">奖励 (+)</button>
+                    <button class="btn-sub" onclick="manualMod(-1)">惩罚 (-)</button>
                 </div>
             </div>
         </div>
@@ -77,9 +79,10 @@
             </div>
             <div class="flex-row" style="margin-top:10px;">
                 <span>每日数额:</span>
-                <input type="number" id="dailyAmount" class="input-box" style="width:70px; padding:5px; text-align:center;">
+                <input type="number" id="dailyAmount" class="input-box" style="width:70px; padding:5px; text-align:center;" onchange="saveDaily()">
             </div>
         </div>
+        
         <div id="log-status">数据同步中...</div>
     </div>
 
@@ -131,9 +134,14 @@
             getCoins();
         }
 
+        // 修正后的自定义输入逻辑
         function manualMod(sign) {
             let val = parseInt(document.getElementById('manualInput').value);
-            if(val) modifyCoins(val * sign, "手动调整");
+            if(val > 0) {
+                // val 取绝对值计算，sign 决定加减
+                modifyCoins(val * sign, sign > 0 ? "手动奖励" : "手动惩罚");
+                document.getElementById('manualInput').value = ""; // 执行后清空输入框
+            }
         }
 
         async function saveDaily() {

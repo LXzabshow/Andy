@@ -3,125 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家长控制台</title>
+    <title>家长控制面板</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px 10px; background: #1a1a1a; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 20px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px 10px; background: #121212; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 15px; }
+        .card { background: #1e1e1e; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #333; }
+        .card-header h3 { margin: 0; color: #888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .big-num { font-size: 60px; font-weight: bold; margin: 10px 0; color: #ffb700; text-align: center; font-family: 'Courier New', monospace;}
         
-        .card { background: #2c2c2e; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        .card-header h3 { margin: 0; color: #a1a1aa; font-size: 16px; font-weight: 600; }
-        
-        .big-num { font-size: 70px; font-weight: bold; margin: 10px 0 20px 0; color: #ffb700; text-shadow: 0 0 15px rgba(255, 183, 0, 0.2); text-align: center; font-family: monospace;}
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        
-        button { padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.1s, opacity 0.2s; }
-        button:active { transform: scale(0.96); opacity: 0.8; }
-        
-        .btn-add { background: #27ae60; color: white; }
-        .btn-sub { background: #c0392b; color: white; }
+        /* 日志样式 */
+        .log-item { background: #252525; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; border-left: 4px solid #007aff; display: flex; justify-content: space-between; }
+        .log-time { color: #666; font-family: monospace; }
+        .log-action { color: #ddd; font-weight: bold; }
+        .log-amount { color: #27ae60; font-weight: bold; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;}
+        button { padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.1s; }
+        button:active { transform: scale(0.95); }
+        .btn-add { background: #1c7a44; color: white; }
+        .btn-sub { background: #962d22; color: white; }
         .btn-primary { background: #007aff; color: white; width: 100%; }
-        
-        .input-box { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #555; background: #1e1e1e; color: white; font-size: 16px; box-sizing: border-box; margin-bottom: 10px;}
-        textarea.input-box { resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5; }
+        .input-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #121212; color: white; font-size: 16px; box-sizing: border-box; }
         
         .flex-row { display: flex; justify-content: space-between; align-items: center; }
-        .hint-text { color: #888; font-size: 13px; line-height: 1.4; margin-top: 10px; }
-        
-        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch { position: relative; width: 44px; height: 24px; display: inline-block; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background-color: #34c759; }
-        input:checked + .slider:before { transform: translateX(22px); }
-
-        #log { color: #aaa; font-size: 13px; text-align: center; margin-top: 10px; min-height: 20px; }
-
-        #taskModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; display: none; justify-content: center; align-items: center; }
-        .modal-content { background: #2c2c2e; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; }
-        .modal-content h3 { margin-top: 0; text-align: center; color: white; font-size: 20px; margin-bottom: 20px;}
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 8px; color: #a1a1aa; font-size: 14px;}
-        .modal-btns { display: flex; gap: 10px; margin-top: 25px; }
-        .btn-cancel { background: #444; color: white; flex: 1; }
-        .btn-confirm { background: #34c759; color: white; flex: 1; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        
+        #log-status { color: #888; font-size: 12px; text-align: center; padding: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        
         <div class="card">
-            <div class="card-header"><h3>💰 资产看板</h3></div>
+            <div class="card-header"><h3>💰 资产余额</h3></div>
             <div id="currentCoins" class="big-num">...</div>
             <div class="grid">
-                <button class="btn-add" onclick="modifyCoins(10)">+10 奖励</button>
-                <button class="btn-add" onclick="modifyCoins(50)">+50 大奖</button>
-                <button class="btn-sub" onclick="modifyCoins(-10)">-10 扣除</button>
-                <button class="btn-sub" onclick="modifyCoins(-50)">-50 兑换</button>
+                <button class="btn-add" onclick="modifyCoins(50, '额外大奖')">+50 大奖</button>
+                <button class="btn-sub" onclick="modifyCoins(-50, '兑换奖励')">-50 兑换</button>
             </div>
-            <div style="margin-top: 15px; border-top: 1px solid #444; padding-top: 15px;">
-                <input type="number" id="manualInput" class="input-box" placeholder="输入自定义金额">
+            <div style="margin-top: 15px;">
+                <input type="number" id="manualInput" class="input-box" placeholder="自定义数额">
                 <div class="grid">
-                    <button class="btn-add" onclick="manualMod(1)">精准增加</button>
-                    <button class="btn-sub" onclick="manualMod(-1)">精准扣除</button>
+                    <button class="btn-add" onclick="manualMod(1)">惩罚(-)</button>
+                    <button class="btn-sub" onclick="manualMod(-1)">奖励(+)</button>
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <div class="card-header"><h3>📜 任务分发</h3></div>
-            <button class="btn-primary" onclick="openTaskModal()">✨ 发布随机悬赏任务</button>
-            <div class="hint-text">发布后，孩子端将出现飞行宝箱。正确答题可获取奖励，超时自动失效。</div>
+            <div class="card-header"><h3>🕒 最近申报记录 (审计)</h3></div>
+            <div id="childLogList" style="margin-top:10px;">
+                <div style="text-align:center; color:#555; padding:20px;">暂无申报记录</div>
+            </div>
         </div>
 
         <div class="card">
-            <div class="card-header"><h3>⚙️ 自动化规则</h3></div>
-            <div class="flex-row">
-                <span style="font-size: 16px; font-weight: bold;">每日固定消耗</span>
+            <div class="card-header"><h3>📜 挑战任务</h3></div>
+            <button class="btn-primary" style="margin-top:10px;" onclick="location.href='https://andy-world.top/index.html'">前往发布任务</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>⚙️ 规则设置</h3></div>
+            <div class="flex-row" style="margin-top:15px;">
+                <span>每日自动扣除:</span>
                 <label class="switch">
-                    <input type="checkbox" id="dailyToggle" onchange="toggleDailyUI()">
+                    <input type="checkbox" id="dailyToggle" onchange="saveDaily()">
                     <span class="slider"></span>
                 </label>
             </div>
-            <div id="dailySettings" style="display:none; margin-top: 15px;">
-                <div class="flex-row" style="margin-bottom: 10px;">
-                    <span style="color:#aaa;">每日扣除额度:</span>
-                    <div><input type="number" id="dailyAmount" class="input-box" style="width: 80px; margin: 0; text-align: center; padding: 8px;"> 币</div>
-                </div>
-                <button class="btn-primary" onclick="saveDailyConfig()">保存规则生效</button>
-            </div>
-            <div class="hint-text">开启后，系统将在每日零点自动执行扣减。若多日未登录，系统将在下次联网时合并结算。最多扣至 0 币。</div>
-        </div>
-
-        <div id="log">系统加载中...</div>
-    </div>
-
-    <div id="taskModal">
-        <div class="modal-content">
-            <h3>发布悬赏挑战</h3>
-            <div class="form-group">
-                <label>问题描述 (可回车换行)</label>
-                <textarea id="t_question" class="input-box" placeholder="例如：&#10;1. 树上有3只鸟&#10;2. 飞走了1只&#10;问：还剩几只？"></textarea>
-            </div>
-            <div class="form-group">
-                <label>标准答案 (需完全匹配)</label>
-                <input type="text" id="t_answer" class="input-box" placeholder="例如：2">
-            </div>
-            <div class="grid">
-                <div class="form-group">
-                    <label>奖励币数</label>
-                    <input type="number" id="t_reward" class="input-box" placeholder="如：50">
-                </div>
-                <div class="form-group">
-                    <label>有效时间 (小时)</label>
-                    <input type="number" id="t_hours" class="input-box" placeholder="如：2">
-                </div>
-            </div>
-            <div class="modal-btns">
-                <button class="btn-cancel" onclick="closeTaskModal()">取消</button>
-                <button class="btn-confirm" onclick="saveTask()">发布至云端</button>
+            <div class="flex-row" style="margin-top:10px;">
+                <span>每日数额:</span>
+                <input type="number" id="dailyAmount" class="input-box" style="width:70px; padding:5px; text-align:center;">
             </div>
         </div>
+        <div id="log-status">数据同步中...</div>
     </div>
 
     <script>
@@ -129,154 +88,69 @@
         const API_KEY = '$2a$10$pSEOl/63AtvEMUqQopzGeuhVgcRcfXSz5L8lyQdZZHZM66zdYKI0O'; 
         const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
         
-        const display = document.getElementById('currentCoins');
-        const log = document.getElementById('log');
         let currentData = null;
 
-        function getTodayStr() {
-            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-            let y, m, d;
-            parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
-            return `${y}-${m}-${d}`;
-        }
-
-        function getDaysDiff(d1Str, d2Str) {
-            if(!d1Str || !d2Str) return 0;
-            const [y1,m1,da1] = d1Str.split('-').map(Number);
-            const [y2,m2,da2] = d2Str.split('-').map(Number);
-            const date1 = Date.UTC(y1, m1-1, da1);
-            const date2 = Date.UTC(y2, m2-1, da2);
-            return Math.floor((date2 - date1) / (1000 * 60 * 60 * 24));
-        }
-
-        async function checkAndApplyDailyDeduction(record) {
-            if (!record.dailyConfig || !record.dailyConfig.enabled) return record;
-            let today = getTodayStr();
-            let diffDays = getDaysDiff(record.dailyConfig.lastDeductDate, today);
-            
-            if (diffDays > 0) {
-                let totalDeduct = diffDays * record.dailyConfig.amount;
-                let deductedAmount = Math.min(record.coins, totalDeduct);
-                record.coins = Math.max(0, record.coins - totalDeduct);
-                // 更新时强制验证并保留最大历史记录
-                record.historicalMaxCoins = Math.max(record.coins, record.historicalMaxCoins || 0);
-                record.dailyConfig.lastDeductDate = today;
-                try {
-                    await fetch(BASE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(record) });
-                    record._justAutoDeducted = deductedAmount;
-                } catch (e) { console.error(e); }
-            }
-            return record;
-        }
-
-        // 移除了密码验证逻辑
-        window.onload = function() {
-            getCoins();
-        };
-
         async function getCoins() {
-            log.innerText = "数据同步中...";
             try {
                 let res = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
                 let json = await res.json();
+                currentData = json.record;
+                document.getElementById('currentCoins').innerText = currentData.coins;
                 
-                let record = await checkAndApplyDailyDeduction(json.record);
-                currentData = record;
-                
-                display.innerText = record.coins;
-                
-                if(record.dailyConfig) {
-                    document.getElementById('dailyToggle').checked = record.dailyConfig.enabled;
-                    document.getElementById('dailyAmount').value = record.dailyConfig.amount;
-                    toggleDailyUI();
+                // 渲染日志
+                const logContainer = document.getElementById('childLogList');
+                if(currentData.childLogs && currentData.childLogs.length > 0) {
+                    logContainer.innerHTML = currentData.childLogs.map(log => `
+                        <div class="log-item">
+                            <span class="log-time">[${log.time}]</span>
+                            <span class="log-action">${log.action}</span>
+                            <span class="log-amount">${log.amount > 0 ? '+'+log.amount : log.amount}</span>
+                        </div>
+                    `).join('');
                 }
 
-                if(record._justAutoDeducted > 0) log.innerText = `💡 自动结算：已合并扣除日常消耗 ${record._justAutoDeducted} 币`;
-                else log.innerText = "✅ 数据同步完成";
-                
-                return record;
-            } catch (e) { log.innerText = "❌ 网络异常，请刷新"; }
+                // 渲染自动配置
+                if(currentData.dailyConfig) {
+                    document.getElementById('dailyToggle').checked = currentData.dailyConfig.enabled;
+                    document.getElementById('dailyAmount').value = currentData.dailyConfig.amount;
+                }
+                document.getElementById('log-status').innerText = "✅ 同步成功 - " + new Date().toLocaleTimeString();
+            } catch (e) { document.getElementById('log-status').innerText = "❌ 刷新失败"; }
         }
 
-        async function modifyCoins(amount) {
-            log.innerText = "云端写入中...";
-            try {
-                let record = await getCoins();
-                let newCoins = Math.max(0, record.coins + amount); 
-                // 核心逻辑：记录历史最高金币水位线
-                let newMax = Math.max(newCoins, record.historicalMaxCoins || 0);
-                
-                let payload = { ...record, coins: newCoins, historicalMaxCoins: newMax };
-                delete payload._justAutoDeducted; 
-                
-                await fetch(BASE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(payload) });
-                
-                display.innerText = newCoins;
-                log.innerText = `✅ 资产变动成功！当前余币: ${newCoins}`;
-            } catch (e) { log.innerText = "❌ 写入失败"; }
+        async function modifyCoins(amount, reason) {
+            document.getElementById('log-status').innerText = "写入云端...";
+            let record = currentData;
+            let newCoins = Math.max(0, record.coins + amount);
+            let payload = { ...record, coins: newCoins, historicalMaxCoins: Math.max(newCoins, record.historicalMaxCoins || 0) };
+            
+            await fetch(BASE_URL, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                body: JSON.stringify(payload)
+            });
+            getCoins();
         }
 
         function manualMod(sign) {
             let val = parseInt(document.getElementById('manualInput').value);
-            if(val) { modifyCoins(val * sign); document.getElementById('manualInput').value = ""; }
+            if(val) modifyCoins(val * sign, "手动调整");
         }
 
-        function toggleDailyUI() { document.getElementById('dailySettings').style.display = document.getElementById('dailyToggle').checked ? 'block' : 'none'; }
-
-        async function saveDailyConfig() {
-            let enabled = document.getElementById('dailyToggle').checked;
-            let amount = parseInt(document.getElementById('dailyAmount').value) || 0;
-            
-            log.innerText = "保存规则中...";
-            let record = await getCoins();
-            let payload = {
-                ...record,
-                historicalMaxCoins: Math.max(record.coins, record.historicalMaxCoins || 0),
-                dailyConfig: { enabled: enabled, amount: amount, lastDeductDate: getTodayStr() }
+        async function saveDaily() {
+            let record = currentData;
+            record.dailyConfig = {
+                enabled: document.getElementById('dailyToggle').checked,
+                amount: parseInt(document.getElementById('dailyAmount').value) || 0,
+                lastDeductDate: new Date().toISOString().split('T')[0]
             };
-            delete payload._justAutoDeducted;
-
-            await fetch(BASE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(payload) });
-            log.innerText = "✅ 自动消耗规则已生效，将于次日执行";
+            await fetch(BASE_URL, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+                body: JSON.stringify(record)
+            });
+            getCoins();
         }
 
-        async function openTaskModal() {
-            document.getElementById('taskModal').style.display = 'flex';
-            let record = await getCoins();
-            const now = Date.now();
-            if(record.activeEvent && record.activeEvent.expireTime > now) {
-                document.getElementById('t_question').value = record.activeEvent.question;
-                document.getElementById('t_answer').value = record.activeEvent.answer;
-                document.getElementById('t_reward').value = record.activeEvent.reward;
-                document.getElementById('t_hours').value = Math.ceil((record.activeEvent.expireTime - now) / 3600000);
-            } else {
-                ['t_question','t_answer','t_reward','t_hours'].forEach(id => document.getElementById(id).value = "");
-            }
-        }
-
-        function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
-
-        async function saveTask() {
-            const q = document.getElementById('t_question').value.trim();
-            const a = document.getElementById('t_answer').value.trim();
-            const r = parseInt(document.getElementById('t_reward').value);
-            const h = parseFloat(document.getElementById('t_hours').value);
-
-            if(!q || !a || !r || !h) return alert("请完整填写表单！");
-
-            log.innerText = "云端分发中...";
-            let record = await getCoins();
-            let payload = { 
-                ...record, 
-                historicalMaxCoins: Math.max(record.coins, record.historicalMaxCoins || 0),
-                activeEvent: { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 60 * 60 * 1000) }
-            };
-            delete payload._justAutoDeducted;
-
-            await fetch(BASE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(payload) });
-            log.innerText = "✅ 宝箱已空投至孩子端！";
-            closeTaskModal();
-        }
+        window.onload = () => { getCoins(); setInterval(getCoins, 10000); };
     </script>
 </body>
 </html>

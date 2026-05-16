@@ -8,7 +8,6 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px 10px; background: #1a1a1a; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 20px; }
         
-        /* 🌟 便当盒 (Bento Box) 卡片设计 */
         .card { background: #2c2c2e; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
         .card-header h3 { margin: 0; color: #a1a1aa; font-size: 16px; font-weight: 600; }
@@ -29,7 +28,6 @@
         .flex-row { display: flex; justify-content: space-between; align-items: center; }
         .hint-text { color: #888; font-size: 13px; line-height: 1.4; margin-top: 10px; }
         
-        /* 开关按钮样式 */
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 34px; }
@@ -39,7 +37,6 @@
 
         #log { color: #aaa; font-size: 13px; text-align: center; margin-top: 10px; min-height: 20px; }
 
-        /* 任务弹窗 */
         #taskModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; display: none; justify-content: center; align-items: center; }
         .modal-content { background: #2c2c2e; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; }
         .modal-content h3 { margin-top: 0; text-align: center; color: white; font-size: 20px; margin-bottom: 20px;}
@@ -134,10 +131,8 @@
         
         const display = document.getElementById('currentCoins');
         const log = document.getElementById('log');
-        
         let currentData = null;
 
-        // --- 时间辅助函数 ---
         function getTodayStr() {
             const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
             let y, m, d;
@@ -154,7 +149,6 @@
             return Math.floor((date2 - date1) / (1000 * 60 * 60 * 24));
         }
 
-        // --- 自动化拦截器 (核心) ---
         async function checkAndApplyDailyDeduction(record) {
             if (!record.dailyConfig || !record.dailyConfig.enabled) return record;
             let today = getTodayStr();
@@ -164,6 +158,8 @@
                 let totalDeduct = diffDays * record.dailyConfig.amount;
                 let deductedAmount = Math.min(record.coins, totalDeduct);
                 record.coins = Math.max(0, record.coins - totalDeduct);
+                // 更新时强制验证并保留最大历史记录
+                record.historicalMaxCoins = Math.max(record.coins, record.historicalMaxCoins || 0);
                 record.dailyConfig.lastDeductDate = today;
                 try {
                     await fetch(BASE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(record) });
@@ -173,6 +169,7 @@
             return record;
         }
 
+        // 移除了密码验证逻辑
         window.onload = function() {
             getCoins();
         };
@@ -183,14 +180,11 @@
                 let res = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
                 let json = await res.json();
                 
-                // 1. 触发自动结算拦截器
                 let record = await checkAndApplyDailyDeduction(json.record);
                 currentData = record;
                 
-                // 2. 渲染资产
                 display.innerText = record.coins;
                 
-                // 3. 渲染规则
                 if(record.dailyConfig) {
                     document.getElementById('dailyToggle').checked = record.dailyConfig.enabled;
                     document.getElementById('dailyAmount').value = record.dailyConfig.amount;
@@ -208,10 +202,12 @@
             log.innerText = "云端写入中...";
             try {
                 let record = await getCoins();
-                let newCoins = Math.max(0, record.coins + amount); // 保护机制，即便手动扣除也不能为负
+                let newCoins = Math.max(0, record.coins + amount); 
+                // 核心逻辑：记录历史最高金币水位线
+                let newMax = Math.max(newCoins, record.historicalMaxCoins || 0);
                 
-                let payload = { ...record, coins: newCoins };
-                delete payload._justAutoDeducted; // 清理临时标签
+                let payload = { ...record, coins: newCoins, historicalMaxCoins: newMax };
+                delete payload._justAutoDeducted; 
                 
                 await fetch(BASE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(payload) });
                 
@@ -225,10 +221,7 @@
             if(val) { modifyCoins(val * sign); document.getElementById('manualInput').value = ""; }
         }
 
-        // --- 自动化规则面板 ---
-        function toggleDailyUI() {
-            document.getElementById('dailySettings').style.display = document.getElementById('dailyToggle').checked ? 'block' : 'none';
-        }
+        function toggleDailyUI() { document.getElementById('dailySettings').style.display = document.getElementById('dailyToggle').checked ? 'block' : 'none'; }
 
         async function saveDailyConfig() {
             let enabled = document.getElementById('dailyToggle').checked;
@@ -238,7 +231,8 @@
             let record = await getCoins();
             let payload = {
                 ...record,
-                dailyConfig: { enabled: enabled, amount: amount, lastDeductDate: getTodayStr() } // 规则2：更改设置当天不追溯
+                historicalMaxCoins: Math.max(record.coins, record.historicalMaxCoins || 0),
+                dailyConfig: { enabled: enabled, amount: amount, lastDeductDate: getTodayStr() }
             };
             delete payload._justAutoDeducted;
 
@@ -246,7 +240,6 @@
             log.innerText = "✅ 自动消耗规则已生效，将于次日执行";
         }
 
-        // --- 悬赏任务面板 ---
         async function openTaskModal() {
             document.getElementById('taskModal').style.display = 'flex';
             let record = await getCoins();
@@ -273,7 +266,11 @@
 
             log.innerText = "云端分发中...";
             let record = await getCoins();
-            let payload = { ...record, activeEvent: { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 60 * 60 * 1000) }};
+            let payload = { 
+                ...record, 
+                historicalMaxCoins: Math.max(record.coins, record.historicalMaxCoins || 0),
+                activeEvent: { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 60 * 60 * 1000) }
+            };
             delete payload._justAutoDeducted;
 
             await fetch(BASE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(payload) });

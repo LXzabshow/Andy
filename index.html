@@ -33,7 +33,7 @@
         .status-bar { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 14px; display: inline-flex; align-items: center; margin-top: 10px; border: 2px solid #555; }
         .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
         .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
-        .message { color: #004400; margin-top: 10px; font-size: 18px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold;}
+        .message { color: #004400; margin-top: 10px; font-size: 16px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold; line-height: 1.2;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
 
         /* ------------------- 🎁 飞行宝箱 ------------------- */
@@ -64,20 +64,9 @@
         }
         .challenge-title { font-size: 28px; color: #333; margin-bottom: 10px; text-shadow: 1px 1px #fff; }
         
-        /* 🌟 核心修改：字体调整为 14px，行高更紧凑 */
         .challenge-q { 
-            font-size: 14px; /* 原来是 24px */
-            color: #000; 
-            margin: 15px 0; 
-            font-weight: bold; 
-            background: #fff; 
-            padding: 8px; /* 稍微减少内边距 */
-            border: 2px solid #555;
-            white-space: pre-wrap; 
-            text-align: left;      
-            max-height: 250px;     
-            overflow-y: auto;      
-            line-height: 1.4; /* 增加一点行高，防止字挤在一起 */
+            font-size: 14px; color: #000; margin: 15px 0; font-weight: bold; background: #fff; padding: 8px; border: 2px solid #555;
+            white-space: pre-wrap; text-align: left; max-height: 250px; overflow-y: auto; line-height: 1.4;
         }
 
         .challenge-reward { color: #00aa00; font-size: 20px; margin-bottom: 10px; }
@@ -90,17 +79,12 @@
         .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 15;}
         .actor { position: absolute; bottom: 55px; transition: transform 0.1s; z-index: 30; }
         
-        /* 皮肤样式 */
         .skin-steve { width: 60px; height: 135px; }
         .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
         .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
         .skin-steve .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; }
         .skin-steve .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
-        .skin-steve .sword { 
-            position: absolute; top: 35px; right: -40px; font-size: 60px; 
-            transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; 
-            z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000);
-        }
+        .skin-steve .sword { position: absolute; top: 35px; right: -40px; font-size: 60px; transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000); }
 
         .skin-creeper { width: 45px; height: 120px; }
         .skin-creeper .head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
@@ -141,11 +125,7 @@
         @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
         
         .anim-attack { animation: swordSwing 0.35s ease-out forwards; }
-        @keyframes swordSwing { 
-            0% { transform: scaleX(-1) rotate(45deg); } 
-            50% { transform: scaleX(-1) rotate(-60deg); } 
-            100% { transform: scaleX(-1) rotate(45deg); } 
-        }
+        @keyframes swordSwing { 0% { transform: scaleX(-1) rotate(45deg); } 50% { transform: scaleX(-1) rotate(-60deg); } 100% { transform: scaleX(-1) rotate(45deg); } }
         
         .anim-hurt { animation: hurtFlash 0.3s steps(2) infinite; }
         @keyframes hurtFlash { 0% { filter: sepia(1) hue-rotate(-50deg) saturate(5); } 100% { filter: none; } }
@@ -178,10 +158,7 @@
         <button class="mc-btn" onclick="startGame()">开始冒险</button>
     </div>
 
-    <audio id="bgm" loop>
-        <source src="bgm.mp3" type="audio/mpeg">
-    </audio>
-    
+    <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-levelup"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/levelup.ogg" type="audio/ogg"></audio>
     <audio id="sfx-explode"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/explode.ogg" type="audio/ogg"></audio>
     <audio id="sfx-hit"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/damage/hit1.ogg" type="audio/ogg"></audio>
@@ -277,20 +254,53 @@
             { limit: 5001, title: "💻 指令方块主宰" }
         ];
 
+        // --- 时间辅助函数 ---
+        function getTodayStr() {
+            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+            let y, m, d;
+            parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
+            return `${y}-${m}-${d}`;
+        }
+
+        function getDaysDiff(d1Str, d2Str) {
+            if(!d1Str || !d2Str) return 0;
+            const [y1,m1,da1] = d1Str.split('-').map(Number);
+            const [y2,m2,da2] = d2Str.split('-').map(Number);
+            const date1 = Date.UTC(y1, m1-1, da1);
+            const date2 = Date.UTC(y2, m2-1, da2);
+            return Math.floor((date2 - date1) / (1000 * 60 * 60 * 24));
+        }
+
+        // --- 自动化拦截器 (核心) ---
+        async function checkAndApplyDailyDeduction(record) {
+            if (!record.dailyConfig || !record.dailyConfig.enabled) return record;
+            let today = getTodayStr();
+            let diffDays = getDaysDiff(record.dailyConfig.lastDeductDate, today);
+            
+            if (diffDays > 0) {
+                let totalDeduct = diffDays * record.dailyConfig.amount;
+                let deductedAmount = Math.min(record.coins, totalDeduct); // 计算实际扣除数量
+                
+                record.coins = Math.max(0, record.coins - totalDeduct);
+                record.dailyConfig.lastDeductDate = today;
+                
+                try {
+                    await fetch(BASE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(record) });
+                    record._justAutoDeducted = deductedAmount;
+                } catch (e) { console.error(e); }
+            }
+            return record;
+        }
+
         function startGame() {
             document.getElementById('start-overlay').style.display='none';
             checkDayNight();
-            try {
-                bgm.load(); bgm.volume = 0.4; bgm.play().catch(e => {});
-                sfxLevelUp.load(); sfxExplode.load(); sfxHit.load();
-            } catch(e){}
-
+            try { bgm.load(); bgm.volume = 0.4; bgm.play().catch(e => {}); sfxLevelUp.load(); sfxExplode.load(); sfxHit.load(); } catch(e){}
             if(ambientInterval) clearInterval(ambientInterval);
             if(syncInterval) clearInterval(syncInterval);
 
             syncData();
             syncInterval = setInterval(syncData, 60000); 
-            
             playAmbientScenario();
             ambientInterval = setInterval(playAmbientScenario, 12000);
         }
@@ -302,10 +312,7 @@
         }
 
         function stopFloatingChest() {
-            if(chestFloatInterval) {
-                clearInterval(chestFloatInterval);
-                chestFloatInterval = null;
-            }
+            if(chestFloatInterval) { clearInterval(chestFloatInterval); chestFloatInterval = null; }
         }
 
         function moveChest() {
@@ -316,22 +323,34 @@
             chest.style.top = randomY + '%';
         }
 
-        // --- 核心同步逻辑 ---
+        // --- 核心同步逻辑 (含自动化拦截) ---
         async function syncData() {
+            if(isAnimating) return; // 正在播放动画时先不干扰
             connStatus.innerText = "正在同步...";
             
             try {
                 let res = await fetch(BASE_URL + '/latest', { headers: { 'X-Master-Key': API_KEY } });
                 let data = await res.json();
-                let cloudCoins = data.record.coins || 0;
-                let event = data.record.activeEvent;
+                
+                // 🌟 1. 触发自动结算拦截器
+                let record = await checkAndApplyDailyDeduction(data.record);
+                let cloudCoins = record.coins || 0;
+                let event = record.activeEvent;
 
+                // 🌟 2. 检查是否有刚刚发生跨日自动扣费
+                if (record._justAutoDeducted > 0) {
+                    playExplodeSequence(record._justAutoDeducted, cloudCoins, `日常消耗结算！自动扣除 ${record._justAutoDeducted} 币`);
+                    lastCoins = cloudCoins;
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                    updateValue(cloudCoins);
+                    connStatus.innerText = "数据已同步";
+                    return; // 自动扣费动画优先，播放完结束本次同步循环
+                }
+
+                // 🌟 3. 处理宝箱显示逻辑
                 if(event && event.expireTime > Date.now()) {
                     activeEventData = event;
-                    if(chest.style.display !== 'block') {
-                        chest.style.display = 'block';
-                        startFloatingChest(); 
-                    }
+                    if(chest.style.display !== 'block') { chest.style.display = 'block'; startFloatingChest(); }
                 } else {
                     activeEventData = null;
                     chest.style.display = 'none';
@@ -339,10 +358,9 @@
                     if(cModal.style.display === 'flex') closeChallengeModal(); 
                 }
 
-                // 读取本地缓存
+                // 🌟 4. 处理常规金币差异对比
                 let localStr = localStorage.getItem('andy_last_seen_coins');
 
-                // 情况A：第一次打开，没有缓存 -> 静默
                 if (localStr === null) {
                     lastCoins = cloudCoins;
                     localStorage.setItem('andy_last_seen_coins', cloudCoins);
@@ -352,7 +370,6 @@
                     return; 
                 }
 
-                // 情况B：有缓存 -> 对比
                 lastCoins = parseInt(localStr);
 
                 if (cloudCoins > lastCoins) {
@@ -360,19 +377,20 @@
                     playAttackSequence(diff, cloudCoins);
                 } else if (cloudCoins < lastCoins) {
                     let diff = lastCoins - cloudCoins;
-                    playExplodeSequence(diff, cloudCoins);
+                    // 普通手动扣除，非自动结算
+                    playExplodeSequence(diff, cloudCoins, `遭遇爆炸！损失 ${diff}`);
                 } else {
                     connStatus.innerText = "数据已同步";
                     totalDisplay.innerText = cloudCoins;
                     updateRank(cloudCoins);
                 }
                 
-                if(cloudCoins !== lastCoins) {
-                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
-                }
+                if(cloudCoins !== lastCoins) localStorage.setItem('andy_last_seen_coins', cloudCoins);
+
             } catch (error) { console.error(error); connStatus.innerText = "连接中..."; }
         }
 
+        // --- 宝箱答题弹窗逻辑 ---
         function openChallengeModal() {
             if(!activeEventData) return;
             cModal.style.display = 'flex';
@@ -404,10 +422,7 @@
             let m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             let s = Math.floor((diff % (1000 * 60)) / 1000);
             
-            let hStr = h < 10 ? "0" + h : h;
-            let mStr = m < 10 ? "0" + m : m;
-            let sStr = s < 10 ? "0" + s : s;
-            
+            let hStr = h < 10 ? "0" + h : h; let mStr = m < 10 ? "0" + m : m; let sStr = s < 10 ? "0" + s : s;
             document.getElementById('c_timer').innerText = `剩余时间: ${d}天 ${hStr}小时 ${mStr}分 ${sStr}秒`;
         }
 
@@ -433,31 +448,21 @@
                     let record = json.record;
                     let newCoins = record.coins + activeEventData.reward;
                     
-                    let payload = {
-                        coins: newCoins,
-                        transactions: record.transactions,
-                        activeEvent: null 
-                    };
-
-                    await fetch(BASE_URL, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
-                        body: JSON.stringify(payload)
-                    });
+                    let payload = { coins: newCoins, transactions: record.transactions, activeEvent: null, dailyConfig: record.dailyConfig };
+                    await fetch(BASE_URL, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY }, body: JSON.stringify(payload) });
                     
                     lastCoins = newCoins;
                     totalDisplay.innerText = newCoins;
                     updateRank(newCoins);
                     localStorage.setItem('andy_last_seen_coins', newCoins);
-
                 } catch(e) { console.error("领奖失败", e); }
-
             } else {
                 playSound('fuse'); 
                 alert("❌ 答案不对哦，请再想一想！");
             }
         }
 
+        // --- 剧情与特效 ---
         function clearAmbientActors() {
             const ambients = document.querySelectorAll('.ambient-actor');
             ambients.forEach(el => el.remove());
@@ -469,22 +474,12 @@
             do { scenario = Math.floor(Math.random() * 3); } while (scenario === lastScenario);
             lastScenario = scenario; 
             
-            if (scenario === 0) {
-                spawnActor('skin-villager', 'left', 0, 8);
-                setTimeout(() => { spawnActor('skin-creeper', 'left', 0, 9); }, 1000);
-            }
-            else if (scenario === 1) {
-                spawnActor('skin-skeleton', 'right', 0, 8);
-                setTimeout(() => { spawnActor('skin-villager', 'right', 1, 8); }, 800);
-            }
+            if (scenario === 0) { spawnActor('skin-villager', 'left', 0, 8); setTimeout(() => { spawnActor('skin-creeper', 'left', 0, 9); }, 1000); }
+            else if (scenario === 1) { spawnActor('skin-skeleton', 'right', 0, 8); setTimeout(() => { spawnActor('skin-villager', 'right', 1, 8); }, 800); }
             else {
                 const isNight = document.body.classList.contains('night');
-                if (isNight) {
-                    spawnActor('skin-pig', 'left', 0, 10);
-                    setTimeout(() => { spawnActor('skin-zombie', 'left', 0, 11); }, 1500);
-                } else {
-                    spawnActor('skin-pig', 'left', 0, 15);
-                }
+                if (isNight) { spawnActor('skin-pig', 'left', 0, 10); setTimeout(() => { spawnActor('skin-zombie', 'left', 0, 11); }, 1500); } 
+                else { spawnActor('skin-pig', 'left', 0, 15); }
             }
         }
 
@@ -504,15 +499,8 @@
             else if(skinClass.includes('pig')) inner = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="leg" style="left:0"></div><div class="leg" style="left:25px"></div>';
             el.innerHTML = inner;
 
-            if (direction === 'left') {
-                el.style.left = '-100px';
-                el.style.transform = 'scaleX(1)';
-                el.style.animation = `runLeftToRight ${duration}s linear forwards`;
-            } else {
-                el.style.right = '-100px';
-                el.style.transform = 'scaleX(-1)';
-                el.style.animation = `runRightToLeft ${duration}s linear forwards`;
-            }
+            if (direction === 'left') { el.style.left = '-100px'; el.style.transform = 'scaleX(1)'; el.style.animation = `runLeftToRight ${duration}s linear forwards`; } 
+            else { el.style.right = '-100px'; el.style.transform = 'scaleX(-1)'; el.style.animation = `runRightToLeft ${duration}s linear forwards`; }
             stage.appendChild(el);
             setTimeout(() => { el.remove(); }, duration * 1000);
         }
@@ -522,71 +510,40 @@
             clearAmbientActors(); 
             uiLayer.style.opacity = '0'; 
             
-            heroSteve.style.display = 'block';
-            heroCreeper.style.display = 'block';
+            heroSteve.style.display = 'block'; heroCreeper.style.display = 'block';
             heroSteve.style.left = "35%"; heroSteve.style.bottom = "55px"; heroSteve.style.transform = "scaleX(1)";
             heroCreeper.style.right = "35%"; heroCreeper.style.bottom = "55px"; heroCreeper.style.transform = "scaleX(1)";
             document.querySelector('.skin-steve .sword').style.display = 'block'; 
 
-            setTimeout(() => {
-                document.querySelector('.skin-steve .sword').classList.add('anim-attack');
-                playSound('hit');
-                setTimeout(() => { heroCreeper.classList.add('anim-hurt'); }, 150);
-            }, 500);
-
-            setTimeout(() => {
-                heroCreeper.style.display = 'none'; 
-                createParticles(100, '💰'); 
-                playSound('levelup');
-                statusMsg.innerText = `击杀奖励！+${amount}`;
-                statusMsg.style.color = "#00aa00";
-            }, 1200);
-
-            setTimeout(() => {
-                updateValue(finalCoins);
-                resetStage();
-            }, 3000);
+            setTimeout(() => { document.querySelector('.skin-steve .sword').classList.add('anim-attack'); playSound('hit'); setTimeout(() => { heroCreeper.classList.add('anim-hurt'); }, 150); }, 500);
+            setTimeout(() => { heroCreeper.style.display = 'none'; createParticles(100, '💰'); playSound('levelup'); statusMsg.innerText = `击杀奖励！+${amount}`; statusMsg.style.color = "#00aa00"; }, 1200);
+            setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000);
         }
 
-        function playExplodeSequence(amount, finalCoins) {
+        // 🌟 增加 customMsg 参数，支持自动扣款显示自定义消息
+        function playExplodeSequence(amount, finalCoins, customMsg) {
             isAnimating = true;
             clearAmbientActors(); 
             uiLayer.style.opacity = '0';
             
-            heroCreeper.style.display = 'block';
-            heroCreeper.classList.remove('anim-hurt');
+            heroCreeper.style.display = 'block'; heroCreeper.classList.remove('anim-hurt');
             heroCreeper.style.right = "45%"; heroCreeper.style.bottom = "55px"; heroCreeper.style.transition = "all 0.5s";
 
+            setTimeout(() => { playSound('fuse'); heroCreeper.classList.add('anim-swell'); }, 500);
             setTimeout(() => {
-                playSound('fuse');
-                heroCreeper.classList.add('anim-swell'); 
-            }, 500);
-
-            setTimeout(() => {
-                heroCreeper.style.opacity = '0';
-                document.body.classList.add('shake'); 
-                createParticles(50, '⬛'); createParticles(50, '🟥'); 
-                playSound('explode');
-                statusMsg.innerText = `遭遇爆炸！损失 ${amount}`;
+                heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); 
+                createParticles(50, '⬛'); createParticles(50, '🟥'); playSound('explode');
+                statusMsg.innerText = customMsg || `遭遇爆炸！损失 ${amount}`;
                 statusMsg.style.color = "#8b0000";
             }, 2500);
 
-            setTimeout(() => {
-                document.body.classList.remove('shake');
-                updateValue(finalCoins);
-                resetStage();
-            }, 4000);
+            setTimeout(() => { document.body.classList.remove('shake'); updateValue(finalCoins); resetStage(); }, 4000);
         }
 
         function resetStage() {
             uiLayer.style.opacity = '1';
-            heroSteve.style.display = 'none';
-            document.querySelector('.skin-steve .sword').style.display = 'none';
-            document.querySelector('.skin-steve .sword').classList.remove('anim-attack');
-            
-            heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1';
-            heroCreeper.classList.remove('anim-hurt'); heroCreeper.classList.remove('anim-swell');
-
+            heroSteve.style.display = 'none'; document.querySelector('.skin-steve .sword').style.display = 'none'; document.querySelector('.skin-steve .sword').classList.remove('anim-attack');
+            heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.classList.remove('anim-hurt'); heroCreeper.classList.remove('anim-swell');
             isAnimating = false;
             lastCoins = parseInt(totalDisplay.innerText);
         }
@@ -597,8 +554,7 @@
                 const el = document.createElement('div');
                 el.classList.add('confetti'); el.innerText = char;
                 const angle = Math.random() * 360; const dist = 50 + Math.random() * 100;
-                el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw');
-                el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh');
+                el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw'); el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh');
                 document.body.appendChild(el); setTimeout(() => el.remove(), 1000);
             }
         }
@@ -609,20 +565,11 @@
         }
         function updateRank(coins) {
             let currentTitle = RANKS[0].title;
-            for (let i = RANKS.length - 1; i >= 0; i--) {
-                if (coins >= RANKS[i].limit) { currentTitle = RANKS[i].title; break; }
-            }
+            for (let i = RANKS.length - 1; i >= 0; i--) { if (coins >= RANKS[i].limit) { currentTitle = RANKS[i].title; break; } }
             rankBadge.innerText = currentTitle;
         }
-        function clickCoin() {
-            if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); }
-            if(navigator.vibrate) navigator.vibrate(20);
-        }
-        function toggleMute() {
-            isMuted = !isMuted;
-            bgm[isMuted ? 'pause' : 'play']();
-            document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊';
-        }
+        function clickCoin() { if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); } if(navigator.vibrate) navigator.vibrate(20); }
+        function toggleMute() { isMuted = !isMuted; bgm[isMuted ? 'pause' : 'play'](); document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊'; }
         function playSound(type) {
             if(isMuted) return;
             try {

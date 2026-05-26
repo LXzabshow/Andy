@@ -128,15 +128,15 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let currentData = null;
-        const ROW_ID = 1; // 锁定读取第一行数据
+        const ROW_ID = 1; 
 
         async function getCoins() {
             try {
-                const { data, error } = await supabase.from('GameData').select('*').eq('id', ROW_ID);
+                const { data, error } = await supabase.from('gamedata').select('*').eq('id', ROW_ID);
                 if (error) throw error;
                 
                 if(!data || data.length === 0) {
-                    document.getElementById('log-status').innerText = "❌ 找不到初始行，请在Supabase中插入一行 id=1 的数据";
+                    document.getElementById('log-status').innerText = "❌ 找不到初始行，请确认数据库包含 id=1 的数据";
                     return;
                 }
                 
@@ -169,12 +169,20 @@
         async function modifyCoins(amount, reason) {
             document.getElementById('log-status').innerText = "写入云端...";
             let newCoins = Math.max(0, currentData.coins + amount);
+            
+            // 家长端操作同步写入审计日志
+            let logs = currentData.childLogs || [];
+            const newTime = new Date().toLocaleTimeString('zh-CN', {hour12:false, hour:'2-digit', minute:'2-digit'});
+            logs.unshift({ time: newTime, action: reason, amount: amount });
+            logs = logs.slice(0, 5);
+
             let payload = { 
                 coins: newCoins, 
-                historicalMaxCoins: Math.max(newCoins, currentData.historicalMaxCoins || 0) 
+                historicalMaxCoins: Math.max(newCoins, currentData.historicalMaxCoins || 0),
+                childLogs: logs
             };
             
-            const { error } = await supabase.from('GameData').update(payload).eq('id', ROW_ID);
+            const { error } = await supabase.from('gamedata').update(payload).eq('id', ROW_ID);
             if(!error) getCoins();
             else document.getElementById('log-status').innerText = "❌ 写入失败";
         }
@@ -188,12 +196,13 @@
         }
 
         async function saveDaily() {
+            document.getElementById('log-status').innerText = "保存设置中...";
             let dailyConfig = {
                 enabled: document.getElementById('dailyToggle').checked,
                 amount: parseInt(document.getElementById('dailyAmount').value) || 0,
                 lastDeductDate: new Date().toISOString().split('T')[0]
             };
-            const { error } = await supabase.from('GameData').update({ dailyConfig }).eq('id', ROW_ID);
+            const { error } = await supabase.from('gamedata').update({ dailyConfig }).eq('id', ROW_ID);
             if(!error) getCoins();
         }
 
@@ -219,7 +228,7 @@
             const h = parseFloat(document.getElementById('t_hours').value);
             if(!q || !a || !r || !h) return alert("请完整填写表单！");
 
-            const { error } = await supabase.from('GameData').update({
+            const { error } = await supabase.from('gamedata').update({
                 activeEvent: { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 3600000) }
             }).eq('id', ROW_ID);
             

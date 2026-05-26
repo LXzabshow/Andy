@@ -122,7 +122,7 @@
     </div>
 
     <script>
-        // ---------------- Supabase 初始化 ----------------
+        // 全局唯一声明，绝对不可重复
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -170,7 +170,6 @@
             document.getElementById('log-status').innerText = "写入云端...";
             let newCoins = Math.max(0, currentData.coins + amount);
             
-            // 家长端操作同步写入审计日志
             let logs = currentData.childLogs || [];
             const newTime = new Date().toLocaleTimeString('zh-CN', {hour12:false, hour:'2-digit', minute:'2-digit'});
             logs.unshift({ time: newTime, action: reason, amount: amount });

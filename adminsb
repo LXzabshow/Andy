@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家长控制面板</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px 10px; background: #121212; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 15px; }
+        .card { background: #1e1e1e; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #333; }
+        .card-header h3 { margin: 0; color: #888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .big-num { font-size: 60px; font-weight: bold; margin: 10px 0 20px 0; color: #ffb700; text-align: center; font-family: 'Courier New', monospace;}
+        
+        .log-item { background: #252525; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; border-left: 4px solid #007aff; display: flex; justify-content: space-between; }
+        .log-time { color: #666; font-family: monospace; }
+        .log-action { color: #ddd; font-weight: bold; }
+        .log-amount { color: #27ae60; font-weight: bold; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;}
+        button { padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.1s; }
+        button:active { transform: scale(0.95); }
+        .btn-add { background: #1c7a44; color: white; }
+        .btn-sub { background: #962d22; color: white; }
+        .btn-primary { background: #007aff; color: white; width: 100%; }
+        .input-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #121212; color: white; font-size: 16px; box-sizing: border-box; }
+        textarea.input-box { resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5; }
+        
+        .flex-row { display: flex; justify-content: space-between; align-items: center; }
+        .switch { position: relative; width: 44px; height: 24px; display: inline-block; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #34c759; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        
+        #log-status { color: #888; font-size: 12px; text-align: center; padding: 10px; }
+
+        #taskModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: #2c2c2e; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; }
+        .modal-content h3 { margin-top: 0; text-align: center; color: white; font-size: 20px; margin-bottom: 20px;}
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #a1a1aa; font-size: 14px;}
+        .modal-btns { display: flex; gap: 10px; margin-top: 25px; }
+        .btn-cancel { background: #444; color: white; flex: 1; }
+        .btn-confirm { background: #34c759; color: white; flex: 1; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header"><h3>💰 资产余额</h3></div>
+            <div id="currentCoins" class="big-num">...</div>
+            <div class="grid">
+                <button class="btn-add" onclick="modifyCoins(50, '额外大奖')">+50 大奖</button>
+                <button class="btn-sub" onclick="modifyCoins(-50, '兑换奖励')">-50 兑换</button>
+            </div>
+            <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 15px;">
+                <input type="number" id="manualInput" class="input-box" placeholder="输入自定义数额 (如: 20)">
+                <div class="grid">
+                    <button class="btn-add" onclick="manualMod(1)">奖励 (+)</button>
+                    <button class="btn-sub" onclick="manualMod(-1)">惩罚 (-)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>🕒 最近申报记录 (审计)</h3></div>
+            <div id="childLogList" style="margin-top:10px;">
+                <div style="text-align:center; color:#555; padding:20px;">暂无申报记录</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>📜 挑战任务</h3></div>
+            <button class="btn-primary" style="margin-top:10px;" onclick="openTaskModal()">✨ 发布随机悬赏任务</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>⚙️ 规则设置</h3></div>
+            <div class="flex-row" style="margin-top:15px;">
+                <span>每日自动扣除:</span>
+                <label class="switch">
+                    <input type="checkbox" id="dailyToggle" onchange="saveDaily()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="flex-row" style="margin-top:10px;">
+                <span>每日数额:</span>
+                <input type="number" id="dailyAmount" class="input-box" style="width:70px; padding:5px; text-align:center;" onchange="saveDaily()">
+            </div>
+        </div>
+        <div id="log-status">数据建立握手...</div>
+    </div>
+
+    <div id="taskModal">
+        <div class="modal-content">
+            <h3>发布悬赏挑战</h3>
+            <div class="form-group">
+                <label>问题描述 (可回车换行)</label>
+                <textarea id="t_question" class="input-box" placeholder="例如：&#10;1. 树上有3只鸟..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>标准答案</label>
+                <input type="text" id="t_answer" class="input-box">
+            </div>
+            <div class="grid">
+                <div class="form-group">
+                    <label>奖励币数</label>
+                    <input type="number" id="t_reward" class="input-box">
+                </div>
+                <div class="form-group">
+                    <label>有效时间 (小时)</label>
+                    <input type="number" id="t_hours" class="input-box">
+                </div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeTaskModal()">取消</button>
+                <button class="btn-confirm" onclick="saveTask()">发布至云端</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------------- Supabase 初始化 ----------------
+        const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co/GameData';
+        const SUPABASE_ANON_KEY = 'uTtDe5CqeJpekpgn';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentData = null;
+        const ROW_ID = 1; // 锁定读取第一行数据
+
+        async function getCoins() {
+            try {
+                const { data, error } = await supabase.from('GameData').select('*').eq('id', ROW_ID);
+                if (error) throw error;
+                
+                if(!data || data.length === 0) {
+                    document.getElementById('log-status').innerText = "❌ 找不到初始行，请在Supabase中插入一行 id=1 的数据";
+                    return;
+                }
+                
+                currentData = data[0];
+                document.getElementById('currentCoins').innerText = currentData.coins;
+                
+                const logContainer = document.getElementById('childLogList');
+                if(currentData.childLogs && currentData.childLogs.length > 0) {
+                    logContainer.innerHTML = currentData.childLogs.map(log => `
+                        <div class="log-item">
+                            <span class="log-time">[${log.time}]</span>
+                            <span class="log-action">${log.action}</span>
+                            <span class="log-amount">${log.amount > 0 ? '+'+log.amount : log.amount}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    logContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">暂无申报记录</div>';
+                }
+
+                if(currentData.dailyConfig) {
+                    document.getElementById('dailyToggle').checked = currentData.dailyConfig.enabled;
+                    document.getElementById('dailyAmount').value = currentData.dailyConfig.amount;
+                }
+                document.getElementById('log-status').innerText = "✅ 同步成功 - " + new Date().toLocaleTimeString();
+            } catch (e) { 
+                document.getElementById('log-status').innerText = "❌ 刷新失败: " + e.message; 
+            }
+        }
+
+        async function modifyCoins(amount, reason) {
+            document.getElementById('log-status').innerText = "写入云端...";
+            let newCoins = Math.max(0, currentData.coins + amount);
+            let payload = { 
+                coins: newCoins, 
+                historicalMaxCoins: Math.max(newCoins, currentData.historicalMaxCoins || 0) 
+            };
+            
+            const { error } = await supabase.from('GameData').update(payload).eq('id', ROW_ID);
+            if(!error) getCoins();
+            else document.getElementById('log-status').innerText = "❌ 写入失败";
+        }
+
+        function manualMod(sign) {
+            let val = parseInt(document.getElementById('manualInput').value);
+            if(val > 0) {
+                modifyCoins(val * sign, sign > 0 ? "手动奖励" : "手动惩罚");
+                document.getElementById('manualInput').value = ""; 
+            }
+        }
+
+        async function saveDaily() {
+            let dailyConfig = {
+                enabled: document.getElementById('dailyToggle').checked,
+                amount: parseInt(document.getElementById('dailyAmount').value) || 0,
+                lastDeductDate: new Date().toISOString().split('T')[0]
+            };
+            const { error } = await supabase.from('GameData').update({ dailyConfig }).eq('id', ROW_ID);
+            if(!error) getCoins();
+        }
+
+        async function openTaskModal() {
+            document.getElementById('taskModal').style.display = 'flex';
+            const now = Date.now();
+            if(currentData.activeEvent && currentData.activeEvent.expireTime > now) {
+                document.getElementById('t_question').value = currentData.activeEvent.question;
+                document.getElementById('t_answer').value = currentData.activeEvent.answer;
+                document.getElementById('t_reward').value = currentData.activeEvent.reward;
+                document.getElementById('t_hours').value = Math.ceil((currentData.activeEvent.expireTime - now) / 3600000);
+            } else {
+                ['t_question','t_answer','t_reward','t_hours'].forEach(id => document.getElementById(id).value = "");
+            }
+        }
+
+        function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
+
+        async function saveTask() {
+            const q = document.getElementById('t_question').value.trim();
+            const a = document.getElementById('t_answer').value.trim();
+            const r = parseInt(document.getElementById('t_reward').value);
+            const h = parseFloat(document.getElementById('t_hours').value);
+            if(!q || !a || !r || !h) return alert("请完整填写表单！");
+
+            const { error } = await supabase.from('GameData').update({
+                activeEvent: { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 3600000) }
+            }).eq('id', ROW_ID);
+            
+            if(!error) { closeTaskModal(); getCoins(); }
+        }
+
+        window.onload = () => { getCoins(); setInterval(getCoins, 5000); };
+    </script>
+</body>
+</html>

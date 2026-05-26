@@ -190,7 +190,7 @@
         function manualMod(sign) {
             let val = parseInt(document.getElementById('manualInput').value);
             if(val > 0) {
-                modifyCoins(val * sign, sign > 0 ? "手动奖励" : "手动惩罚");
+                modifyCoins(val * sign, sign > 0 ? "手动奖励" : "手动扣减");
                 document.getElementById('manualInput').value = ""; 
             }
         }

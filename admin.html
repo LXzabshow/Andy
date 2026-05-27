@@ -52,11 +52,8 @@
         <div class="card">
             <div class="card-header"><h3>💰 资产余额</h3></div>
             <div id="currentCoins" class="big-num">...</div>
-            <div class="grid">
-                <button class="btn-add" onclick="modifyCoins(50, '额外大奖')">+50 大奖</button>
-                <button class="btn-sub" onclick="modifyCoins(-50, '兑换消耗')">-50 兑换</button>
-            </div>
-            <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 15px;">
+            
+            <div style="margin-top: 5px;">
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
                     <input type="number" id="manualInput" class="input-box" style="flex:1;" placeholder="数额">
                     <input type="text" id="manualReason" class="input-box" style="flex:2;" placeholder="输入增减理由 (选填)">
@@ -69,9 +66,9 @@
         </div>
 
         <div class="card">
-            <div class="card-header"><h3>🕒 最近申报记录 (审计)</h3></div>
+            <div class="card-header"><h3>🕒 增减记录</h3></div>
             <div id="childLogList" style="margin-top:10px;">
-                <div style="text-align:center; color:#555; padding:20px;">暂无申报记录</div>
+                <div style="text-align:center; color:#555; padding:20px;">暂无记录</div>
             </div>
         </div>
 
@@ -171,7 +168,7 @@
                         </div>
                     `}).join('');
                 } else {
-                    logContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">暂无申报记录</div>';
+                    logContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">暂无记录</div>';
                 }
 
                 if(currentData.dailyConfig) {

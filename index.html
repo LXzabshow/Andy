@@ -10,7 +10,7 @@
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: #76b5fe; font-family: 'VT323', monospace; text-align: center; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background-color 2s ease; }
         .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 20; }
-        .ui-container { margin-top: 8vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.3s;}
+        .ui-container { margin-top: 5vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.3s;}
         .card { background-color: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 20px; position: relative; }
         
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
@@ -33,41 +33,55 @@
         .message { color: #004400; margin-top: 10px; font-size: 16px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold; line-height: 1.2;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
 
-        .btn-main-action { width: 100%; margin-top: 15px; padding: 12px; font-family: 'VT323', monospace; font-size: 24px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 4px 4px rgba(255,255,255,0.3), inset -4px -4px rgba(0,0,0,0.3); }
+        .btn-main-action { width: 100%; margin-top: 15px; padding: 12px; font-family: 'VT323', monospace; font-size: 22px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 4px 4px rgba(255,255,255,0.3), inset -4px -4px rgba(0,0,0,0.3); }
+        .btn-main-action:active { transform: scale(0.98); }
+        .btn-log { background: #8e44ad; margin-top: 10px; }
 
-        /* ⚔️ 二级弹窗 */
-        #rewardModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 400; display: none; justify-content: center; align-items: center; }
-        .reward-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; width: 100%; }
+        /* 通用弹窗卡片结构 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 400; display: none; justify-content: center; align-items: center; }
+        .challenge-card { background: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 20px; width: 85%; max-width: 350px; text-align: center; }
+        .challenge-title { font-size: 28px; color: #333; margin-bottom: 15px; text-shadow: 1px 1px #fff; }
+        .btn-close-modal { background: #c0392b; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; margin-top: 15px; width: 100%;}
+
+        /* ⚔️ 任务大厅二级弹窗 */
+        .reward-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
         .mc-item-btn { position: relative; background: #8b8b8b; border: 3px solid #000; border-right-color: #fff; border-bottom-color: #fff; padding: 10px; cursor: pointer; overflow: hidden; height: 90px; display: flex; flex-direction: column; justify-content: center; }
         .mc-item-btn:active:not(.in-cd) { transform: scale(0.95); }
         .mc-item-title { font-size: 18px; color: #000; margin-bottom: 5px; font-weight: bold; text-shadow: 1px 1px #fff;}
         .mc-item-reward { color: #004400; font-weight: bold; font-size: 22px; text-shadow: 1px 1px #fff;}
-        
         .cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; pointer-events: none; background: conic-gradient(rgba(0,0,0,0.7) var(--progress), transparent 0deg); }
         .cd-timer { position: absolute; bottom: 4px; right: 6px; color: #fff; font-size: 16px; font-weight: bold; text-shadow: 1px 1px #000; display: none; }
         .in-cd { cursor: not-allowed; opacity: 0.8; }
         .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
-        .btn-close-modal { background: #c0392b; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; margin-top: 20px; width: 100%;}
+
+        /* 📜 账单流水列表 */
+        .log-container { max-height: 250px; overflow-y: auto; text-align: left; background: #fff; border: 2px solid #555; padding: 10px; font-family: -apple-system, sans-serif; font-size: 14px; }
+        .log-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; }
+        .log-row:last-child { border-bottom: none; }
+        .log-t { color: #888; font-size: 11px; min-width: 80px;}
+        .log-a { font-weight: bold; color: #333; flex: 1; margin: 0 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+        .log-v { font-weight: bold; color: #27ae60; text-align: right; min-width: 30px;}
+        .log-v.sub { color: #e74c3c; }
 
         #treasure-chest { position: fixed; top: 10%; left: 50%; font-size: 60px; z-index: 200; cursor: pointer; display: none; }
         .chest-float-anim { animation: bobbing 1s infinite alternate; }
         @keyframes bobbing { from { transform: translateY(0); } to { transform: translateY(-5px); } }
 
-        #challengeModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 300; display: none; justify-content: center; align-items: center; }
-        .challenge-card { background: #c6c6c6; border: 4px solid #000; padding: 20px; width: 85%; max-width: 350px; text-align: center; }
         .challenge-q { font-size: 14px; color: #000; margin: 15px 0; font-weight: bold; background: #fff; padding: 8px; border: 2px solid #555; white-space: pre-wrap; text-align: left; max-height: 250px; overflow-y: auto;}
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; }
 
-        /* 游戏骨骼动画 */
+        /* 游戏骨骼动画 (已全量恢复结构) */
         .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 15;}
         .actor { position: absolute; bottom: 55px; transition: transform 0.1s; z-index: 30; }
+        
         .skin-steve { width: 60px; height: 135px; }
         .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
         .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
         .skin-steve .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; }
         .skin-steve .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
         .skin-steve .sword { position: absolute; top: 35px; right: -40px; font-size: 60px; transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000); }
+        
         .skin-creeper { width: 45px; height: 120px; }
         .skin-creeper .head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
         .skin-creeper .face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8; }
@@ -95,6 +109,7 @@
         @keyframes runLeftToRight { 0% { left: -150px; } 100% { left: 120vw; } }
         .run-r-to-l { animation: runRightToLeft 8s linear forwards; }
         @keyframes runRightToLeft { 0% { right: -150px; } 100% { right: 120vw; } }
+        
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
         .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; }
         .confetti { position: fixed; top: 50%; left: 50%; z-index: 999; animation: explode-particle 1s ease-out forwards; pointer-events: none; font-size: 30px;}
@@ -117,20 +132,20 @@
 
     <div id="treasure-chest" class="chest-float-anim" onclick="openChallengeModal()">🎁</div>
 
-    <div id="challengeModal">
+    <div id="challengeModal" class="modal-overlay">
         <div class="challenge-card">
             <div class="challenge-title">📜 冒险家挑战</div>
-            <div class="challenge-reward">奖励: <span id="c_reward">50</span> 币</div>
-            <div id="c_timer" style="color:red; font-size:18px;">剩余时间...</div>
+            <div style="color:#00aa00; font-size:20px; font-weight:bold;">奖励: <span id="c_reward">50</span> 币</div>
+            <div id="c_timer" style="color:red; font-size:18px; margin: 10px 0;">剩余时间...</div>
             <div class="challenge-q" id="c_question">题目加载中...</div>
             <input type="text" id="c_input" class="challenge-input" placeholder="输入答案">
             <br>
             <button class="btn-submit" onclick="submitAnswer()">确定</button>
-            <button class="btn-submit" style="background:#c0392b" onclick="closeChallengeModal()">关闭</button>
+            <button class="btn-close-modal" style="width: auto; margin-left: 10px; display:inline-block;" onclick="closeChallengeModal()">关闭</button>
         </div>
     </div>
 
-    <div id="rewardModal">
+    <div id="rewardModal" class="modal-overlay">
         <div class="challenge-card">
             <div class="challenge-title">⚔️ 任务大厅</div>
             <div class="reward-grid">
@@ -151,6 +166,15 @@
         </div>
     </div>
 
+    <div id="logModal" class="modal-overlay">
+        <div class="challenge-card">
+            <div class="challenge-title">📜 账单流水</div>
+            <div id="logListContent" class="log-container">
+                </div>
+            <button class="btn-close-modal" onclick="closeLogModal()">关闭</button>
+        </div>
+    </div>
+
     <div class="ui-container" id="uiLayer">
         <div class="card">
             <div class="mute-btn" onclick="toggleMute()">🔊</div>
@@ -166,6 +190,8 @@
             </div>
 
             <button class="btn-main-action" onclick="openRewardModal()">⚔️ 任务大厅</button>
+            <button class="btn-main-action btn-log" onclick="openLogModal()">📜 账单流水</button>
+
             <div class="status-bar"><div id="light" class="light online"></div><span id="connStatus">等待同步...</span></div>
             <div id="statusMsg" class="message"></div>
         </div>
@@ -181,7 +207,7 @@
         // ---------------- Supabase 初始化 ----------------
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
-        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // 修改为 dbClient
+        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const uiLayer = document.getElementById('uiLayer');
         const totalDisplay = document.getElementById('totalDisplay');
@@ -191,9 +217,12 @@
         const stage = document.getElementById('stage');
         const heroSteve = document.getElementById('hero-steve');
         const heroCreeper = document.getElementById('hero-creeper');
+        
         const chest = document.getElementById('treasure-chest');
         const cModal = document.getElementById('challengeModal');
         const rModal = document.getElementById('rewardModal');
+        const lModal = document.getElementById('logModal');
+        
         const bgm = document.getElementById('bgm');
         const sfxLevelUp = document.getElementById('sfx-levelup');
         const sfxExplode = document.getElementById('sfx-explode'); 
@@ -212,11 +241,15 @@
             { limit: 601, title: "🔥 下界合金战神" }, { limit: 1001, title: "🐲 末影屠龙者" }
         ];
 
-        function getTodayStr() {
-            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-            let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
-            return `${y}-${m}-${d}`;
+        function getFormattedTime() {
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const mins = String(now.getMinutes()).padStart(2, '0');
+            return `${month}-${day} ${hours}:${mins}`;
         }
+        function getTodayStr() { return new Date().toISOString().split('T')[0]; }
 
         async function checkAndApplyDailyDeduction(record) {
             if (!record.dailyConfig || !record.dailyConfig.enabled) return record;
@@ -229,9 +262,7 @@
             record.dailyConfig.lastDeductDate = today;
             
             try {
-                await dbClient.from('gamedata').update({  // 修改为 dbClient
-                    coins: record.coins, dailyConfig: record.dailyConfig 
-                }).eq('id', ROW_ID);
+                await dbClient.from('gamedata').update({ coins: record.coins, dailyConfig: record.dailyConfig }).eq('id', ROW_ID);
                 record._justAutoDeducted = deductedAmount;
             } catch (e) { console.error(e); }
             return record;
@@ -251,13 +282,15 @@
         async function syncData() {
             if(isAnimating) return;
             try {
-                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); // 修改为 dbClient
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 let record = data[0];
                 record = await checkAndApplyDailyDeduction(record);
                 currentData = record;
                 
                 let cloudCoins = record.coins || 0;
                 currentMaxCoins = Math.max(cloudCoins, record.historicalMaxCoins || 0);
+
+                renderLogs(record.childLogs); // 渲染最新流水
 
                 if (record._justAutoDeducted > 0) {
                     playExplodeSequence(record._justAutoDeducted, cloudCoins, `日常消耗结算！自动扣除 ${record._justAutoDeducted} 币`);
@@ -292,6 +325,23 @@
             } catch (error) { connStatus.innerText = "重新连接中..."; }
         }
 
+        // 📜 流水弹窗逻辑
+        function openLogModal() { lModal.style.display = 'flex'; }
+        function closeLogModal() { lModal.style.display = 'none'; }
+        function renderLogs(logs) {
+            const container = document.getElementById('logListContent');
+            if(logs && logs.length > 0) {
+                container.innerHTML = logs.map(log => {
+                    const amountClass = log.amount > 0 ? "log-v" : "log-v sub";
+                    const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
+                    return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`;
+                }).join('');
+            } else {
+                container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">背包里还没有记录哦~</div>';
+            }
+        }
+
+        // ⚔️ 任务大厅逻辑
         function openRewardModal() { rModal.style.display = 'flex'; processCooldowns(); }
         function closeRewardModal() { rModal.style.display = 'none'; }
 
@@ -300,23 +350,22 @@
             if(currentData.cooldowns && currentData.cooldowns[type] > now) return; 
 
             try {
-                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); // 修改为 dbClient
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 let record = data[0];
                 const newCoins = record.coins + amount;
-                const newTime = new Date().toLocaleTimeString('zh-CN', {hour12:false, hour:'2-digit', minute:'2-digit'});
                 
                 let logs = record.childLogs || [];
-                logs.unshift({ time: newTime, action: actionName, amount: amount });
-                logs = logs.slice(0, 5);
+                logs.unshift({ time: getFormattedTime(), action: actionName, amount: amount });
+                logs = logs.slice(0, 10); // 扩容同步到10条
 
                 let cds = record.cooldowns || {}; cds[type] = now + (CD_HOURS * 3600000);
                 currentMaxCoins = Math.max(newCoins, record.historicalMaxCoins || 0);
 
-                await dbClient.from('gamedata').update({ // 修改为 dbClient
+                await dbClient.from('gamedata').update({
                     coins: newCoins, historicalMaxCoins: currentMaxCoins, childLogs: logs, cooldowns: cds
                 }).eq('id', ROW_ID);
 
-                currentData = { ...record, coins: newCoins, cooldowns: cds };
+                currentData = { ...record, coins: newCoins, childLogs: logs, cooldowns: cds };
                 localStorage.setItem('andy_last_seen_coins', newCoins);
                 closeRewardModal();
                 playAttackSequence(amount, newCoins);
@@ -344,7 +393,7 @@
             heroSteve.style.left = "35%"; heroCreeper.style.right = "35%";
             document.querySelector('.skin-steve .sword').style.display = 'block'; 
             setTimeout(() => { document.querySelector('.skin-steve .sword').classList.add('anim-attack'); playSound('hit'); setTimeout(() => { heroCreeper.classList.add('anim-hurt'); }, 150); }, 500);
-            setTimeout(() => { heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); statusMsg.innerText = `奖励入账！+${amount}`; }, 1200);
+            setTimeout(() => { heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); statusMsg.innerText = `奖励入账！+${amount}`; statusMsg.style.color="#004400"; }, 1200);
             setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000);
         }
 
@@ -362,7 +411,33 @@
         function resetStage() { uiLayer.style.opacity = '1'; heroSteve.style.display = 'none'; heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; isAnimating = false; }
         function updateValue(coins) { totalDisplay.innerText = coins; updateRank(coins); updateHealthBar(coins, currentMaxCoins); }
         function updateHealthBar(c, m) { const finalMax = Math.max(c, m || 0); document.getElementById('maxCoinsText').innerText = finalMax; document.getElementById('healthBarFill').style.width = (finalMax===0?0:(c/finalMax)*100) + '%'; }
+        
+        // 修复后的背景角色动画生成逻辑
+        function playAmbientScenario() { 
+            if (isAnimating) return; 
+            let scenario; do { scenario = Math.floor(Math.random() * 2); } while (scenario === lastScenario); 
+            lastScenario = scenario; 
+            if (scenario === 0) { spawnActor('skin-villager', 'left', 12); } else { spawnActor('skin-creeper', 'right', 12); } 
+        }
+        function spawnActor(skinClass, direction, duration) { 
+            if (isAnimating) return; 
+            const el = document.createElement('div'); 
+            el.className = `actor ambient-actor ${skinClass}`; 
+            el.style.bottom = (55 + Math.floor(Math.random() * 15)) + 'px'; 
+            
+            // 完整还原内部 HTML 结构，使得背景人物恢复显示
+            let inner = '';
+            if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
+            else if(skinClass.includes('villager')) inner = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>';
+            el.innerHTML = inner;
+
+            if (direction === 'left') { el.style.left = '-100px'; el.style.animation = `runLeftToRight ${duration}s linear forwards`; } 
+            else { el.style.right = '-100px'; el.style.transform = 'scaleX(-1)'; el.style.animation = `runRightToLeft ${duration}s linear forwards`; } 
+            stage.appendChild(el); 
+            setTimeout(() => el.remove(), duration * 1000); 
+        }
         function clearAmbientActors() { document.querySelectorAll('.ambient-actor').forEach(el => el.remove()); }
+
         function startFloatingChest() { if(!chestFloatInterval) { moveChest(); chestFloatInterval = setInterval(moveChest, 3500); } }
         function stopFloatingChest() { clearInterval(chestFloatInterval); chestFloatInterval = null; }
         function moveChest() { const randomX = Math.floor(Math.random() * 70) + 10, randomY = Math.floor(Math.random() * 20) + 5; chest.style.left = randomX + '%'; chest.style.top = randomY + '%'; }
@@ -376,8 +451,6 @@
         function closeChallengeModal() { cModal.style.display = 'none'; clearInterval(timerInterval); }
         function updateTimer() { let diff = activeEventData.expireTime - Date.now(); if(diff <= 0) { closeChallengeModal(); chest.style.display = 'none'; return; } let h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000); document.getElementById('c_timer').innerText = `剩余时间: ${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }
         async function submitAnswer() { if(document.getElementById('c_input').value.trim() === activeEventData.answer.trim()) { closeChallengeModal(); chest.style.display = 'none'; try { const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0], newCoins = record.coins + activeEventData.reward; await dbClient.from('gamedata').update({ coins: newCoins, activeEvent: null, historicalMaxCoins: Math.max(newCoins, record.historicalMaxCoins) }).eq('id', ROW_ID); localStorage.setItem('andy_last_seen_coins', newCoins); playAttackSequence(activeEventData.reward, newCoins); } catch(e){} } else { playSound('fuse'); alert("❌ 答案不对哦！"); } }
-        function playAmbientScenario() { if (isAnimating) return; let scenario; do { scenario = Math.floor(Math.random() * 2); } while (scenario === lastScenario); lastScenario = scenario; if (scenario === 0) { spawnActor('skin-villager', 'left', 8); } else { spawnActor('skin-creeper', 'right', 8); } }
-        function spawnActor(skinClass, direction, duration) { if (isAnimating) return; const el = document.createElement('div'); el.className = `actor ambient-actor ${skinClass}`; el.style.bottom = (55 + Math.floor(Math.random() * 20)) + 'px'; if (direction === 'left') { el.style.left = '-100px'; el.style.animation = `runLeftToRight ${duration}s linear forwards`; } else { el.style.right = '-100px'; el.style.transform = 'scaleX(-1)'; el.style.animation = `runRightToLeft ${duration}s linear forwards`; } stage.appendChild(el); setTimeout(() => el.remove(), duration * 1000); }
     </script>
 </body>
 </html>

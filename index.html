@@ -9,7 +9,7 @@
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: #76b5fe; font-family: 'VT323', monospace; text-align: center; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background-color 2s ease; }
-        .ground { position: absolute; bottom: 0; width: 100%; height: 60px; background: #5D4037; border-top: 10px solid #4CAF50; z-index: 20; }
+        .ground { position: absolute; bottom: 0; width: 100%; height: 20px; background: #5D4037; border-top: 6px solid #4CAF50; z-index: 20; }
         .ui-container { margin-top: 5vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.3s;}
         .card { background-color: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 20px; position: relative; }
         
@@ -73,7 +73,7 @@
 
         /* 游戏骨骼动画 (已全量恢复结构) */
         .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 15;}
-        .actor { position: absolute; bottom: 55px; transition: transform 0.1s; z-index: 30; }
+        .actor { position: absolute; bottom: 20px; transition: transform 0.1s; z-index: 30; }
         
         .skin-steve { width: 60px; height: 135px; }
         .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
@@ -423,7 +423,7 @@
             if (isAnimating) return; 
             const el = document.createElement('div'); 
             el.className = `actor ambient-actor ${skinClass}`; 
-            el.style.bottom = (55 + Math.floor(Math.random() * 15)) + 'px'; 
+            el.style.bottom = (22 + Math.floor(Math.random() * 8)) + 'px'; 
             
             // 完整还原内部 HTML 结构，使得背景人物恢复显示
             let inner = '';

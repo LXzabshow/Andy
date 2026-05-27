@@ -12,9 +12,10 @@
         .big-num { font-size: 60px; font-weight: bold; margin: 10px 0 20px 0; color: #ffb700; text-align: center; font-family: 'Courier New', monospace;}
         
         .log-item { background: #252525; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; border-left: 4px solid #007aff; display: flex; justify-content: space-between; }
-        .log-time { color: #666; font-family: monospace; }
-        .log-action { color: #ddd; font-weight: bold; }
-        .log-amount { color: #27ae60; font-weight: bold; }
+        .log-time { color: #888; font-family: monospace; font-size: 11px; margin-right: 8px; min-width: 80px;}
+        .log-action { color: #ddd; font-weight: bold; flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .log-amount { color: #27ae60; font-weight: bold; min-width: 30px; text-align: right; }
+        .log-amount.sub { color: #e74c3c; }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;}
         button { padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.1s; }
@@ -22,7 +23,7 @@
         .btn-add { background: #1c7a44; color: white; }
         .btn-sub { background: #962d22; color: white; }
         .btn-primary { background: #007aff; color: white; width: 100%; }
-        .input-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #121212; color: white; font-size: 16px; box-sizing: border-box; }
+        .input-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #121212; color: white; font-size: 15px; box-sizing: border-box; }
         textarea.input-box { resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5; }
         
         .flex-row { display: flex; justify-content: space-between; align-items: center; }
@@ -44,7 +45,7 @@
         .btn-cancel { background: #444; color: white; flex: 1; }
         .btn-confirm { background: #34c759; color: white; flex: 1; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="container">
@@ -53,13 +54,16 @@
             <div id="currentCoins" class="big-num">...</div>
             <div class="grid">
                 <button class="btn-add" onclick="modifyCoins(50, '额外大奖')">+50 大奖</button>
-                <button class="btn-sub" onclick="modifyCoins(-50, '兑换奖励')">-50 兑换</button>
+                <button class="btn-sub" onclick="modifyCoins(-50, '兑换消耗')">-50 兑换</button>
             </div>
             <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 15px;">
-                <input type="number" id="manualInput" class="input-box" placeholder="输入自定义数额 (如: 20)">
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="number" id="manualInput" class="input-box" style="flex:1;" placeholder="数额">
+                    <input type="text" id="manualReason" class="input-box" style="flex:2;" placeholder="输入增减理由 (选填)">
+                </div>
                 <div class="grid">
                     <button class="btn-add" onclick="manualMod(1)">奖励 (+)</button>
-                    <button class="btn-sub" onclick="manualMod(-1)">惩罚 (-)</button>
+                    <button class="btn-sub" onclick="manualMod(-1)">扣减 (-)</button>
                 </div>
             </div>
         </div>
@@ -122,18 +126,27 @@
     </div>
 
     <script>
-        // 更换变量名为 dbClient，彻底避开命名冲突
+        // 全局唯一声明，绝对不可重复
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
-        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let currentData = null;
         const ROW_ID = 1; 
 
+        // 格式化时间戳 (MM-DD HH:mm)
+        function getFormattedTime() {
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const mins = String(now.getMinutes()).padStart(2, '0');
+            return `${month}-${day} ${hours}:${mins}`;
+        }
+
         async function getCoins() {
             try {
-                // 修改为调用 dbClient
-                const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
+                const { data, error } = await supabase.from('gamedata').select('*').eq('id', ROW_ID);
                 if (error) throw error;
                 
                 if(!data || data.length === 0) {
@@ -144,15 +157,19 @@
                 currentData = data[0];
                 document.getElementById('currentCoins').innerText = currentData.coins;
                 
+                // 渲染扩容至 10 条的日志
                 const logContainer = document.getElementById('childLogList');
                 if(currentData.childLogs && currentData.childLogs.length > 0) {
-                    logContainer.innerHTML = currentData.childLogs.map(log => `
+                    logContainer.innerHTML = currentData.childLogs.map(log => {
+                        const amountClass = log.amount > 0 ? "log-amount" : "log-amount sub";
+                        const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
+                        return `
                         <div class="log-item">
                             <span class="log-time">[${log.time}]</span>
                             <span class="log-action">${log.action}</span>
-                            <span class="log-amount">${log.amount > 0 ? '+'+log.amount : log.amount}</span>
+                            <span class="${amountClass}">${amountText}</span>
                         </div>
-                    `).join('');
+                    `}).join('');
                 } else {
                     logContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">暂无申报记录</div>';
                 }
@@ -171,10 +188,10 @@
             document.getElementById('log-status').innerText = "写入云端...";
             let newCoins = Math.max(0, currentData.coins + amount);
             
+            // 写入带日期的日志，保留最新 10 条
             let logs = currentData.childLogs || [];
-            const newTime = new Date().toLocaleTimeString('zh-CN', {hour12:false, hour:'2-digit', minute:'2-digit'});
-            logs.unshift({ time: newTime, action: reason, amount: amount });
-            logs = logs.slice(0, 5);
+            logs.unshift({ time: getFormattedTime(), action: reason, amount: amount });
+            logs = logs.slice(0, 10); 
 
             let payload = { 
                 coins: newCoins, 
@@ -182,16 +199,21 @@
                 childLogs: logs
             };
             
-            const { error } = await dbClient.from('gamedata').update(payload).eq('id', ROW_ID);
+            const { error } = await supabase.from('gamedata').update(payload).eq('id', ROW_ID);
             if(!error) getCoins();
             else document.getElementById('log-status').innerText = "❌ 写入失败";
         }
 
         function manualMod(sign) {
             let val = parseInt(document.getElementById('manualInput').value);
+            let reason = document.getElementById('manualReason').value.trim();
+            
             if(val > 0) {
-                modifyCoins(val * sign, sign > 0 ? "手动奖励" : "手动扣减");
+                // 如果没有输入理由，给个默认文案
+                if (!reason) reason = sign > 0 ? "手动奖励" : "手动扣减";
+                modifyCoins(val * sign, reason);
                 document.getElementById('manualInput').value = ""; 
+                document.getElementById('manualReason').value = ""; 
             }
         }
 
@@ -202,7 +224,7 @@
                 amount: parseInt(document.getElementById('dailyAmount').value) || 0,
                 lastDeductDate: new Date().toISOString().split('T')[0]
             };
-            const { error } = await dbClient.from('gamedata').update({ dailyConfig }).eq('id', ROW_ID);
+            const { error } = await supabase.from('gamedata').update({ dailyConfig }).eq('id', ROW_ID);
             if(!error) getCoins();
         }
 
@@ -228,7 +250,7 @@
             const h = parseFloat(document.getElementById('t_hours').value);
             if(!q || !a || !r || !h) return alert("请完整填写表单！");
 
-            const { error } = await dbClient.from('gamedata').update({
+            const { error } = await supabase.from('gamedata').update({
                 activeEvent: { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 3600000) }
             }).eq('id', ROW_ID);
             

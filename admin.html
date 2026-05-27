@@ -129,7 +129,7 @@
         // 全局唯一声明，绝对不可重复
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let currentData = null;
         const ROW_ID = 1; 
@@ -146,7 +146,7 @@
 
         async function getCoins() {
             try {
-                const { data, error } = await supabase.from('gamedata').select('*').eq('id', ROW_ID);
+                const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 if (error) throw error;
                 
                 if(!data || data.length === 0) {
@@ -199,7 +199,7 @@
                 childLogs: logs
             };
             
-            const { error } = await supabase.from('gamedata').update(payload).eq('id', ROW_ID);
+            const { error } = await dbClient.from('gamedata').update(payload).eq('id', ROW_ID);
             if(!error) getCoins();
             else document.getElementById('log-status').innerText = "❌ 写入失败";
         }
@@ -224,7 +224,7 @@
                 amount: parseInt(document.getElementById('dailyAmount').value) || 0,
                 lastDeductDate: new Date().toISOString().split('T')[0]
             };
-            const { error } = await supabase.from('gamedata').update({ dailyConfig }).eq('id', ROW_ID);
+            const { error } = await dbClient.from('gamedata').update({ dailyConfig }).eq('id', ROW_ID);
             if(!error) getCoins();
         }
 
@@ -250,7 +250,7 @@
             const h = parseFloat(document.getElementById('t_hours').value);
             if(!q || !a || !r || !h) return alert("请完整填写表单！");
 
-            const { error } = await supabase.from('gamedata').update({
+            const { error } = await dbClient.from('gamedata').update({
                 activeEvent: { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 3600000) }
             }).eq('id', ROW_ID);
             

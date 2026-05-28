@@ -123,15 +123,17 @@
     </div>
 
     <script>
-        // 全局唯一声明，绝对不可重复
+        // ---------------- Supabase 初始化 ----------------
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
+        
+        // 声明统一的全局变量 dbClient
         const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let currentData = null;
         const ROW_ID = 1; 
 
-        // 格式化时间戳 (MM-DD HH:mm)
+        // 格式化审计时间戳 (MM-DD HH:mm)
         function getFormattedTime() {
             const now = new Date();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -154,7 +156,7 @@
                 currentData = data[0];
                 document.getElementById('currentCoins').innerText = currentData.coins;
                 
-                // 渲染扩容至 10 条的日志
+                // 渲染最新 10 条增减日志
                 const logContainer = document.getElementById('childLogList');
                 if(currentData.childLogs && currentData.childLogs.length > 0) {
                     logContainer.innerHTML = currentData.childLogs.map(log => {
@@ -185,7 +187,7 @@
             document.getElementById('log-status').innerText = "写入云端...";
             let newCoins = Math.max(0, currentData.coins + amount);
             
-            // 写入带日期的日志，保留最新 10 条
+            // 组装日志数组，追加最新记录并保留最高 10 条
             let logs = currentData.childLogs || [];
             logs.unshift({ time: getFormattedTime(), action: reason, amount: amount });
             logs = logs.slice(0, 10); 
@@ -206,7 +208,7 @@
             let reason = document.getElementById('manualReason').value.trim();
             
             if(val > 0) {
-                // 如果没有输入理由，给个默认文案
+                // 如果没有输入理由，则根据动作自动触发默认回退文案
                 if (!reason) reason = sign > 0 ? "手动奖励" : "手动扣减";
                 modifyCoins(val * sign, reason);
                 document.getElementById('manualInput').value = ""; 
@@ -216,8 +218,10 @@
 
         async function saveDaily() {
             document.getElementById('log-status').innerText = "保存设置中...";
-            // 生成严格的东八区本地日期字符串 (YYYY-MM-DD)
-            const localDateStr = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()).map(p => p.value).join('').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+            // 修复时区Bug：锁定东八区（Asia/Shanghai）本地自然日 YYYY-MM-DD 格式
+            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+            let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
+            const localDateStr = `${y}-${m}-${d}`;
             
             let dailyConfig = {
                 enabled: document.getElementById('dailyToggle').checked,

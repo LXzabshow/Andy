@@ -249,7 +249,12 @@
             const mins = String(now.getMinutes()).padStart(2, '0');
             return `${month}-${day} ${hours}:${mins}`;
         }
-        function getTodayStr() { return new Date().toISOString().split('T')[0]; }
+        function getTodayStr() {
+            // 锁定东八区时区，确保在午夜 0:00 准时切换自然日
+            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+            let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
+            return `${y}-${m}-${d}`;
+        }
 
         async function checkAndApplyDailyDeduction(record) {
             if (!record.dailyConfig || !record.dailyConfig.enabled) return record;
@@ -258,11 +263,27 @@
             
             let totalDeduct = record.dailyConfig.amount;
             let deductedAmount = Math.min(record.coins, totalDeduct); 
+            if (deductedAmount === 0) {
+                // 如果余额已经是 0，只更新日期，不制造账单
+                await dbClient.from('gamedata').update({ dailyConfig: { ...record.dailyConfig, lastDeductDate: today } }).eq('id', ROW_ID);
+                return record;
+            }
+
             record.coins = Math.max(0, record.coins - totalDeduct);
             record.dailyConfig.lastDeductDate = today;
             
+            // 💡 核心修复：强制将自动扣费事件写入双端流水的顶部
+            let logs = record.childLogs || [];
+            logs.unshift({ time: getFormattedTime(), action: "系统自动日常扣除", amount: -deductedAmount });
+            record.childLogs = logs.slice(0, 10); // 维持10条上限
+            
             try {
-                await dbClient.from('gamedata').update({ coins: record.coins, dailyConfig: record.dailyConfig }).eq('id', ROW_ID);
+                // 将更新后的 余额、配置 和 日志 一并推送云端
+                await dbClient.from('gamedata').update({ 
+                    coins: record.coins, 
+                    dailyConfig: record.dailyConfig,
+                    childLogs: record.childLogs 
+                }).eq('id', ROW_ID);
                 record._justAutoDeducted = deductedAmount;
             } catch (e) { console.error(e); }
             return record;

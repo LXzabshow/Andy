@@ -216,10 +216,13 @@
 
         async function saveDaily() {
             document.getElementById('log-status').innerText = "保存设置中...";
+            // 生成严格的东八区本地日期字符串 (YYYY-MM-DD)
+            const localDateStr = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()).map(p => p.value).join('').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+            
             let dailyConfig = {
                 enabled: document.getElementById('dailyToggle').checked,
                 amount: parseInt(document.getElementById('dailyAmount').value) || 0,
-                lastDeductDate: new Date().toISOString().split('T')[0]
+                lastDeductDate: localDateStr
             };
             const { error } = await dbClient.from('gamedata').update({ dailyConfig }).eq('id', ROW_ID);
             if(!error) getCoins();

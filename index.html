@@ -28,7 +28,7 @@
 
         /* BUFF 挂载区 */
         #activeBuffsContainer { width: 100%; display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
-        .buff-pill { background: rgba(0,0,0,0.7); border: 2px solid #ffb700; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 15px; font-family: -apple-system, sans-serif; font-weight: bold; text-shadow: 1px 1px #000; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; animation: glow 2s infinite alternate;}
+        .buff-pill { background: rgba(0,0,0,0.7); border: 2px solid #ffb700; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-family: -apple-system, sans-serif; font-weight: bold; text-shadow: 1px 1px #000; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; animation: glow 2s infinite alternate;}
         @keyframes glow { from { box-shadow: 0 0 5px #ffb700; } to { box-shadow: 0 0 15px #ffb700, 0 0 5px #ffb700 inset; } }
 
         .health-bar-container { width: 100%; margin-top: 10px; padding: 0 10px; box-sizing: border-box; }
@@ -88,7 +88,6 @@
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; }
 
-        /* 模型动画 */
         .skin-steve { width: 60px; height: 135px; }
         .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
         .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
@@ -424,7 +423,6 @@
             }
         }
 
-        // 核心渲染函数：增加了大量防御性判空代码
         function updateRankUI(coins, rank) {
             const rData = RANK_DATA[rank - 1] || RANK_DATA[0];
             
@@ -467,7 +465,7 @@
         function renderBuffs() {
             if (!currentData || !currentData.activeBuffs) return;
             const container = document.getElementById('activeBuffsContainer');
-            if (!container) return; // 防御性判断
+            if (!container) return; 
             
             let html = '';
             const now = Date.now();
@@ -475,13 +473,21 @@
             for (const [id, buff] of Object.entries(currentData.activeBuffs)) {
                 const remain = buff.endTime - now;
                 if (remain > 0) {
-                    let h = Math.floor(remain / 3600000);
-                    let m = Math.floor((remain % 3600000) / 60000);
-                    let s = Math.floor((remain % 60000) / 1000);
+                    let days = Math.floor(remain / (24 * 3600000));
+                    let hours = Math.floor((remain % (24 * 3600000)) / 3600000);
+                    let mins = Math.floor((remain % 3600000) / 60000);
+                    
+                    let timeStr = "";
+                    if (days >= 1) {
+                        timeStr = `${days}天 ${hours}小时`;
+                    } else {
+                        timeStr = `${hours}小时 ${mins}分`;
+                    }
+
                     html += `
                         <div class="buff-pill">
                             <span>${buff.icon} ${buff.name}</span>
-                            <span>${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}</span>
+                            <span>${timeStr}</span>
                         </div>
                     `;
                 }
@@ -499,14 +505,14 @@
                 container.innerHTML = '<div style="padding:20px; color:#555;">货架空空如也，暂无商品</div>';
                 return;
             }
-            // 修复注入Bug：采用 ID 传递，不再在 HTML 内拼接 JSON 字符串
+            
             container.innerHTML = currentData.shopItems.map(item => `
                 <div class="mc-item-btn" onclick="triggerBuy('${item.id}')" style="border-color:#8e44ad;">
                     <div class="mc-item-header">
                         <span class="mc-item-title">${item.icon} ${item.name}</span>
                         <span class="mc-item-reward" style="color:#c0392b;">-${item.price} 🪙</span>
                     </div>
-                    <div class="mc-item-desc">${item.desc} <br><span style="color:#555;">(持续 ${item.hours} 小时)</span></div>
+                    <div class="mc-item-desc">${item.desc} <br><span style="color:#555;">(持续 ${item.hours >= 24 ? (item.hours/24 + ' 天') : (item.hours + ' 小时')})</span></div>
                 </div>
             `).join('');
         }

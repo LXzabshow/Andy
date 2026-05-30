@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Andy的冒险背包</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #76b5fe; font-family: 'VT323', monospace; text-align: center; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background-color 2s ease; }
+        
+        /* 地面与角色下沉调整 */
+        .ground { position: absolute; bottom: 0; width: 100%; height: 20px; background: #5D4037; border-top: 6px solid #4CAF50; z-index: 20; }
+        .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 15;}
+        .actor { position: absolute; bottom: 20px; transition: transform 0.1s; z-index: 30; }
+        
+        .ui-container { margin-top: 5vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.3s;}
+        
+        /* 动态卡片材质 (通过 JS 改变 var) */
+        .card { 
+            background-color: var(--card-bg, #c6c6c6); 
+            border: 5px solid var(--card-border, #000); 
+            box-shadow: inset 4px 4px rgba(255,255,255,0.4), inset -4px -4px rgba(0,0,0,0.4); 
+            padding: 20px; position: relative; transition: all 0.5s ease;
+        }
+        
+        h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
+        .rank-badge { background: #333; color: var(--card-border, #f1c40f); padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 10px; font-size: 20px; border-radius: 4px; box-shadow: 2px 2px #000;}
+        .slot { background: #8b8b8b; width: 100px; height: 100px; margin: 0 auto; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+        .slot:active .coin-icon { transform: scale(0.8); }
+        .coin-icon { font-size: 60px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
+        .label { color: #404040; font-size: 20px; margin-top: 10px; font-weight: bold; text-shadow: 1px 1px #fff;}
+        .total { font-size: 70px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 5px 0; line-height: 1; }
+
+        /* 背包容量血条 */
+        .health-bar-container { width: 100%; margin-top: 10px; padding: 0 10px; box-sizing: border-box; }
+        .health-bar-label { font-size: 16px; color: #404040; font-weight: bold; margin-bottom: 5px; text-shadow: 1px 1px #fff; text-align: left; display:flex; justify-content: space-between;}
+        .health-bar-bg { width: 100%; height: 24px; background-color: #333; border: 3px solid #000; position: relative; box-shadow: inset 2px 2px #111, inset -2px -2px #555; overflow: hidden;}
+        .health-bar-fill { height: 100%; background-color: #e70000; width: 0%; transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: inset 0px 4px 0px rgba(255,255,255,0.3), inset 0px -4px 0px rgba(0,0,0,0.2); }
+        .health-bar-fill.safe { background-color: #2ecc71; }
+        .health-bar-fill.warn { background-color: #f1c40f; }
+
+        /* 升级与操作按钮 */
+        .btn-upgrade { width: 100%; margin-top: 15px; padding: 12px; font-family: 'VT323', monospace; font-size: 20px; font-weight: bold; color: white; background: #d35400; border: 4px solid #000; cursor: pointer; box-shadow: inset 4px 4px rgba(255,255,255,0.3), inset -4px -4px rgba(0,0,0,0.3); animation: pulse 2s infinite;}
+        .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        
+        .btn-main-action { width: 100%; margin-top: 10px; padding: 10px; font-family: inherit; font-size: 22px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 4px 4px rgba(255,255,255,0.3), inset -4px -4px rgba(0,0,0,0.3); }
+        .btn-main-action:active:not(:disabled) { transform: scale(0.98); }
+        .btn-log { background: #8e44ad; }
+
+        .status-bar { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 14px; display: inline-flex; align-items: center; margin-top: 10px; border: 2px solid #555; }
+        .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
+        .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+        .message { color: #004400; margin-top: 10px; font-size: 16px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold; line-height: 1.2;}
+        .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
+
+        /* 弹窗通用样式 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 400; display: none; justify-content: center; align-items: center; }
+        .challenge-card { background: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 20px; width: 85%; max-width: 350px; text-align: center; }
+        .challenge-title { font-size: 28px; color: #333; margin-bottom: 15px; text-shadow: 1px 1px #fff; }
+        .btn-close-modal { background: #c0392b; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; margin-top: 15px; width: 100%;}
+
+        /* 悬赏大厅 */
+        .reward-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+        .mc-item-btn { position: relative; background: #8b8b8b; border: 3px solid #000; border-right-color: #fff; border-bottom-color: #fff; padding: 10px; cursor: pointer; overflow: hidden; height: 90px; display: flex; flex-direction: column; justify-content: center; }
+        .mc-item-btn:active:not(.in-cd) { transform: scale(0.95); }
+        .mc-item-title { font-size: 18px; color: #000; margin-bottom: 5px; font-weight: bold; text-shadow: 1px 1px #fff;}
+        .mc-item-reward { color: #004400; font-weight: bold; font-size: 22px; text-shadow: 1px 1px #fff;}
+        .cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; pointer-events: none; background: conic-gradient(rgba(0,0,0,0.7) var(--progress), transparent 0deg); }
+        .cd-timer { position: absolute; bottom: 4px; right: 6px; color: #fff; font-size: 16px; font-weight: bold; text-shadow: 1px 1px #000; display: none; }
+        .in-cd { cursor: not-allowed; opacity: 0.8; }
+        .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
+
+        /* 探险账单 */
+        .log-container { max-height: 250px; overflow-y: auto; text-align: left; background: #fff; border: 2px solid #555; padding: 10px; font-family: -apple-system, sans-serif; font-size: 14px; }
+        .log-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; }
+        .log-row:last-child { border-bottom: none; }
+        .log-t { color: #888; font-size: 11px; min-width: 80px;}
+        .log-a { font-weight: bold; color: #333; flex: 1; margin: 0 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+        .log-v { font-weight: bold; color: #27ae60; text-align: right; min-width: 30px;}
+        .log-v.sub { color: #e74c3c; }
+
+        #treasure-chest { position: fixed; top: 10%; left: 50%; font-size: 60px; z-index: 200; cursor: pointer; display: none; }
+        .chest-float-anim { animation: bobbing 1s infinite alternate; }
+        @keyframes bobbing { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+
+        .challenge-q { font-size: 14px; color: #000; margin: 15px 0; font-weight: bold; background: #fff; padding: 8px; border: 2px solid #555; white-space: pre-wrap; text-align: left; max-height: 250px; overflow-y: auto;}
+        .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
+        .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; }
+
+        /* 动画元素 */
+        .skin-steve { width: 60px; height: 135px; }
+        .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
+        .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
+        .skin-steve .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; }
+        .skin-steve .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
+        .skin-steve .sword { position: absolute; top: 35px; right: -40px; font-size: 60px; transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000); }
+        
+        .skin-creeper { width: 45px; height: 120px; }
+        .skin-creeper .head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
+        .skin-creeper .face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8; }
+        .skin-creeper .body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; }
+        .skin-creeper .legs { width: 45px; height: 30px; position: absolute; top: 90px; }
+        .skin-creeper .leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0; }
+        
+        .skin-villager { width: 50px; height: 140px; }
+        .skin-villager .head { width: 50px; height: 60px; background: #d09b7c; position: absolute; top: 0; }
+        .skin-villager .nose { width: 10px; height: 18px; background: #d09b7c; position: absolute; top: 30px; left: 20px; border: 1px solid #a3755b; z-index: 5;}
+        .skin-villager .body { width: 50px; height: 80px; background: #684831; position: absolute; top: 60px; }
+        .skin-villager .arms { width: 50px; height: 15px; background: #684831; position: absolute; top: 75px; left: 0; box-shadow: inset 0 0 5px rgba(0,0,0,0.3); }
+
+        .breathe { animation: breathe 2s ease-in-out infinite; }
+        @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
+        .anim-attack { animation: swordSwing 0.35s ease-out forwards; }
+        @keyframes swordSwing { 0% { transform: scaleX(-1) rotate(45deg); } 50% { transform: scaleX(-1) rotate(-60deg); } 100% { transform: scaleX(-1) rotate(45deg); } }
+        .anim-hurt { animation: hurtFlash 0.3s steps(2) infinite; }
+        @keyframes hurtFlash { 0% { filter: sepia(1) hue-rotate(-50deg) saturate(5); } 100% { filter: none; } }
+        .anim-swell { animation: swell 2.5s ease-in forwards; }
+        @keyframes swell { 0% { transform: scale(1); filter: brightness(1); } 95% { transform: scale(2.5); filter: brightness(100); opacity: 1;} 100% { transform: scale(3); opacity: 0; } }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 20% { transform: translate(-3px, 0px); } 40% { transform: translate(1px, -1px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(-1px, -1px); } 100% { transform: translate(1px, -2px); } }
+        .run-l-to-r { animation: runLeftToRight 8s linear forwards; }
+        @keyframes runLeftToRight { 0% { left: -150px; } 100% { left: 120vw; } }
+        .run-r-to-l { animation: runRightToLeft 8s linear forwards; }
+        @keyframes runRightToLeft { 0% { right: -150px; } 100% { right: 120vw; } }
+        
+        #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; }
+        .confetti { position: fixed; top: 50%; left: 50%; z-index: 999; animation: explode-particle 1s ease-out forwards; pointer-events: none; font-size: 30px;}
+        @keyframes explode-particle { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(720deg); opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    <div id="start-overlay">
+        <h1 style="font-size: 40px; margin-bottom:10px;">Andy的探险世界</h1>
+        <button class="mc-btn" onclick="startGame()">开始冒险</button>
+    </div>
+
+    <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-levelup"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/levelup.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-explode"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/explode.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-hit"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/damage/hit1.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-fuse"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/fuse.ogg" type="audio/ogg"></audio>
+    <audio id="sfx-click"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/click.ogg" type="audio/ogg"></audio>
+
+    <div id="treasure-chest" class="chest-float-anim" onclick="openChallengeModal()">🎁</div>
+
+    <div id="challengeModal" class="modal-overlay">
+        <div class="challenge-card">
+            <div class="challenge-title">📜 未知悬赏令</div>
+            <div style="color:#00aa00; font-size:20px; font-weight:bold;">赏金: <span id="c_reward">50</span> 币</div>
+            <div id="c_timer" style="color:red; font-size:18px; margin: 10px 0;">宝箱消散倒计时...</div>
+            <div class="challenge-q" id="c_question">题目加载中...</div>
+            <input type="text" id="c_input" class="challenge-input" placeholder="输入密码">
+            <br>
+            <button class="btn-submit" onclick="submitAnswer()">解开封印</button>
+            <button class="btn-close-modal" style="width: auto; margin-left: 10px; display:inline-block;" onclick="closeChallengeModal()">放弃</button>
+        </div>
+    </div>
+
+    <div id="rewardModal" class="modal-overlay">
+        <div class="challenge-card">
+            <div class="challenge-title">⚔️ 任务告示牌</div>
+            <div class="reward-grid">
+                <div class="mc-item-btn" id="btn-sport" onclick="claimReward('sport', '疾跑附魔 (运动)', 10)">
+                    <div class="cd-overlay"></div><span class="mc-item-title">疾跑附魔</span><span class="mc-item-reward">+10 🪙</span><span class="cd-timer">--:--</span>
+                </div>
+                <div class="mc-item-btn" id="btn-focus" onclick="claimReward('focus', '凝神药水 (专注)', 10)">
+                    <div class="cd-overlay"></div><span class="mc-item-title">凝神药水</span><span class="mc-item-reward">+10 🪙</span><span class="cd-timer">--:--</span>
+                </div>
+                <div class="mc-item-btn" id="btn-writing" onclick="claimReward('writing', '成书与笔 (书写)', 10)">
+                    <div class="cd-overlay"></div><span class="mc-item-title">成书与笔</span><span class="mc-item-reward">+10 🪙</span><span class="cd-timer">--:--</span>
+                </div>
+                <div class="mc-item-btn" id="btn-extra" onclick="claimReward('extra', '探索下界 (课外)', 10)">
+                    <div class="cd-overlay"></div><span class="mc-item-title">探索下界</span><span class="mc-item-reward">+10 🪙</span><span class="cd-timer">--:--</span>
+                </div>
+            </div>
+            <button class="btn-close-modal" onclick="closeRewardModal()">返回营地</button>
+        </div>
+    </div>
+
+    <div id="logModal" class="modal-overlay">
+        <div class="challenge-card">
+            <div class="challenge-title">📜 探险账单</div>
+            <div id="logListContent" class="log-container">
+                </div>
+            <button class="btn-close-modal" onclick="closeLogModal()">合上账本</button>
+        </div>
+    </div>
+
+    <div class="ui-container" id="uiLayer">
+        <div class="card" id="ui-card">
+            <div class="mute-btn" onclick="toggleMute()">🔊</div>
+            <h2>Andy的探险背包</h2>
+            <div id="rankBadge" class="rank-badge">同步中...</div>
+            <div class="slot" onclick="clickCoin()"><div class="coin-icon" id="icon">🪙</div></div>
+            <div class="label">行囊内硬币</div>
+            <div id="totalDisplay" class="total">...</div>
+
+            <div class="health-bar-container">
+                <div class="health-bar-label">
+                    <span>承载力:</span>
+                    <span id="capacityText">0 / 200</span>
+                </div>
+                <div class="health-bar-bg"><div id="healthBarFill" class="health-bar-fill"></div></div>
+            </div>
+
+            <button id="btnUpgrade" class="btn-upgrade" onclick="upgradeRank()" disabled>🆙 打造更强装备</button>
+
+            <button class="btn-main-action" onclick="openRewardModal()">⚔️ 查看任务</button>
+            <button class="btn-main-action btn-log" onclick="openLogModal()">📜 翻开账单</button>
+
+            <div class="status-bar"><div id="light" class="light online"></div><span id="connStatus">连线末地...</span></div>
+            <div id="statusMsg" class="message"></div>
+        </div>
+    </div>
+
+    <div class="stage" id="stage">
+        <div id="hero-steve" class="actor skin-steve breathe" style="left: -200px; display: none; z-index: 100;"><div class="head"></div><div class="hair"></div><div class="body"></div><div class="pants"></div><div class="sword">🗡️</div></div>
+        <div id="hero-creeper" class="actor skin-creeper" style="right: -200px; display: none; z-index: 99;"><div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div></div>
+    </div>
+    <div class="ground"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
+        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const uiCard = document.getElementById('ui-card');
+        const totalDisplay = document.getElementById('totalDisplay');
+        const statusMsg = document.getElementById('statusMsg');
+        const connStatus = document.getElementById('connStatus');
+        const rankBadge = document.getElementById('rankBadge');
+        const btnUpgrade = document.getElementById('btnUpgrade');
+        const stage = document.getElementById('stage');
+        const heroSteve = document.getElementById('hero-steve');
+        const heroCreeper = document.getElementById('hero-creeper');
+        
+        const chest = document.getElementById('treasure-chest');
+        const cModal = document.getElementById('challengeModal');
+        const rModal = document.getElementById('rewardModal');
+        const lModal = document.getElementById('logModal');
+        
+        const bgm = document.getElementById('bgm');
+        const sfxLevelUp = document.getElementById('sfx-levelup');
+        const sfxExplode = document.getElementById('sfx-explode'); 
+        const sfxHit = document.getElementById('sfx-hit'); 
+        const sfxFuse = document.getElementById('sfx-fuse'); 
+        const sfxClick = document.getElementById('sfx-click');
+
+        let isMuted = false, lastCoins = null, isAnimating = false, lastScenario = -1; 
+        let ambientInterval = null, syncInterval = null, activeEventData = null, timerInterval = null, chestFloatInterval = null; 
+        let currentData = null; 
+        const CD_HOURS = 3, ROW_ID = 1;
+
+        // 十阶数值与视觉映射表
+        const RANK_DATA = [
+            { rank: 1, cap: 200, cost: 150, title: "🪵 新手伐木工", color: "#8B5A2B", bg: "#d2b48c" },
+            { rank: 2, cap: 350, cost: 300, title: "🪨 洞穴探索者", color: "#7D7D7D", bg: "#b0b0b0" },
+            { rank: 3, cap: 600, cost: 500, title: "🛡️ 铁甲护卫", color: "#D8D8D8", bg: "#e6e6e6" },
+            { rank: 4, cap: 1000, cost: 800, title: "🥇 寻金探险家", color: "#FEE12B", bg: "#fff7a8" },
+            { rank: 5, cap: 1500, cost: 1300, title: "⚡ 红石工程师", color: "#FF0000", bg: "#ffcccc" },
+            { rank: 6, cap: 2500, cost: 2200, title: "💎 钻石先锋", color: "#55FFFF", bg: "#ccffff" },
+            { rank: 7, cap: 4000, cost: 3500, title: "🔮 黑曜石行者", color: "#3B2D59", bg: "#5a4a7a" },
+            { rank: 8, cap: 6000, cost: 5500, title: "🟢 绿宝石领主", color: "#55FF55", bg: "#ccffcc" },
+            { rank: 9, cap: 10000, cost: 9999, title: "🔥 合金战神", color: "#4A3B3C", bg: "#6b5658" },
+            { rank: 10, cap: Infinity, cost: 0, title: "🐲 末影屠龙者", color: "#AA00AA", bg: "#d4a8d4" }
+        ];
+
+        function getFormattedTime() {
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const mins = String(now.getMinutes()).padStart(2, '0');
+            return `${month}-${day} ${hours}:${mins}`;
+        }
+        
+        function getTodayStr() { 
+            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+            let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
+            return `${y}-${m}-${d}`;
+        }
+
+        async function checkAndApplyDailyDeduction(record) {
+            if (!record.dailyConfig || !record.dailyConfig.enabled) return record;
+            let today = getTodayStr();
+            if(record.dailyConfig.lastDeductDate === today) return record;
+            
+            let totalDeduct = record.dailyConfig.amount;
+            let deductedAmount = Math.min(record.coins, totalDeduct); 
+            if(deductedAmount === 0) {
+                await dbClient.from('gamedata').update({ dailyConfig: { ...record.dailyConfig, lastDeductDate: today } }).eq('id', ROW_ID);
+                return record;
+            }
+
+            record.coins = Math.max(0, record.coins - totalDeduct);
+            record.dailyConfig.lastDeductDate = today;
+            
+            let logs = record.childLogs || [];
+            logs.unshift({ time: getFormattedTime(), action: "系统自动饥饿消耗", amount: -deductedAmount });
+            record.childLogs = logs.slice(0, 10);
+            
+            try {
+                await dbClient.from('gamedata').update({ coins: record.coins, dailyConfig: record.dailyConfig, childLogs: record.childLogs }).eq('id', ROW_ID);
+                record._justAutoDeducted = deductedAmount;
+            } catch (e) { console.error(e); }
+            return record;
+        }
+
+        async function startGame() {
+            document.getElementById('start-overlay').style.display='none';
+            checkDayNight();
+            try { bgm.load(); bgm.volume = 0.4; bgm.play().catch(e => {}); } catch(e){}
+            await syncData();
+            syncInterval = setInterval(syncData, 5000); 
+            setInterval(processCooldowns, 1000); 
+            playAmbientScenario();
+            ambientInterval = setInterval(playAmbientScenario, 12000);
+        }
+
+        async function syncData() {
+            if(isAnimating) return;
+            try {
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
+                let record = data[0];
+                record.currentRank = record.currentRank || 1; // 兼容初始
+                
+                record = await checkAndApplyDailyDeduction(record);
+                currentData = record;
+                let cloudCoins = record.coins || 0;
+                
+                renderLogs(record.childLogs);
+                updateRankUI(cloudCoins, record.currentRank);
+
+                if (record._justAutoDeducted > 0) {
+                    playExplodeSequence(record._justAutoDeducted, cloudCoins, `饥饿值消耗！扣除 ${record._justAutoDeducted} 币`);
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                    return; 
+                }
+
+                if(record.activeEvent && record.activeEvent.expireTime > Date.now()) {
+                    activeEventData = record.activeEvent;
+                    if(chest.style.display !== 'block') { chest.style.display = 'block'; startFloatingChest(); }
+                } else {
+                    chest.style.display = 'none'; stopFloatingChest();
+                }
+
+                let localStr = localStorage.getItem('andy_last_seen_coins');
+                if (localStr === null) {
+                    totalDisplay.innerText = cloudCoins; 
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                    return;
+                }
+                lastCoins = parseInt(localStr);
+
+                if (cloudCoins > lastCoins) {
+                    playAttackSequence(cloudCoins - lastCoins, cloudCoins);
+                } else if (cloudCoins < lastCoins) {
+                    playExplodeSequence(lastCoins - cloudCoins, cloudCoins, `遭遇劫掠！扣减 ${lastCoins - cloudCoins}`);
+                } else {
+                    totalDisplay.innerText = cloudCoins;
+                }
+                localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                connStatus.innerText = "信号良好";
+            } catch (error) { connStatus.innerText = "失去连接..."; }
+        }
+
+        // 界面动态刷新核心
+        function updateRankUI(coins, rank) {
+            const rData = RANK_DATA[rank - 1];
+            
+            // 材质渲染
+            uiCard.style.setProperty('--card-border', rData.color);
+            uiCard.style.setProperty('--card-bg', rData.bg);
+            rankBadge.innerText = rData.title;
+
+            // 血条渲染
+            let maxCap = rData.cap;
+            let ratio = maxCap === Infinity ? 0 : (coins / maxCap) * 100;
+            document.getElementById('capacityText').innerText = `${coins} / ${maxCap === Infinity ? '∞' : maxCap}`;
+            
+            const fill = document.getElementById('healthBarFill');
+            fill.style.width = ratio + '%';
+            if(ratio > 85) { fill.className = 'health-bar-fill warn'; }
+            else if (ratio < 40) { fill.className = 'health-bar-fill safe'; }
+            else { fill.className = 'health-bar-fill'; }
+
+            // 升级按钮逻辑
+            if (rank >= RANK_DATA.length) {
+                btnUpgrade.innerText = "已达最高境界 👑";
+                btnUpgrade.disabled = true;
+            } else {
+                let cost = rData.cost;
+                btnUpgrade.innerText = `🆙 突破界限 (需花费 ${cost} 币)`;
+                btnUpgrade.disabled = coins < cost;
+            }
+        }
+
+        // 主动突破界限 (升级操作)
+        async function upgradeRank() {
+            if (!currentData || isAnimating) return;
+            const rank = currentData.currentRank || 1;
+            const rData = RANK_DATA[rank - 1];
+            
+            if (currentData.coins < rData.cost) return; // 二次校验防作弊
+            playSound('click');
+
+            const nextRank = rank + 1;
+            const nextRData = RANK_DATA[nextRank - 1];
+            const newCoins = currentData.coins - rData.cost;
+
+            let logs = currentData.childLogs || [];
+            logs.unshift({ time: getFormattedTime(), action: `晋升身份: ${nextRData.title}`, amount: -rData.cost });
+            logs = logs.slice(0, 10); 
+
+            try {
+                // UI 隐去，播放爆破效果象征打破上限
+                isAnimating = true; uiCard.style.opacity = '0';
+                playSound('fuse');
+                createParticles(30, '✨');
+                setTimeout(() => { playSound('levelup'); createParticles(80, '🎉'); }, 1000);
+
+                await dbClient.from('gamedata').update({ 
+                    coins: newCoins, 
+                    currentRank: nextRank,
+                    childLogs: logs
+                }).eq('id', ROW_ID);
+                
+                setTimeout(() => {
+                    localStorage.setItem('andy_last_seen_coins', newCoins);
+                    currentData.coins = newCoins;
+                    currentData.currentRank = nextRank;
+                    updateValue(newCoins);
+                    updateRankUI(newCoins, nextRank);
+                    uiCard.style.opacity = '1';
+                    isAnimating = false;
+                }, 2500);
+
+            } catch (e) { alert("突破受阻，网络波动！"); isAnimating = false; uiCard.style.opacity = '1';}
+        }
+
+        // 📜 流水弹窗
+        function openLogModal() { lModal.style.display = 'flex'; }
+        function closeLogModal() { lModal.style.display = 'none'; }
+        function renderLogs(logs) {
+            const container = document.getElementById('logListContent');
+            if(logs && logs.length > 0) {
+                container.innerHTML = logs.map(log => {
+                    const amountClass = log.amount > 0 ? "log-v" : "log-v sub";
+                    const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
+                    return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`;
+                }).join('');
+            } else {
+                container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>';
+            }
+        }
+
+        // ⚔️ 任务大厅
+        function openRewardModal() { rModal.style.display = 'flex'; processCooldowns(); }
+        function closeRewardModal() { rModal.style.display = 'none'; }
+
+        async function claimReward(type, actionName, amount) {
+            const now = Date.now();
+            if(currentData.cooldowns && currentData.cooldowns[type] > now) return; 
+
+            const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
+            if (currentData.coins + amount > maxCap) {
+                playSound('fuse');
+                alert("🎒 背包承载力不足！\n新奖励无法装下，请先突破界限腾出空间。");
+                return;
+            }
+
+            try {
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
+                let record = data[0];
+                const newCoins = record.coins + amount;
+                
+                let logs = record.childLogs || [];
+                logs.unshift({ time: getFormattedTime(), action: actionName, amount: amount });
+                logs = logs.slice(0, 10); 
+
+                let cds = record.cooldowns || {}; cds[type] = now + (CD_HOURS * 3600000);
+
+                await dbClient.from('gamedata').update({
+                    coins: newCoins, childLogs: logs, cooldowns: cds
+                }).eq('id', ROW_ID);
+
+                currentData = { ...record, coins: newCoins, childLogs: logs, cooldowns: cds };
+                localStorage.setItem('andy_last_seen_coins', newCoins);
+                closeRewardModal();
+                playAttackSequence(amount, newCoins);
+            } catch (e) { alert("申报异常，请重试"); }
+        }
+
+        function processCooldowns() {
+            if(!currentData || !currentData.cooldowns) return;
+            const now = Date.now();
+            ['sport', 'focus', 'writing', 'extra'].forEach(type => {
+                const btn = document.getElementById(`btn-${type}`);
+                const remain = (currentData.cooldowns[type] || 0) - now;
+                if(remain > 0) {
+                    btn.classList.add('in-cd');
+                    btn.style.setProperty('--progress', (remain / (CD_HOURS * 3600000)) * 360 + 'deg');
+                    const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000);
+                    btn.querySelector('.cd-timer').innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+                } else btn.classList.remove('in-cd');
+            });
+        }
+
+        function playAttackSequence(amount, finalCoins) {
+            isAnimating = true; clearAmbientActors(); uiLayer.style.opacity = '0'; 
+            heroSteve.style.display = 'block'; heroCreeper.style.display = 'block';
+            heroSteve.style.left = "35%"; heroCreeper.style.right = "35%";
+            document.querySelector('.skin-steve .sword').style.display = 'block'; 
+            setTimeout(() => { document.querySelector('.skin-steve .sword').classList.add('anim-attack'); playSound('hit'); setTimeout(() => { heroCreeper.classList.add('anim-hurt'); }, 150); }, 500);
+            setTimeout(() => { heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; }, 1200);
+            setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000);
+        }
+
+        function playExplodeSequence(amount, finalCoins, customMsg) {
+            isAnimating = true; clearAmbientActors(); uiLayer.style.opacity = '0';
+            heroCreeper.style.display = 'block'; heroCreeper.style.right = "45%";
+            setTimeout(() => { playSound('fuse'); heroCreeper.classList.add('anim-swell'); }, 500);
+            setTimeout(() => {
+                heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); createParticles(40, '🟥'); playSound('explode');
+                statusMsg.innerText = customMsg; statusMsg.style.color = "#8b0000";
+            }, 2500);
+            setTimeout(() => { document.body.classList.remove('shake'); updateValue(finalCoins); resetStage(); }, 4000);
+        }
+
+        function resetStage() { uiLayer.style.opacity = '1'; heroSteve.style.display = 'none'; heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; isAnimating = false; }
+        function updateValue(coins) { 
+            totalDisplay.innerText = coins; 
+            updateRankUI(coins, currentData.currentRank || 1);
+        }
+        
+        // 修复的背景角色生成逻辑 (坐标已基于新的 22px 基础线调节)
+        function playAmbientScenario() { 
+            if (isAnimating) return; 
+            let scenario; do { scenario = Math.floor(Math.random() * 2); } while (scenario === lastScenario); 
+            lastScenario = scenario; 
+            if (scenario === 0) { spawnActor('skin-villager', 'left', 12); } else { spawnActor('skin-creeper', 'right', 12); } 
+        }
+        function spawnActor(skinClass, direction, duration) { 
+            if (isAnimating) return; 
+            const el = document.createElement('div'); 
+            el.className = `actor ambient-actor ${skinClass}`; 
+            el.style.bottom = (22 + Math.floor(Math.random() * 8)) + 'px'; 
+            
+            let inner = '';
+            if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
+            else if(skinClass.includes('villager')) inner = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>';
+            el.innerHTML = inner;
+
+            if (direction === 'left') { el.style.left = '-100px'; el.style.animation = `runLeftToRight ${duration}s linear forwards`; } 
+            else { el.style.right = '-100px'; el.style.transform = 'scaleX(-1)'; el.style.animation = `runRightToLeft ${duration}s linear forwards`; } 
+            stage.appendChild(el); 
+            setTimeout(() => el.remove(), duration * 1000); 
+        }
+        function clearAmbientActors() { document.querySelectorAll('.ambient-actor').forEach(el => el.remove()); }
+
+        function startFloatingChest() { if(!chestFloatInterval) { moveChest(); chestFloatInterval = setInterval(moveChest, 3500); } }
+        function stopFloatingChest() { clearInterval(chestFloatInterval); chestFloatInterval = null; }
+        function moveChest() { const randomX = Math.floor(Math.random() * 70) + 10, randomY = Math.floor(Math.random() * 20) + 5; chest.style.left = randomX + '%'; chest.style.top = randomY + '%'; }
+        function createParticles(c, char) { for (let i = 0; i < c; i++) { const el = document.createElement('div'); el.classList.add('confetti'); el.innerText = char; const angle = Math.random() * 360, dist = 50 + Math.random() * 100; el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw'); el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh'); document.body.appendChild(el); setTimeout(() => el.remove(), 1000); } }
+        function checkDayNight() { const hour = new Date().getHours(); if (hour >= 18 || hour < 6) document.body.classList.add('night'); else document.body.classList.remove('night'); }
+        function clickCoin() { if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); } }
+        function toggleMute() { isMuted = !isMuted; bgm[isMuted ? 'pause' : 'play'](); document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊'; }
+        function playSound(type) { if(isMuted) return; try { if(type === 'levelup') sfxLevelUp.play(); if(type === 'explode') sfxExplode.play(); if(type === 'hit') sfxHit.play(); if(type === 'fuse') sfxFuse.play(); } catch(e){} }
+        
+        // 宝箱挑战逻辑
+        function openChallengeModal() { if(!activeEventData) return; cModal.style.display = 'flex'; document.getElementById('c_question').innerText = activeEventData.question; document.getElementById('c_reward').innerText = activeEventData.reward; document.getElementById('c_input').value = ""; clearInterval(timerInterval); updateTimer(); timerInterval = setInterval(updateTimer, 1000); }
+        function closeChallengeModal() { cModal.style.display = 'none'; clearInterval(timerInterval); }
+        function updateTimer() { let diff = activeEventData.expireTime - Date.now(); if(diff <= 0) { closeChallengeModal(); chest.style.display = 'none'; return; } let h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000); document.getElementById('c_timer').innerText = `消散倒计时: ${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }
+        async function submitAnswer() { 
+            if(document.getElementById('c_input').value.trim() === activeEventData.answer.trim()) { 
+                const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
+                if (currentData.coins + activeEventData.reward > maxCap) {
+                    playSound('fuse');
+                    alert("🎒 背包承载力不足！\n新战利品无法装下，请先突破界限腾出空间。");
+                    closeChallengeModal(); return;
+                }
+
+                closeChallengeModal(); chest.style.display = 'none'; 
+                try { 
+                    const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); 
+                    let record = data[0], newCoins = record.coins + activeEventData.reward; 
+                    
+                    let logs = record.childLogs || [];
+                    logs.unshift({ time: getFormattedTime(), action: "破解悬赏令宝箱", amount: activeEventData.reward });
+                    logs = logs.slice(0, 10); 
+
+                    await dbClient.from('gamedata').update({ coins: newCoins, activeEvent: null, childLogs: logs }).eq('id', ROW_ID); 
+                    localStorage.setItem('andy_last_seen_coins', newCoins); 
+                    playAttackSequence(activeEventData.reward, newCoins); 
+                } catch(e){} 
+            } else { playSound('fuse'); alert("❌ 密码破解失败！"); } 
+        }
+    </script>
+</body>
+</html>

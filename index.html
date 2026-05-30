@@ -88,6 +88,7 @@
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; }
 
+        /* 模型动画 */
         .skin-steve { width: 60px; height: 135px; }
         .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
         .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
@@ -364,7 +365,7 @@
             await syncData();
             syncInterval = setInterval(syncData, 5000); 
             setInterval(processCooldowns, 1000); 
-            setInterval(renderBuffs, 1000); // BUFF 心跳倒计时
+            setInterval(renderBuffs, 1000); // 启动 BUFF 心跳倒计时
             playAmbientScenario();
             ambientInterval = setInterval(playAmbientScenario, 12000);
         }
@@ -373,10 +374,10 @@
             if(isAnimating) return;
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
+                if (!data || data.length === 0) return;
+                
                 let record = data[0];
                 record.currentRank = record.currentRank || 1; 
-                record.shopItems = record.shopItems || [];
-                record.activeBuffs = record.activeBuffs || {};
                 
                 record = await checkAndApplyDailyDeduction(record);
                 currentData = record;
@@ -393,14 +394,15 @@
 
                 if(record.activeEvent && record.activeEvent.expireTime > Date.now()) {
                     activeEventData = record.activeEvent;
-                    if(chest.style.display !== 'block') { chest.style.display = 'block'; startFloatingChest(); }
+                    if(chest && chest.style.display !== 'block') { chest.style.display = 'block'; startFloatingChest(); }
                 } else {
-                    chest.style.display = 'none'; stopFloatingChest();
+                    if(chest) chest.style.display = 'none'; 
+                    stopFloatingChest();
                 }
 
                 let localStr = localStorage.getItem('andy_last_seen_coins');
                 if (localStr === null) {
-                    totalDisplay.innerText = cloudCoins; 
+                    if(totalDisplay) totalDisplay.innerText = cloudCoins; 
                     localStorage.setItem('andy_last_seen_coins', cloudCoins);
                     return;
                 }
@@ -411,48 +413,62 @@
                 } else if (cloudCoins < lastCoins) {
                     playExplodeSequence(lastCoins - cloudCoins, cloudCoins, `遭遇劫掠！扣减 ${lastCoins - cloudCoins}`);
                 } else {
-                    totalDisplay.innerText = cloudCoins;
+                    if(totalDisplay) totalDisplay.innerText = cloudCoins;
                 }
                 localStorage.setItem('andy_last_seen_coins', cloudCoins);
-                connStatus.innerText = "信号良好";
-            } catch (error) { connStatus.innerText = "失去连接..."; }
+                if(connStatus) connStatus.innerText = "信号良好";
+                
+            } catch (error) { 
+                console.error("数据同步错误: 节点可能未找到", error);
+                if(connStatus) connStatus.innerText = "失去连接..."; 
+            }
         }
 
+        // 核心渲染函数：增加了大量防御性判空代码
         function updateRankUI(coins, rank) {
-            const rData = RANK_DATA[rank - 1];
-            uiCard.style.setProperty('--card-border', rData.color);
-            uiCard.style.setProperty('--card-bg', rData.bg);
-            rankBadge.innerText = rData.title;
+            const rData = RANK_DATA[rank - 1] || RANK_DATA[0];
+            
+            if (uiCard) {
+                uiCard.style.setProperty('--card-border', rData.color);
+                uiCard.style.setProperty('--card-bg', rData.bg);
+            }
+            if (rankBadge) rankBadge.innerText = rData.title;
 
             const hour = new Date().getHours();
             const isNight = (hour >= 18 || hour < 6);
-
             document.body.style.background = (rank >= 9) ? rData.pageBg : (isNight ? rData.nightBg : rData.pageBg);
 
             let maxCap = rData.cap;
             let ratio = maxCap === Infinity ? 0 : (coins / maxCap) * 100;
-            document.getElementById('capacityText').innerText = `${coins} / ${maxCap === Infinity ? '∞' : maxCap}`;
+            
+            const capText = document.getElementById('capacityText');
+            if (capText) capText.innerText = `${coins} / ${maxCap === Infinity ? '∞' : maxCap}`;
             
             const fill = document.getElementById('healthBarFill');
-            fill.style.width = ratio + '%';
-            if(ratio > 85) { fill.className = 'health-bar-fill warn'; }
-            else if (ratio < 40) { fill.className = 'health-bar-fill safe'; }
-            else { fill.className = 'health-bar-fill'; }
+            if (fill) {
+                fill.style.width = ratio + '%';
+                if(ratio > 85) { fill.className = 'health-bar-fill warn'; }
+                else if (ratio < 40) { fill.className = 'health-bar-fill safe'; }
+                else { fill.className = 'health-bar-fill'; }
+            }
 
-            if (rank >= RANK_DATA.length) {
-                btnUpgrade.innerText = "已达最高境界 👑";
-                btnUpgrade.disabled = true;
-            } else {
-                let cost = rData.cost;
-                btnUpgrade.innerText = `🆙 突破界限 (需花费 ${cost} 币)`;
-                btnUpgrade.disabled = coins < cost;
+            if (btnUpgrade) {
+                if (rank >= RANK_DATA.length) {
+                    btnUpgrade.innerText = "已达最高境界 👑";
+                    btnUpgrade.disabled = true;
+                } else {
+                    let cost = rData.cost;
+                    btnUpgrade.innerText = `🆙 突破界限 (需花费 ${cost} 币)`;
+                    btnUpgrade.disabled = coins < cost;
+                }
             }
         }
 
-        // --- BUFF 与商店逻辑 ---
         function renderBuffs() {
             if (!currentData || !currentData.activeBuffs) return;
             const container = document.getElementById('activeBuffsContainer');
+            if (!container) return; // 防御性判断
+            
             let html = '';
             const now = Date.now();
             
@@ -474,25 +490,33 @@
         }
 
         function openShopModal() { 
+            if(!sModal) return;
             sModal.style.display = 'flex'; 
             const container = document.getElementById('shopListContainer');
+            if(!container) return;
+
             if(!currentData || !currentData.shopItems || currentData.shopItems.length === 0) {
-                container.innerHTML = '<div style="padding:20px; color:#555;">货架被洗劫一空，暂无商品</div>';
+                container.innerHTML = '<div style="padding:20px; color:#555;">货架空空如也，暂无商品</div>';
                 return;
             }
+            // 修复注入Bug：采用 ID 传递，不再在 HTML 内拼接 JSON 字符串
             container.innerHTML = currentData.shopItems.map(item => `
-                <div class="mc-item-btn" onclick='requestAction("buy", ${JSON.stringify(item)})' style="border-color:#8e44ad;">
+                <div class="mc-item-btn" onclick="triggerBuy('${item.id}')" style="border-color:#8e44ad;">
                     <div class="mc-item-header">
                         <span class="mc-item-title">${item.icon} ${item.name}</span>
                         <span class="mc-item-reward" style="color:#c0392b;">-${item.price} 🪙</span>
                     </div>
-                    <div class="mc-item-desc">${item.desc} (持续${item.hours}小时)</div>
+                    <div class="mc-item-desc">${item.desc} <br><span style="color:#555;">(持续 ${item.hours} 小时)</span></div>
                 </div>
             `).join('');
         }
-        function closeShopModal() { sModal.style.display = 'none'; }
+        function closeShopModal() { if(sModal) sModal.style.display = 'none'; }
+        
+        function triggerBuy(itemId) {
+            const item = currentData.shopItems.find(i => i.id === itemId);
+            if(item) requestAction('buy', item);
+        }
 
-        // --- 统一挂起拦截器 ---
         function requestAction(actionType, data) {
             clickCoin();
             if (actionType === 'reward') {
@@ -513,15 +537,15 @@
                     playSound('fuse');
                     return alert("❌ 行囊硬币不足，无法兑换该法宝！");
                 }
-                document.getElementById('confirmText').innerHTML = `确认花费 <span style="color:#c0392b;">${data.price}币</span> 兑换<br><span style="color:#8e44ad; font-size:20px;">【${data.name}】</span> 吗？<br><span style="font-size:12px; color:#555;">(购买同类物品可叠加延长时效)</span>`;
+                document.getElementById('confirmText').innerHTML = `确认花费 <span style="color:#c0392b;">${data.price}币</span> 兑换<br><span style="color:#8e44ad; font-size:20px;">【${data.name}】</span> 吗？<br><span style="font-size:12px; color:#555;">(若已有该法宝，时间将叠加延长)</span>`;
             }
 
             pendingAction = { actionType, data };
-            cfModal.style.display = 'flex';
+            if(cfModal) cfModal.style.display = 'flex';
         }
 
         function closeConfirmModal() {
-            cfModal.style.display = 'none';
+            if(cfModal) cfModal.style.display = 'none';
             pendingAction = null;
         }
 
@@ -537,7 +561,6 @@
             }
         }
 
-        // 处理购买
         async function proceedWithBuy(item) {
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
@@ -546,7 +569,6 @@
                 
                 let logs = record.childLogs || [];
                 logs.unshift({ time: getFormattedTime(), action: `兑换法宝: ${item.name}`, amount: -item.price });
-                logs = logs.slice(0, 10);
 
                 let buffs = record.activeBuffs || {};
                 let currentEndTime = buffs[item.id] ? buffs[item.id].endTime : 0;
@@ -555,13 +577,12 @@
 
                 buffs[item.id] = { name: item.name, icon: item.icon, endTime: newEndTime };
 
-                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs, activeBuffs: buffs }).eq('id', ROW_ID);
+                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), activeBuffs: buffs }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs, activeBuffs: buffs };
                 localStorage.setItem('andy_last_seen_coins', newCoins);
                 
                 closeShopModal();
                 
-                // BUFF获取特效
                 playSound('levelup');
                 createParticles(50, ['✨', item.icon, '🔮']);
                 updateValue(newCoins);
@@ -570,7 +591,6 @@
             } catch (e) { alert("兑换受阻，请重试！"); }
         }
 
-        // 处理领奖
         async function proceedWithReward(rewardData) {
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
@@ -578,13 +598,12 @@
                 const newCoins = record.coins + rewardData.amt;
                 
                 let logs = record.childLogs || [];
-                logs.unshift({ time: getFormattedTime(), action: rewardData.name, amount: rewardData.amt });
-                logs = logs.slice(0, 10); 
+                logs.unshift({ time: getFormattedTime(), action: rewardData.name.split(' ')[0], amount: rewardData.amt });
 
                 let cds = record.cooldowns || {}; 
                 cds[rewardData.type] = Date.now() + (rewardData.cd * 3600000); 
 
-                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs, cooldowns: cds }).eq('id', ROW_ID);
+                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), cooldowns: cds }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs, cooldowns: cds };
                 localStorage.setItem('andy_last_seen_coins', newCoins);
                 
@@ -593,7 +612,6 @@
             } catch (e) { alert("申报异常，请重试"); }
         }
 
-        // --- 核心动画与渲染 ---
         async function upgradeRank() {
             if (!currentData || isAnimating) return;
             const rank = currentData.currentRank || 1;
@@ -611,7 +629,7 @@
                 isAnimating = true; 
                 playSound('fuse');
                 document.body.classList.add('shake');
-                uiLayer.style.transform = 'scale(0.95)';
+                if(uiLayer) uiLayer.style.transform = 'scale(0.95)';
                 
                 const dbUpdatePromise = dbClient.from('gamedata').update({ coins: newCoins, currentRank: nextRank, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
 
@@ -626,8 +644,8 @@
                     setTimeout(() => flash.remove(), 1200);
 
                     createParticles(80, ['✨', '💎', '💠', '🔥', '⚡', '❇️']);
-                    uiLayer.style.opacity = '0';
-                    uiLayer.style.transform = 'scale(1)';
+                    if(uiLayer) uiLayer.style.opacity = '0';
+                    if(uiLayer) uiLayer.style.transform = 'scale(1)';
 
                     await dbUpdatePromise; 
 
@@ -643,17 +661,36 @@
                         document.body.appendChild(banner);
                         setTimeout(() => banner.remove(), 3500);
 
-                        uiLayer.style.opacity = '1';
+                        if(uiLayer) uiLayer.style.opacity = '1';
                         isAnimating = false;
                     }, 500); 
                 }, 1000); 
-            } catch (e) { alert("突破受阻！"); isAnimating = false; uiLayer.style.opacity = '1'; uiLayer.style.transform = 'scale(1)'; document.body.classList.remove('shake'); }
+            } catch (e) { 
+                alert("突破受阻！"); 
+                isAnimating = false; 
+                if(uiLayer) { uiLayer.style.opacity = '1'; uiLayer.style.transform = 'scale(1)'; }
+                document.body.classList.remove('shake'); 
+            }
         }
 
-        function openLogModal() { lModal.style.display = 'flex'; }
-        function closeLogModal() { lModal.style.display = 'none'; }
-        function openRewardModal() { rModal.style.display = 'flex'; processCooldowns(); }
-        function closeRewardModal() { rModal.style.display = 'none'; }
+        function openLogModal() { if(lModal) lModal.style.display = 'flex'; }
+        function closeLogModal() { if(lModal) lModal.style.display = 'none'; }
+        function openRewardModal() { if(rModal) rModal.style.display = 'flex'; processCooldowns(); }
+        function closeRewardModal() { if(rModal) rModal.style.display = 'none'; }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('logListContent');
+            if(!container) return;
+            if(logs && logs.length > 0) {
+                container.innerHTML = logs.map(log => {
+                    const amountClass = log.amount > 0 ? "log-v" : "log-v sub";
+                    const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
+                    return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`;
+                }).join('');
+            } else {
+                container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>';
+            }
+        }
 
         function processCooldowns() {
             if(!currentData || !currentData.cooldowns) return;
@@ -667,34 +704,72 @@
                     const totalMs = TASK_CDS[type] * 3600000;
                     btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg');
                     const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000);
-                    btn.querySelector('.cd-timer').innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-                } else btn.classList.remove('in-cd');
+                    let timerEl = btn.querySelector('.cd-timer');
+                    if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+                } else {
+                    btn.classList.remove('in-cd');
+                }
             });
         }
 
         function playAttackSequence(amount, finalCoins) {
-            isAnimating = true; clearAmbientActors(); uiLayer.style.opacity = '0'; 
-            heroSteve.style.display = 'block'; heroCreeper.style.display = 'block';
-            heroSteve.style.left = "35%"; heroCreeper.style.right = "35%";
-            document.querySelector('.skin-steve .sword').style.display = 'block'; 
-            setTimeout(() => { document.querySelector('.skin-steve .sword').classList.add('anim-attack'); playSound('hit'); setTimeout(() => { heroCreeper.classList.add('anim-hurt'); }, 150); }, 500);
-            setTimeout(() => { heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; }, 1200);
+            isAnimating = true; clearAmbientActors(); 
+            if(uiLayer) uiLayer.style.opacity = '0'; 
+            if(heroSteve) heroSteve.style.display = 'block'; 
+            if(heroCreeper) heroCreeper.style.display = 'block';
+            if(heroSteve) heroSteve.style.left = "35%"; 
+            if(heroCreeper) heroCreeper.style.right = "35%";
+            let sword = document.querySelector('.skin-steve .sword');
+            if(sword) sword.style.display = 'block'; 
+            
+            setTimeout(() => { 
+                if(sword) sword.classList.add('anim-attack'); 
+                playSound('hit'); 
+                setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); 
+            }, 500);
+            
+            setTimeout(() => { 
+                if(heroCreeper) heroCreeper.style.display = 'none'; 
+                createParticles(60, '💰'); playSound('levelup'); 
+                if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; }
+            }, 1200);
+            
             setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000);
         }
 
         function playExplodeSequence(amount, finalCoins, customMsg) {
-            isAnimating = true; clearAmbientActors(); uiLayer.style.opacity = '0';
-            heroCreeper.style.display = 'block'; heroCreeper.style.right = "45%";
-            setTimeout(() => { playSound('fuse'); heroCreeper.classList.add('anim-swell'); }, 500);
+            isAnimating = true; clearAmbientActors(); 
+            if(uiLayer) uiLayer.style.opacity = '0';
+            if(heroCreeper) {
+                heroCreeper.style.display = 'block'; 
+                heroCreeper.style.right = "45%";
+            }
+            
+            setTimeout(() => { playSound('fuse'); if(heroCreeper) heroCreeper.classList.add('anim-swell'); }, 500);
             setTimeout(() => {
-                heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); createParticles(40, '🟥'); playSound('explode');
-                statusMsg.innerText = customMsg; statusMsg.style.color = "#8b0000";
+                if(heroCreeper) heroCreeper.style.opacity = '0'; 
+                document.body.classList.add('shake'); 
+                createParticles(40, '🟥'); playSound('explode');
+                if(statusMsg) { statusMsg.innerText = customMsg; statusMsg.style.color = "#8b0000"; }
             }, 2500);
             setTimeout(() => { document.body.classList.remove('shake'); updateValue(finalCoins); resetStage(); }, 4000);
         }
 
-        function resetStage() { uiLayer.style.opacity = '1'; heroSteve.style.display = 'none'; heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; isAnimating = false; }
-        function updateValue(coins) { totalDisplay.innerText = coins; updateRankUI(coins, currentData.currentRank || 1); }
+        function resetStage() { 
+            if(uiLayer) uiLayer.style.opacity = '1'; 
+            if(heroSteve) heroSteve.style.display = 'none'; 
+            if(heroCreeper) {
+                heroCreeper.style.display = 'none'; 
+                heroCreeper.style.opacity = '1'; 
+                heroCreeper.className='actor skin-creeper'; 
+            }
+            isAnimating = false; 
+        }
+        
+        function updateValue(coins) { 
+            if(totalDisplay) totalDisplay.innerText = coins; 
+            updateRankUI(coins, currentData ? (currentData.currentRank || 1) : 1); 
+        }
         
         function playAmbientScenario() { 
             if (isAnimating) return; 
@@ -703,7 +778,7 @@
             if (scenario === 0) { spawnActor('skin-villager', 'left', 12); } else { spawnActor('skin-creeper', 'right', 12); } 
         }
         function spawnActor(skinClass, direction, duration) { 
-            if (isAnimating) return; 
+            if (isAnimating || !stage) return; 
             const el = document.createElement('div'); el.className = `actor ambient-actor ${skinClass}`; el.style.bottom = (22 + Math.floor(Math.random() * 8)) + 'px'; 
             let inner = '';
             if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
@@ -716,7 +791,11 @@
 
         function startFloatingChest() { if(!chestFloatInterval) { moveChest(); chestFloatInterval = setInterval(moveChest, 3500); } }
         function stopFloatingChest() { clearInterval(chestFloatInterval); chestFloatInterval = null; }
-        function moveChest() { const randomX = Math.floor(Math.random() * 70) + 10, randomY = Math.floor(Math.random() * 20) + 5; chest.style.left = randomX + '%'; chest.style.top = randomY + '%'; }
+        function moveChest() { 
+            if(!chest) return;
+            const randomX = Math.floor(Math.random() * 70) + 10, randomY = Math.floor(Math.random() * 20) + 5; 
+            chest.style.left = randomX + '%'; chest.style.top = randomY + '%'; 
+        }
         
         function createParticles(c, chars) { 
             const isArray = Array.isArray(chars);
@@ -727,15 +806,19 @@
                 document.body.appendChild(el); setTimeout(() => el.remove(), 1000); 
             } 
         }
+        
         function clickCoin() { if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); } }
         function toggleMute() { isMuted = !isMuted; bgm[isMuted ? 'pause' : 'play'](); document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊'; }
         function playSound(type) { if(isMuted) return; try { if(type === 'levelup') sfxLevelUp.play(); if(type === 'explode') sfxExplode.play(); if(type === 'hit') sfxHit.play(); if(type === 'fuse') sfxFuse.play(); } catch(e){} }
         
-        function openChallengeModal() { if(!activeEventData) return; cModal.style.display = 'flex'; document.getElementById('c_question').innerText = activeEventData.question; document.getElementById('c_reward').innerText = activeEventData.reward; document.getElementById('c_input').value = ""; clearInterval(timerInterval); updateTimer(); timerInterval = setInterval(updateTimer, 1000); }
-        function closeChallengeModal() { cModal.style.display = 'none'; clearInterval(timerInterval); }
-        function updateTimer() { let diff = activeEventData.expireTime - Date.now(); if(diff <= 0) { closeChallengeModal(); chest.style.display = 'none'; return; } let h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000); document.getElementById('c_timer').innerText = `消散倒计时: ${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }
+        function openChallengeModal() { if(!activeEventData || !cModal) return; cModal.style.display = 'flex'; document.getElementById('c_question').innerText = activeEventData.question; document.getElementById('c_reward').innerText = activeEventData.reward; document.getElementById('c_input').value = ""; clearInterval(timerInterval); updateTimer(); timerInterval = setInterval(updateTimer, 1000); }
+        function closeChallengeModal() { if(cModal) cModal.style.display = 'none'; clearInterval(timerInterval); }
+        function updateTimer() { let diff = activeEventData.expireTime - Date.now(); if(diff <= 0) { closeChallengeModal(); if(chest) chest.style.display = 'none'; return; } let h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000); let cTimer = document.getElementById('c_timer'); if(cTimer) cTimer.innerText = `消散倒计时: ${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }
+        
         async function submitAnswer() { 
-            if(document.getElementById('c_input').value.trim() === activeEventData.answer.trim()) { 
+            let inputEl = document.getElementById('c_input');
+            if(!inputEl) return;
+            if(inputEl.value.trim() === activeEventData.answer.trim()) { 
                 const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
                 if (currentData.coins + activeEventData.reward > maxCap) {
                     playSound('fuse');
@@ -743,7 +826,7 @@
                     closeChallengeModal(); return;
                 }
 
-                closeChallengeModal(); chest.style.display = 'none'; 
+                closeChallengeModal(); if(chest) chest.style.display = 'none'; 
                 try { 
                     const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); 
                     let record = data[0], newCoins = record.coins + activeEventData.reward; 

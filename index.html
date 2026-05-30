@@ -26,6 +26,11 @@
         .label { color: #404040; font-size: 20px; margin-top: 10px; font-weight: bold; text-shadow: 1px 1px #fff;}
         .total { font-size: 70px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 5px 0; line-height: 1; }
 
+        /* BUFF 挂载区 */
+        #activeBuffsContainer { width: 100%; display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+        .buff-pill { background: rgba(0,0,0,0.7); border: 2px solid #ffb700; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 15px; font-family: -apple-system, sans-serif; font-weight: bold; text-shadow: 1px 1px #000; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; animation: glow 2s infinite alternate;}
+        @keyframes glow { from { box-shadow: 0 0 5px #ffb700; } to { box-shadow: 0 0 15px #ffb700, 0 0 5px #ffb700 inset; } }
+
         .health-bar-container { width: 100%; margin-top: 10px; padding: 0 10px; box-sizing: border-box; }
         .health-bar-label { font-size: 16px; color: #404040; font-weight: bold; margin-bottom: 5px; text-shadow: 1px 1px #fff; text-align: left; display:flex; justify-content: space-between;}
         .health-bar-bg { width: 100%; height: 24px; background-color: #333; border: 3px solid #000; position: relative; box-shadow: inset 2px 2px #111, inset -2px -2px #555; overflow: hidden;}
@@ -37,26 +42,29 @@
         .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         
-        .btn-main-action { width: 100%; margin-top: 10px; padding: 10px; font-family: inherit; font-size: 22px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 4px 4px rgba(255,255,255,0.3), inset -4px -4px rgba(0,0,0,0.3); }
-        .btn-main-action:active:not(:disabled) { transform: scale(0.98); }
-        .btn-log { background: #8e44ad; }
+        .main-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn-main-action { width: 100%; padding: 10px; font-family: inherit; font-size: 20px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 4px 4px rgba(255,255,255,0.3), inset -4px -4px rgba(0,0,0,0.3); }
+        .btn-main-action:active:not(:disabled) { transform: scale(0.95); }
+        .btn-shop { background: #e67e22; }
+        .btn-log { background: #8e44ad; grid-column: span 2; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 400; display: none; justify-content: center; align-items: center; padding: 10px;}
+        .status-bar { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 14px; display: inline-flex; align-items: center; margin-top: 10px; border: 2px solid #555; }
+        .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
+        .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+        .message { color: #004400; margin-top: 10px; font-size: 16px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold; line-height: 1.2;}
+        .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 400; display: none; justify-content: center; align-items: center; padding: 10px;}
         .challenge-card { background: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 15px; width: 100%; max-width: 360px; text-align: center; display: flex; flex-direction: column; max-height: 90vh;}
         .challenge-title { font-size: 28px; color: #333; margin-bottom: 10px; text-shadow: 1px 1px #fff; flex-shrink: 0;}
         .btn-close-modal { background: #c0392b; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; margin-top: 10px; width: 100%; flex-shrink: 0;}
 
-        /* 单列卡片排版布局优化 */
         .reward-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; overflow-y: auto; padding-right: 5px;}
-        
-        /* 核心修复：解除 90px 高度封印，变为高度自适应撑开 */
         .mc-item-btn { position: relative; background: #8b8b8b; border: 3px solid #000; border-right-color: #fff; border-bottom-color: #fff; padding: 12px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; text-align: left; min-height: 90px; height: auto; }
         .mc-item-btn:active:not(.in-cd) { transform: scale(0.98); }
         .mc-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; width: 100%; }
         .mc-item-title { font-size: 18px; color: #000; font-weight: bold; text-shadow: 1px 1px #fff; }
         .mc-item-reward { color: #004400; font-weight: bold; font-size: 22px; text-shadow: 1px 1px #fff;}
-        
-        /* 任务描述细节文字排版优化 */
         .mc-item-desc { font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; color: #222; line-height: 1.4; text-shadow: 1px 1px rgba(255,255,255,0.4); word-break: break-all; margin-top: 2px; padding-bottom: 5px;}
         
         .cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; pointer-events: none; background: conic-gradient(rgba(0,0,0,0.7) var(--progress), transparent 0deg); }
@@ -80,21 +88,18 @@
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; }
 
-        /* 骨骼动画 */
         .skin-steve { width: 60px; height: 135px; }
         .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
         .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
         .skin-steve .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; }
         .skin-steve .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; }
         .skin-steve .sword { position: absolute; top: 35px; right: -40px; font-size: 60px; transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000); }
-        
         .skin-creeper { width: 45px; height: 120px; }
         .skin-creeper .head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; }
         .skin-creeper .face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8; }
         .skin-creeper .body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; }
         .skin-creeper .legs { width: 45px; height: 30px; position: absolute; top: 90px; }
         .skin-creeper .leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0; }
-        
         .skin-villager { width: 50px; height: 140px; }
         .skin-villager .head { width: 50px; height: 60px; background: #d09b7c; position: absolute; top: 0; }
         .skin-villager .nose { width: 10px; height: 18px; background: #d09b7c; position: absolute; top: 30px; left: 20px; border: 1px solid #a3755b; z-index: 5;}
@@ -109,10 +114,8 @@
         @keyframes hurtFlash { 0% { filter: sepia(1) hue-rotate(-50deg) saturate(5); } 100% { filter: none; } }
         .anim-swell { animation: swell 2.5s ease-in forwards; }
         @keyframes swell { 0% { transform: scale(1); filter: brightness(1); } 95% { transform: scale(2.5); filter: brightness(100); opacity: 1;} 100% { transform: scale(3); opacity: 0; } }
-        
         .shake { animation: shake 0.5s infinite; }
         @keyframes shake { 0% { transform: translate(2px, 2px); } 20% { transform: translate(-4px, 0px); } 40% { transform: translate(2px, -2px); } 60% { transform: translate(-4px, 2px); } 80% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, -4px); } }
-        
         .run-l-to-r { animation: runLeftToRight 8s linear forwards; }
         @keyframes runLeftToRight { 0% { left: -150px; } 100% { left: 120vw; } }
         .run-r-to-l { animation: runRightToLeft 8s linear forwards; }
@@ -127,7 +130,6 @@
         @keyframes flashAnim { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
         .level-up-banner { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); z-index: 9999; color: #ffb700; font-family: 'VT323', monospace; text-shadow: 4px 4px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; text-align: center; white-space: nowrap; pointer-events: none; animation: bannerAnim 3.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes bannerAnim { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 25% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 80% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; filter: blur(5px);} }
-
     </style>
 </head>
 <body>
@@ -162,9 +164,9 @@
     <div id="confirmModal" class="modal-overlay" style="z-index: 500;">
         <div class="challenge-card" style="max-width: 300px;">
             <div class="challenge-title" style="font-size: 24px;">📋 确认告示</div>
-            <div id="confirmText" style="color:#000; font-size:16px; margin: 15px 0; font-weight:bold; line-height:1.5;">确认已达标并领取奖励吗？</div>
-            <button class="btn-main-action" onclick="executeConfirmedReward()" style="margin-top: 5px;">✅ 确定领取</button>
-            <button class="btn-close-modal" onclick="closeConfirmModal()" style="margin-top: 5px;">❌ 还没完成</button>
+            <div id="confirmText" style="color:#000; font-size:16px; margin: 15px 0; font-weight:bold; line-height:1.5;">...</div>
+            <button class="btn-main-action" onclick="executeConfirmedAction()" style="margin-top: 5px;">✅ 确定</button>
+            <button class="btn-close-modal" onclick="closeConfirmModal()" style="margin-top: 5px;">❌ 取消</button>
         </div>
     </div>
 
@@ -172,89 +174,50 @@
         <div class="challenge-card">
             <div class="challenge-title">⚔️ 任务告示牌</div>
             <div class="reward-grid">
-                
-                <div class="mc-item-btn" id="btn-sport" onclick="requestReward('sport', '制造工具 (基础运动)', 10, 3)">
-                    <div class="cd-overlay"></div>
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">🏃 疾跑附魔</span>
-                        <span class="mc-item-reward">+10 🪙</span>
-                    </div>
-                    <div class="mc-item-desc">认真完成当天的基础体育作业或常规锻炼。</div>
-                    <span class="cd-timer">--:--</span>
+                <div class="mc-item-btn" id="btn-sport" onclick="requestAction('reward', {type:'sport', name:'疾跑附魔 (完成基础运动)', amt:10, cd:3})">
+                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">🏃 疾跑附魔</span><span class="mc-item-reward">+10 🪙</span></div>
+                    <div class="mc-item-desc">认真完成当天的基础体育作业或常规锻炼。</div><span class="cd-timer">--:--</span>
                 </div>
-                
-                <div class="mc-item-btn" id="btn-focus" onclick="requestReward('focus', '凝神药水 (写作业绝对专注)', 10, 3)">
-                    <div class="cd-overlay"></div>
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">🧪 凝神药水</span>
-                        <span class="mc-item-reward">+10 🪙</span>
-                    </div>
-                    <div class="mc-item-desc">写作业期间保持绝对专注，不发呆、不闲聊。</div>
-                    <span class="cd-timer">--:--</span>
+                <div class="mc-item-btn" id="btn-focus" onclick="requestAction('reward', {type:'focus', name:'凝神药水 (写作业绝对专注)', amt:10, cd:3})">
+                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">🧪 凝神药水</span><span class="mc-item-reward">+10 🪙</span></div>
+                    <div class="mc-item-desc">写作业期间保持绝对专注，不发呆、不闲聊。</div><span class="cd-timer">--:--</span>
                 </div>
-                
-                <div class="mc-item-btn" id="btn-writing" onclick="requestReward('writing', '成书与笔 (字迹工整规范)', 10, 3)">
-                    <div class="cd-overlay"></div>
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">📝 成书与笔</span>
-                        <span class="mc-item-reward">+10 🪙</span>
-                    </div>
-                    <div class="mc-item-desc">作业书写工整漂亮，完成每日练字任务。</div>
-                    <span class="cd-timer">--:--</span>
+                <div class="mc-item-btn" id="btn-writing" onclick="requestAction('reward', {type:'writing', name:'成书与笔 (字迹工整规范)', amt:10, cd:3})">
+                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">📝 成书与笔</span><span class="mc-item-reward">+10 🪙</span></div>
+                    <div class="mc-item-desc">作业书写工整漂亮，完成每日练字任务。</div><span class="cd-timer">--:--</span>
                 </div>
-                
-                <div class="mc-item-btn" id="btn-extra" onclick="requestReward('extra', '探索下界 (主动做家务/课外)', 10, 3)">
-                    <div class="cd-overlay"></div>
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">🌋 探索下界</span>
-                        <span class="mc-item-reward">+10 🪙</span>
-                    </div>
-                    <div class="mc-item-desc">主动帮家里分担家务，或完成额外的课外探索。</div>
-                    <span class="cd-timer">--:--</span>
+                <div class="mc-item-btn" id="btn-extra" onclick="requestAction('reward', {type:'extra', name:'探索下界 (主动做家务/课外)', amt:10, cd:3})">
+                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">🌋 探索下界</span><span class="mc-item-reward">+10 🪙</span></div>
+                    <div class="mc-item-desc">主动帮家里分担家务，或完成额外的课外探索。</div><span class="cd-timer">--:--</span>
                 </div>
-
-                <div class="mc-item-btn" id="btn-run5k" onclick="requestReward('run5k', '极速附魔 (35分钟内跑完5KM)', 35, 24)">
-                    <div class="cd-overlay"></div>
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">⚡ 极速附魔</span>
-                        <span class="mc-item-reward">+35 🪙</span>
-                    </div>
-                    <div class="mc-item-desc">挑战自我！必须在 <strong>35分钟内</strong> 一口气跑完 5公里。</div>
-                    <span class="cd-timer">--:--</span>
+                <div class="mc-item-btn" id="btn-run5k" onclick="requestAction('reward', {type:'run5k', name:'极速附魔 (35分钟内跑完5KM)', amt:35, cd:24})">
+                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">⚡ 极速附魔</span><span class="mc-item-reward">+35 🪙</span></div>
+                    <div class="mc-item-desc">挑战自我！必须在 <strong>35分钟内</strong> 一口气跑完 5公里。</div><span class="cd-timer">--:--</span>
                 </div>
-
-                <div class="mc-item-btn" id="btn-jumprope" onclick="requestReward('jumprope', '轻盈药水 (一天内累计2000跳绳)', 30, 24)">
-                    <div class="cd-overlay"></div>
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">🪶 轻盈药水</span>
-                        <span class="mc-item-reward">+30 🪙</span>
-                    </div>
-                    <div class="mc-item-desc">毅力考验！在 <strong>一天之内</strong> 累计完成 2000个 跳绳。</div>
-                    <span class="cd-timer">--:--</span>
+                <div class="mc-item-btn" id="btn-jumprope" onclick="requestAction('reward', {type:'jumprope', name:'轻盈药水 (一天内累计2000跳绳)', amt:30, cd:24})">
+                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">🪶 轻盈药水</span><span class="mc-item-reward">+30 🪙</span></div>
+                    <div class="mc-item-desc">毅力考验！在 <strong>一天之内</strong> 累计完成 2000个 跳绳。</div><span class="cd-timer">--:--</span>
                 </div>
-
-                <div class="mc-item-btn" id="btn-deeplearn" onclick="requestReward('deeplearn', '贤者之书 (费曼式讲解难题)', 20, 12)">
-                    <div class="cd-overlay"></div>
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">📖 贤者之书</span>
-                        <span class="mc-item-reward">+20 🪙</span>
-                    </div>
-                    <div class="mc-item-desc">独立解出附加难题，并像小老师一样把解题思路讲明白。</div>
-                    <span class="cd-timer">--:--</span>
+                <div class="mc-item-btn" id="btn-deeplearn" onclick="requestAction('reward', {type:'deeplearn', name:'贤者之书 (费曼式讲解难题)', amt:20, cd:12})">
+                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">📖 贤者之书</span><span class="mc-item-reward">+20 🪙</span></div>
+                    <div class="mc-item-desc">独立解出附加难题，并像小老师一样把解题思路讲明白。</div><span class="cd-timer">--:--</span>
                 </div>
-
-                <div class="mc-item-btn" id="btn-reading" onclick="requestReward('reading', '附魔书的馈赠 (单次专注阅读超30分钟)', 20, 12)">
-                    <div class="cd-overlay"></div>
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">📚 附魔书的馈赠</span>
-                        <span class="mc-item-reward">+20 🪙</span>
-                    </div>
-                    <div class="mc-item-desc">放下电子产品，单次绝对专注阅读课外书籍 <strong>超过 30分钟</strong>。</div>
-                    <span class="cd-timer">--:--</span>
+                <div class="mc-item-btn" id="btn-reading" onclick="requestAction('reward', {type:'reading', name:'附魔书的馈赠 (单次专注阅读超30分钟)', amt:20, cd:12})">
+                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">📚 附魔书的馈赠</span><span class="mc-item-reward">+20 🪙</span></div>
+                    <div class="mc-item-desc">放下电子产品，单次绝对专注阅读课外书籍 <strong>超过 30分钟</strong>。</div><span class="cd-timer">--:--</span>
                 </div>
-
             </div>
             <button class="btn-close-modal" onclick="closeRewardModal()">返回营地</button>
+        </div>
+    </div>
+
+    <div id="shopModal" class="modal-overlay">
+        <div class="challenge-card">
+            <div class="challenge-title" style="color: #8e44ad;">🛒 神秘商店</div>
+            <div class="reward-grid" id="shopListContainer">
+                <div style="padding:20px; color:#555;">货架同步中...</div>
+            </div>
+            <button class="btn-close-modal" onclick="closeShopModal()">离开商店</button>
         </div>
     </div>
 
@@ -275,6 +238,8 @@
             <div class="label">行囊内硬币</div>
             <div id="totalDisplay" class="total">...</div>
 
+            <div id="activeBuffsContainer"></div>
+
             <div class="health-bar-container">
                 <div class="health-bar-label">
                     <span>承载力:</span>
@@ -285,8 +250,11 @@
 
             <button id="btnUpgrade" class="btn-upgrade" onclick="upgradeRank()" disabled>🆙 打造更强装备</button>
 
-            <button class="btn-main-action" onclick="openRewardModal()">⚔️ 查看任务</button>
-            <button class="btn-main-action btn-log" onclick="openLogModal()">📜 翻开账单</button>
+            <div class="main-btn-grid">
+                <button class="btn-main-action" onclick="openRewardModal()">⚔️ 任务</button>
+                <button class="btn-main-action btn-shop" onclick="openShopModal()">🛒 商店</button>
+                <button class="btn-main-action btn-log" onclick="openLogModal()">📜 账单</button>
+            </div>
 
             <div class="status-bar"><div id="light" class="light online"></div><span id="connStatus">连线末地...</span></div>
             <div id="statusMsg" class="message"></div>
@@ -319,6 +287,8 @@
         const cModal = document.getElementById('challengeModal');
         const rModal = document.getElementById('rewardModal');
         const lModal = document.getElementById('logModal');
+        const sModal = document.getElementById('shopModal');
+        const cfModal = document.getElementById('confirmModal');
         
         const bgm = document.getElementById('bgm');
         const sfxLevelUp = document.getElementById('sfx-levelup');
@@ -329,7 +299,7 @@
 
         let isMuted = false, lastCoins = null, isAnimating = false, lastScenario = -1; 
         let ambientInterval = null, syncInterval = null, activeEventData = null, timerInterval = null, chestFloatInterval = null; 
-        let currentData = null, pendingReward = null; 
+        let currentData = null, pendingAction = null; 
         const ROW_ID = 1;
 
         const TASK_CDS = {
@@ -379,15 +349,13 @@
 
             record.coins = Math.max(0, record.coins - totalDeduct);
             record.dailyConfig.lastDeductDate = today;
-            
             let logs = record.childLogs || [];
             logs.unshift({ time: getFormattedTime(), action: "系统自动饥饿消耗", amount: -deductedAmount });
-            record.childLogs = logs.slice(0, 10);
             
             try {
-                await dbClient.from('gamedata').update({ coins: record.coins, dailyConfig: record.dailyConfig, childLogs: record.childLogs }).eq('id', ROW_ID);
+                await dbClient.from('gamedata').update({ coins: record.coins, dailyConfig: record.dailyConfig, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
                 record._justAutoDeducted = deductedAmount;
-            } catch (e) { console.error(e); }
+            } catch (e) {}
             return record;
         }
 
@@ -396,6 +364,7 @@
             await syncData();
             syncInterval = setInterval(syncData, 5000); 
             setInterval(processCooldowns, 1000); 
+            setInterval(renderBuffs, 1000); // BUFF 心跳倒计时
             playAmbientScenario();
             ambientInterval = setInterval(playAmbientScenario, 12000);
         }
@@ -406,6 +375,8 @@
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 let record = data[0];
                 record.currentRank = record.currentRank || 1; 
+                record.shopItems = record.shopItems || [];
+                record.activeBuffs = record.activeBuffs || {};
                 
                 record = await checkAndApplyDailyDeduction(record);
                 currentData = record;
@@ -456,11 +427,7 @@
             const hour = new Date().getHours();
             const isNight = (hour >= 18 || hour < 6);
 
-            if (rank >= 9) {
-                document.body.style.background = rData.pageBg;
-            } else {
-                document.body.style.background = isNight ? rData.nightBg : rData.pageBg;
-            }
+            document.body.style.background = (rank >= 9) ? rData.pageBg : (isNight ? rData.nightBg : rData.pageBg);
 
             let maxCap = rData.cap;
             let ratio = maxCap === Infinity ? 0 : (coins / maxCap) * 100;
@@ -482,11 +449,155 @@
             }
         }
 
+        // --- BUFF 与商店逻辑 ---
+        function renderBuffs() {
+            if (!currentData || !currentData.activeBuffs) return;
+            const container = document.getElementById('activeBuffsContainer');
+            let html = '';
+            const now = Date.now();
+            
+            for (const [id, buff] of Object.entries(currentData.activeBuffs)) {
+                const remain = buff.endTime - now;
+                if (remain > 0) {
+                    let h = Math.floor(remain / 3600000);
+                    let m = Math.floor((remain % 3600000) / 60000);
+                    let s = Math.floor((remain % 60000) / 1000);
+                    html += `
+                        <div class="buff-pill">
+                            <span>${buff.icon} ${buff.name}</span>
+                            <span>${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}</span>
+                        </div>
+                    `;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        function openShopModal() { 
+            sModal.style.display = 'flex'; 
+            const container = document.getElementById('shopListContainer');
+            if(!currentData || !currentData.shopItems || currentData.shopItems.length === 0) {
+                container.innerHTML = '<div style="padding:20px; color:#555;">货架被洗劫一空，暂无商品</div>';
+                return;
+            }
+            container.innerHTML = currentData.shopItems.map(item => `
+                <div class="mc-item-btn" onclick='requestAction("buy", ${JSON.stringify(item)})' style="border-color:#8e44ad;">
+                    <div class="mc-item-header">
+                        <span class="mc-item-title">${item.icon} ${item.name}</span>
+                        <span class="mc-item-reward" style="color:#c0392b;">-${item.price} 🪙</span>
+                    </div>
+                    <div class="mc-item-desc">${item.desc} (持续${item.hours}小时)</div>
+                </div>
+            `).join('');
+        }
+        function closeShopModal() { sModal.style.display = 'none'; }
+
+        // --- 统一挂起拦截器 ---
+        function requestAction(actionType, data) {
+            clickCoin();
+            if (actionType === 'reward') {
+                const now = Date.now();
+                if(currentData.cooldowns && currentData.cooldowns[data.type] > now) return; 
+
+                const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
+                if (currentData.coins + data.amt > maxCap) {
+                    playSound('fuse');
+                    return alert("🎒 背包承载力不足！\n新奖励无法装下，请先突破界限腾出空间。");
+                }
+                
+                let cleanName = data.name.split(' ')[0]; 
+                document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#27ae60; font-size:20px;">【${cleanName}】</span><br>的悬赏奖励吗？`;
+            } 
+            else if (actionType === 'buy') {
+                if (currentData.coins < data.price) {
+                    playSound('fuse');
+                    return alert("❌ 行囊硬币不足，无法兑换该法宝！");
+                }
+                document.getElementById('confirmText').innerHTML = `确认花费 <span style="color:#c0392b;">${data.price}币</span> 兑换<br><span style="color:#8e44ad; font-size:20px;">【${data.name}】</span> 吗？<br><span style="font-size:12px; color:#555;">(购买同类物品可叠加延长时效)</span>`;
+            }
+
+            pendingAction = { actionType, data };
+            cfModal.style.display = 'flex';
+        }
+
+        function closeConfirmModal() {
+            cfModal.style.display = 'none';
+            pendingAction = null;
+        }
+
+        async function executeConfirmedAction() {
+            if (!pendingAction) return;
+            const action = pendingAction;
+            closeConfirmModal();
+
+            if (action.actionType === 'reward') {
+                await proceedWithReward(action.data);
+            } else if (action.actionType === 'buy') {
+                await proceedWithBuy(action.data);
+            }
+        }
+
+        // 处理购买
+        async function proceedWithBuy(item) {
+            try {
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
+                let record = data[0];
+                const newCoins = record.coins - item.price;
+                
+                let logs = record.childLogs || [];
+                logs.unshift({ time: getFormattedTime(), action: `兑换法宝: ${item.name}`, amount: -item.price });
+                logs = logs.slice(0, 10);
+
+                let buffs = record.activeBuffs || {};
+                let currentEndTime = buffs[item.id] ? buffs[item.id].endTime : 0;
+                if (currentEndTime < Date.now()) currentEndTime = Date.now();
+                let newEndTime = currentEndTime + (item.hours * 3600000);
+
+                buffs[item.id] = { name: item.name, icon: item.icon, endTime: newEndTime };
+
+                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs, activeBuffs: buffs }).eq('id', ROW_ID);
+                currentData = { ...record, coins: newCoins, childLogs: logs, activeBuffs: buffs };
+                localStorage.setItem('andy_last_seen_coins', newCoins);
+                
+                closeShopModal();
+                
+                // BUFF获取特效
+                playSound('levelup');
+                createParticles(50, ['✨', item.icon, '🔮']);
+                updateValue(newCoins);
+                renderBuffs();
+
+            } catch (e) { alert("兑换受阻，请重试！"); }
+        }
+
+        // 处理领奖
+        async function proceedWithReward(rewardData) {
+            try {
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
+                let record = data[0];
+                const newCoins = record.coins + rewardData.amt;
+                
+                let logs = record.childLogs || [];
+                logs.unshift({ time: getFormattedTime(), action: rewardData.name, amount: rewardData.amt });
+                logs = logs.slice(0, 10); 
+
+                let cds = record.cooldowns || {}; 
+                cds[rewardData.type] = Date.now() + (rewardData.cd * 3600000); 
+
+                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs, cooldowns: cds }).eq('id', ROW_ID);
+                currentData = { ...record, coins: newCoins, childLogs: logs, cooldowns: cds };
+                localStorage.setItem('andy_last_seen_coins', newCoins);
+                
+                closeRewardModal();
+                playAttackSequence(rewardData.amt, newCoins);
+            } catch (e) { alert("申报异常，请重试"); }
+        }
+
+        // --- 核心动画与渲染 ---
         async function upgradeRank() {
             if (!currentData || isAnimating) return;
             const rank = currentData.currentRank || 1;
             const rData = RANK_DATA[rank - 1];
-            
             if (currentData.coins < rData.cost) return; 
             
             const nextRank = rank + 1;
@@ -495,17 +606,14 @@
 
             let logs = currentData.childLogs || [];
             logs.unshift({ time: getFormattedTime(), action: `突破境界: ${nextRData.title}`, amount: -rData.cost });
-            logs = logs.slice(0, 10); 
-
+            
             try {
                 isAnimating = true; 
                 playSound('fuse');
                 document.body.classList.add('shake');
                 uiLayer.style.transform = 'scale(0.95)';
                 
-                const dbUpdatePromise = dbClient.from('gamedata').update({ 
-                    coins: newCoins, currentRank: nextRank, childLogs: logs
-                }).eq('id', ROW_ID);
+                const dbUpdatePromise = dbClient.from('gamedata').update({ coins: newCoins, currentRank: nextRank, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
 
                 setTimeout(async () => {
                     document.body.classList.remove('shake');
@@ -518,7 +626,6 @@
                     setTimeout(() => flash.remove(), 1200);
 
                     createParticles(80, ['✨', '💎', '💠', '🔥', '⚡', '❇️']);
-                    
                     uiLayer.style.opacity = '0';
                     uiLayer.style.transform = 'scale(1)';
 
@@ -539,89 +646,14 @@
                         uiLayer.style.opacity = '1';
                         isAnimating = false;
                     }, 500); 
-                    
                 }, 1000); 
-
-            } catch (e) { alert("突破受阻，网络波动！"); isAnimating = false; uiLayer.style.opacity = '1'; uiLayer.style.transform = 'scale(1)'; document.body.classList.remove('shake'); }
+            } catch (e) { alert("突破受阻！"); isAnimating = false; uiLayer.style.opacity = '1'; uiLayer.style.transform = 'scale(1)'; document.body.classList.remove('shake'); }
         }
 
         function openLogModal() { lModal.style.display = 'flex'; }
         function closeLogModal() { lModal.style.display = 'none'; }
-        function renderLogs(logs) {
-            const container = document.getElementById('logListContent');
-            if(logs && logs.length > 0) {
-                container.innerHTML = logs.map(log => {
-                    const amountClass = log.amount > 0 ? "log-v" : "log-v sub";
-                    const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
-                    return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`;
-                }).join('');
-            } else {
-                container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>';
-            }
-        }
-
         function openRewardModal() { rModal.style.display = 'flex'; processCooldowns(); }
         function closeRewardModal() { rModal.style.display = 'none'; }
-
-        // 💡 拦截交互核心：点击任务按钮时，执行防误触挂起拦截
-        function requestReward(type, actionName, amount, cdHours) {
-            const now = Date.now();
-            if(currentData.cooldowns && currentData.cooldowns[type] > now) return; 
-
-            const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
-            if (currentData.coins + amount > maxCap) {
-                playSound('fuse');
-                alert("🎒 背包承载力不足！\n新奖励无法装下，请先突破界限腾出空间。");
-                return;
-            }
-
-            // 锁定当前悬赏参数池，拉起二次验证告示牌
-            pendingReward = { type, actionName, amount, cdHours };
-            
-            // 提取核心汉字名称
-            let cleanName = actionName.split(' ')[0]; 
-            document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#8b0000; font-size:20px;">【${cleanName}】</span><br>的悬赏奖励吗？`;
-            document.getElementById('confirmModal').style.display = 'flex';
-            clickCoin(); // 触发基础点击反馈
-        }
-
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').style.display = 'none';
-            pendingReward = null;
-        }
-
-        // 💡 确认无误，执行真正的云端数据写入
-        async function executeConfirmedReward() {
-            if (!pendingReward) return;
-            const { type, actionName, amount, cdHours } = pendingReward;
-            closeConfirmModal();
-            await proceedWithReward(type, actionName, amount, cdHours);
-        }
-
-        // 领奖实际上报函数
-        async function proceedWithReward(type, actionName, amount, cdHours) {
-            try {
-                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
-                let record = data[0];
-                const newCoins = record.coins + amount;
-                
-                let logs = record.childLogs || [];
-                logs.unshift({ time: getFormattedTime(), action: actionName, amount: amount });
-                logs = logs.slice(0, 10); 
-
-                let cds = record.cooldowns || {}; 
-                cds[type] = Date.now() + (cdHours * 3600000); 
-
-                await dbClient.from('gamedata').update({
-                    coins: newCoins, childLogs: logs, cooldowns: cds
-                }).eq('id', ROW_ID);
-
-                currentData = { ...record, coins: newCoins, childLogs: logs, cooldowns: cds };
-                localStorage.setItem('andy_last_seen_coins', newCoins);
-                closeRewardModal();
-                playAttackSequence(amount, newCoins);
-            } catch (e) { alert("申报异常，请重试"); }
-        }
 
         function processCooldowns() {
             if(!currentData || !currentData.cooldowns) return;
@@ -662,10 +694,7 @@
         }
 
         function resetStage() { uiLayer.style.opacity = '1'; heroSteve.style.display = 'none'; heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; isAnimating = false; }
-        function updateValue(coins) { 
-            totalDisplay.innerText = coins; 
-            updateRankUI(coins, currentData.currentRank || 1);
-        }
+        function updateValue(coins) { totalDisplay.innerText = coins; updateRankUI(coins, currentData.currentRank || 1); }
         
         function playAmbientScenario() { 
             if (isAnimating) return; 
@@ -675,19 +704,13 @@
         }
         function spawnActor(skinClass, direction, duration) { 
             if (isAnimating) return; 
-            const el = document.createElement('div'); 
-            el.className = `actor ambient-actor ${skinClass}`; 
-            el.style.bottom = (22 + Math.floor(Math.random() * 8)) + 'px'; 
-            
+            const el = document.createElement('div'); el.className = `actor ambient-actor ${skinClass}`; el.style.bottom = (22 + Math.floor(Math.random() * 8)) + 'px'; 
             let inner = '';
             if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
             else if(skinClass.includes('villager')) inner = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>';
             el.innerHTML = inner;
-
-            if (direction === 'left') { el.style.left = '-100px'; el.style.animation = `runLeftToRight ${duration}s linear forwards`; } 
-            else { el.style.right = '-100px'; el.style.transform = 'scaleX(-1)'; el.style.animation = `runRightToLeft ${duration}s linear forwards`; } 
-            stage.appendChild(el); 
-            setTimeout(() => el.remove(), duration * 1000); 
+            if (direction === 'left') { el.style.left = '-100px'; el.style.animation = `runLeftToRight ${duration}s linear forwards`; } else { el.style.right = '-100px'; el.style.transform = 'scaleX(-1)'; el.style.animation = `runRightToLeft ${duration}s linear forwards`; } 
+            stage.appendChild(el); setTimeout(() => el.remove(), duration * 1000); 
         }
         function clearAmbientActors() { document.querySelectorAll('.ambient-actor').forEach(el => el.remove()); }
 
@@ -698,17 +721,12 @@
         function createParticles(c, chars) { 
             const isArray = Array.isArray(chars);
             for (let i = 0; i < c; i++) { 
-                const el = document.createElement('div'); 
-                el.classList.add('confetti'); 
-                el.innerText = isArray ? chars[Math.floor(Math.random() * chars.length)] : chars; 
+                const el = document.createElement('div'); el.classList.add('confetti'); el.innerText = isArray ? chars[Math.floor(Math.random() * chars.length)] : chars; 
                 const angle = Math.random() * 360, dist = 50 + Math.random() * 100; 
-                el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw'); 
-                el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh'); 
-                document.body.appendChild(el); 
-                setTimeout(() => el.remove(), 1000); 
+                el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw'); el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh'); 
+                document.body.appendChild(el); setTimeout(() => el.remove(), 1000); 
             } 
         }
-        function checkDayNight() { const hour = new Date().getHours(); if (hour >= 18 || hour < 6) document.body.classList.add('night'); else document.body.classList.remove('night'); }
         function clickCoin() { if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); } }
         function toggleMute() { isMuted = !isMuted; bgm[isMuted ? 'pause' : 'play'](); document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊'; }
         function playSound(type) { if(isMuted) return; try { if(type === 'levelup') sfxLevelUp.play(); if(type === 'explode') sfxExplode.play(); if(type === 'hit') sfxHit.play(); if(type === 'fuse') sfxFuse.play(); } catch(e){} }
@@ -729,12 +747,8 @@
                 try { 
                     const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); 
                     let record = data[0], newCoins = record.coins + activeEventData.reward; 
-                    
-                    let logs = record.childLogs || [];
-                    logs.unshift({ time: getFormattedTime(), action: "破解悬赏令宝箱", amount: activeEventData.reward });
-                    logs = logs.slice(0, 10); 
-
-                    await dbClient.from('gamedata').update({ coins: newCoins, activeEvent: null, childLogs: logs }).eq('id', ROW_ID); 
+                    let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: "破解悬赏令宝箱", amount: activeEventData.reward });
+                    await dbClient.from('gamedata').update({ coins: newCoins, activeEvent: null, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID); 
                     localStorage.setItem('andy_last_seen_coins', newCoins); 
                     playAttackSequence(activeEventData.reward, newCoins); 
                 } catch(e){} 

@@ -55,6 +55,7 @@
 </head>
 <body>
     <div class="container">
+        <!-- 资产操作区 -->
         <div class="card">
             <div class="card-header">
                 <h3>💰 资产余额</h3>
@@ -75,6 +76,7 @@
             </div>
         </div>
 
+        <!-- 实时BUFF监控 -->
         <div class="card">
             <div class="card-header"><h3>✨ 生效中的特权 (BUFF)</h3></div>
             <div id="adminBuffList" style="margin-top: 10px;">
@@ -82,6 +84,7 @@
             </div>
         </div>
 
+        <!-- 增减记录 -->
         <div class="card">
             <div class="card-header"><h3>🕒 增减记录</h3></div>
             <div id="childLogList" style="margin-top:10px;">
@@ -89,11 +92,34 @@
             </div>
         </div>
 
+        <!-- 神秘商店货架管理 -->
         <div class="card">
             <div class="card-header"><h3>🛒 神秘商店管理</h3></div>
             <div style="margin-top: 15px; display:flex; flex-direction: column; gap: 10px;">
                 <div style="display:flex; gap:10px;">
-                    <input type="text" id="s_icon" class="input-box" style="flex:1;" placeholder="图标(如🎫)">
+                    <!-- 核心修改：文本框变为下拉选择框 -->
+                    <select id="s_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
+                        <option value="🎫">🎫 凭证</option>
+                        <option value="⚔️">⚔️ 铁剑</option>
+                        <option value="🛡️">🛡️ 盾牌</option>
+                        <option value="⛏️">⛏️ 镐子</option>
+                        <option value="🪓">🪓 斧头</option>
+                        <option value="💎">💎 钻石</option>
+                        <option value="🥇">🥇 金锭</option>
+                        <option value="🟢">🟢 绿宝石</option>
+                        <option value="🔮">🔮 末影珍珠</option>
+                        <option value="🪵">🪵 原木</option>
+                        <option value="🪨">🪨 圆石</option>
+                        <option value="🧪">🧪 药水</option>
+                        <option value="⚡">⚡ 红石粉</option>
+                        <option value="✨">✨ 经验球</option>
+                        <option value="📜">📜 附魔书</option>
+                        <option value="🍎">🍎 苹果</option>
+                        <option value="🍖">🍖 熟肉</option>
+                        <option value="🍞">🍞 面包</option>
+                        <option value="🗝️">🗝️ 钥匙</option>
+                        <option value="👑">👑 王冠</option>
+                    </select>
                     <input type="text" id="s_name" class="input-box" style="flex:3;" placeholder="商品名称">
                 </div>
                 <input type="text" id="s_desc" class="input-box" placeholder="兑换权益描述">
@@ -106,11 +132,13 @@
             <div id="shopList" style="margin-top: 15px;"></div>
         </div>
 
+        <!-- 悬赏任务 -->
         <div class="card">
             <div class="card-header"><h3>📜 挑战任务</h3></div>
             <button class="btn-primary" style="margin-top:10px;" onclick="openTaskModal()">✨ 发布随机悬赏任务</button>
         </div>
 
+        <!-- 自动化规则 -->
         <div class="card">
             <div class="card-header"><h3>⚙️ 自动化扣除规则</h3></div>
             <div class="flex-row" style="margin-top:15px;">
@@ -128,6 +156,7 @@
         <div id="log-status">数据建立握手...</div>
     </div>
 
+    <!-- 弹窗部分 -->
     <div id="taskModal">
         <div class="modal-content">
             <h3>发布悬赏挑战</h3>
@@ -261,7 +290,7 @@
         }
 
         async function addShopItem() {
-            const icon = document.getElementById('s_icon').value.trim() || '🎁';
+            const icon = document.getElementById('s_icon').value;
             const name = document.getElementById('s_name').value.trim();
             const desc = document.getElementById('s_desc').value.trim();
             const price = parseInt(document.getElementById('s_price').value);
@@ -275,7 +304,10 @@
             document.getElementById('log-status').innerText = "上架中...";
             const { error } = await dbClient.from('gamedata').update({ shopItems: items }).eq('id', ROW_ID);
             if(!error) {
-                ['s_icon', 's_name', 's_desc', 's_price', 's_hours'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('s_name').value = '';
+                document.getElementById('s_desc').value = '';
+                document.getElementById('s_price').value = '';
+                document.getElementById('s_hours').value = '';
                 getCoins();
             }
         }

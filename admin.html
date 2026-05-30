@@ -25,6 +25,7 @@
         .btn-add { background: #1c7a44; color: white; }
         .btn-sub { background: #962d22; color: white; }
         .btn-primary { background: #007aff; color: white; width: 100%; }
+        .btn-danger { background: #c0392b; color: white; padding: 8px; font-size: 12px; }
         .input-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #121212; color: white; font-size: 15px; box-sizing: border-box; }
         textarea.input-box { resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5; }
         
@@ -37,6 +38,9 @@
         input:checked + .slider:before { transform: translateX(20px); }
         
         #log-status { color: #888; font-size: 12px; text-align: center; padding: 10px; }
+
+        .shop-item { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #444;}
+        .buff-item { background: rgba(139,0,0,0.2); border-left: 4px solid #ffb700; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 
         #taskModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; display: none; justify-content: center; align-items: center; }
         .modal-content { background: #2c2c2e; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; }
@@ -72,10 +76,34 @@
         </div>
 
         <div class="card">
+            <div class="card-header"><h3>✨ 生效中的特权 (BUFF)</h3></div>
+            <div id="adminBuffList" style="margin-top: 10px;">
+                <div style="text-align:center; color:#555; padding:10px;">暂无生效状态</div>
+            </div>
+        </div>
+
+        <div class="card">
             <div class="card-header"><h3>🕒 增减记录</h3></div>
             <div id="childLogList" style="margin-top:10px;">
                 <div style="text-align:center; color:#555; padding:20px;">暂无记录</div>
             </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>🛒 神秘商店管理</h3></div>
+            <div style="margin-top: 15px; display:flex; flex-direction: column; gap: 10px;">
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="s_icon" class="input-box" style="flex:1;" placeholder="图标(如🎫)">
+                    <input type="text" id="s_name" class="input-box" style="flex:3;" placeholder="商品名称">
+                </div>
+                <input type="text" id="s_desc" class="input-box" placeholder="兑换权益描述">
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="s_price" class="input-box" style="flex:1;" placeholder="售价(币)">
+                    <input type="number" id="s_hours" class="input-box" style="flex:1;" placeholder="时效(小时)">
+                </div>
+                <button class="btn-primary" onclick="addShopItem()">➕ 部署上架</button>
+            </div>
+            <div id="shopList" style="margin-top: 15px;"></div>
         </div>
 
         <div class="card">
@@ -84,9 +112,9 @@
         </div>
 
         <div class="card">
-            <div class="card-header"><h3>⚙️ 规则设置</h3></div>
+            <div class="card-header"><h3>⚙️ 自动化扣除规则</h3></div>
             <div class="flex-row" style="margin-top:15px;">
-                <span>每日自动扣除:</span>
+                <span>每日自动消耗:</span>
                 <label class="switch">
                     <input type="checkbox" id="dailyToggle" onchange="saveDaily()">
                     <span class="slider"></span>
@@ -122,9 +150,9 @@
         const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let currentData = null;
+        let timerInterval = null;
         const ROW_ID = 1; 
 
-        // 十阶数值同步配置 (与孩子端保持一致)
         const RANK_DATA = [
             { rank: 1, cap: 200, title: "🪵 新手伐木工" },
             { rank: 2, cap: 350, title: "🪨 洞穴探索者" },
@@ -151,50 +179,119 @@
             try {
                 const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 if (error) throw error;
-                if(!data || data.length === 0) {
-                    document.getElementById('log-status').innerText = "❌ 找不到初始行数据";
-                    return;
-                }
+                if(!data || data.length === 0) return;
                 
                 currentData = data[0];
-                currentData.currentRank = currentData.currentRank || 1; // 兼容缺省值
+                currentData.currentRank = currentData.currentRank || 1;
+                currentData.shopItems = currentData.shopItems || [];
+                currentData.activeBuffs = currentData.activeBuffs || {};
                 
                 let rData = RANK_DATA[currentData.currentRank - 1];
                 document.getElementById('currentCoins').innerText = currentData.coins;
                 document.getElementById('rankBadge').innerText = `${rData.title} (Lv.${currentData.currentRank})`;
                 document.getElementById('capText').innerText = `当前容量上限: ${rData.cap === Infinity ? '无限' : rData.cap}`;
                 
-                const logContainer = document.getElementById('childLogList');
-                if(currentData.childLogs && currentData.childLogs.length > 0) {
-                    logContainer.innerHTML = currentData.childLogs.map(log => {
-                        const amountClass = log.amount > 0 ? "log-amount" : "log-amount sub";
-                        const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
-                        return `
-                        <div class="log-item">
-                            <span class="log-time">[${log.time}]</span>
-                            <span class="log-action">${log.action}</span>
-                            <span class="${amountClass}">${amountText}</span>
-                        </div>
-                    `}).join('');
-                } else {
-                    logContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">暂无记录</div>';
-                }
-
+                renderLogs(currentData.childLogs);
+                renderShopItems(currentData.shopItems);
+                
                 if(currentData.dailyConfig) {
                     document.getElementById('dailyToggle').checked = currentData.dailyConfig.enabled;
                     document.getElementById('dailyAmount').value = currentData.dailyConfig.amount;
                 }
-                document.getElementById('log-status').innerText = "✅ 同步成功 - " + new Date().toLocaleTimeString();
+                document.getElementById('log-status').innerText = "✅ 数据同步良好 - " + new Date().toLocaleTimeString();
             } catch (e) { 
                 document.getElementById('log-status').innerText = "❌ 刷新失败: " + e.message; 
             }
+        }
+
+        function renderLogs(logs) {
+            const logContainer = document.getElementById('childLogList');
+            if(logs && logs.length > 0) {
+                logContainer.innerHTML = logs.map(log => {
+                    const amountClass = log.amount > 0 ? "log-amount" : "log-amount sub";
+                    const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
+                    return `<div class="log-item"><span class="log-time">[${log.time}]</span><span class="log-action">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`;
+                }).join('');
+            } else {
+                logContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">暂无记录</div>';
+            }
+        }
+
+        function renderShopItems(items) {
+            const container = document.getElementById('shopList');
+            if(items.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">货架空空如也</div>';
+                return;
+            }
+            container.innerHTML = items.map(item => `
+                <div class="shop-item">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; font-size:15px; color:#ffb700;">${item.icon} ${item.name}</div>
+                        <div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div>
+                        <div style="font-size:12px; color:#27ae60;">💰 ${item.price} 币 | ⏳ ${item.hours} 小时</div>
+                    </div>
+                    <button class="btn-danger" onclick="deleteShopItem('${item.id}')">下架</button>
+                </div>
+            `).join('');
+        }
+
+        function updateBuffTimers() {
+            if (!currentData || !currentData.activeBuffs) return;
+            const container = document.getElementById('adminBuffList');
+            const now = Date.now();
+            let hasActive = false;
+            let html = '';
+
+            for (const [id, buff] of Object.entries(currentData.activeBuffs)) {
+                const remain = buff.endTime - now;
+                if (remain > 0) {
+                    hasActive = true;
+                    let h = Math.floor(remain / 3600000);
+                    let m = Math.floor((remain % 3600000) / 60000);
+                    let s = Math.floor((remain % 60000) / 1000);
+                    html += `
+                        <div class="buff-item">
+                            <div style="font-weight:bold; color:#fff;">${buff.icon} ${buff.name}</div>
+                            <div style="color:#ffb700; font-family:monospace; font-size:14px; font-weight:bold;">${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}</div>
+                        </div>
+                    `;
+                }
+            }
+            container.innerHTML = hasActive ? html : '<div style="text-align:center; color:#555; padding:10px;">暂无生效状态</div>';
+        }
+
+        async function addShopItem() {
+            const icon = document.getElementById('s_icon').value.trim() || '🎁';
+            const name = document.getElementById('s_name').value.trim();
+            const desc = document.getElementById('s_desc').value.trim();
+            const price = parseInt(document.getElementById('s_price').value);
+            const hours = parseFloat(document.getElementById('s_hours').value);
+
+            if(!name || !desc || !price || !hours) return alert("请完整填写商品信息！");
+
+            let items = currentData.shopItems || [];
+            items.push({ id: 'item_' + Date.now(), icon, name, desc, price, hours });
+
+            document.getElementById('log-status').innerText = "上架中...";
+            const { error } = await dbClient.from('gamedata').update({ shopItems: items }).eq('id', ROW_ID);
+            if(!error) {
+                ['s_icon', 's_name', 's_desc', 's_price', 's_hours'].forEach(id => document.getElementById(id).value = '');
+                getCoins();
+            }
+        }
+
+        async function deleteShopItem(id) {
+            if(!confirm("确定下架该商品吗？")) return;
+            let items = currentData.shopItems.filter(i => i.id !== id);
+            document.getElementById('log-status').innerText = "下架中...";
+            const { error } = await dbClient.from('gamedata').update({ shopItems: items }).eq('id', ROW_ID);
+            if(!error) getCoins();
         }
 
         async function modifyCoins(amount, reason) {
             if (amount === 0) return;
             document.getElementById('log-status').innerText = "写入云端...";
             
-            // 获取当前上限进行拦截截断
             let maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
             let targetCoins = currentData.coins + amount;
             let finalCoins = Math.max(0, Math.min(targetCoins, maxCap));
@@ -202,7 +299,7 @@
 
             if (actualDelta === 0) {
                 alert("操作无效：已达容量上限或余额已为 0！");
-                document.getElementById('log-status').innerText = "✅ 同步成功";
+                document.getElementById('log-status').innerText = "✅ 数据同步良好";
                 return;
             }
 
@@ -212,9 +309,7 @@
 
             let payload = { coins: finalCoins, childLogs: logs };
             const { error } = await dbClient.from('gamedata').update(payload).eq('id', ROW_ID);
-            
             if(!error) getCoins();
-            else document.getElementById('log-status').innerText = "❌ 写入失败";
         }
 
         function manualMod(sign) {
@@ -234,11 +329,7 @@
             let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
             const localDateStr = `${y}-${m}-${d}`;
             
-            let dailyConfig = {
-                enabled: document.getElementById('dailyToggle').checked,
-                amount: parseInt(document.getElementById('dailyAmount').value) || 0,
-                lastDeductDate: localDateStr
-            };
+            let dailyConfig = { enabled: document.getElementById('dailyToggle').checked, amount: parseInt(document.getElementById('dailyAmount').value) || 0, lastDeductDate: localDateStr };
             const { error } = await dbClient.from('gamedata').update({ dailyConfig }).eq('id', ROW_ID);
             if(!error) getCoins();
         }
@@ -255,7 +346,6 @@
                 ['t_question','t_answer','t_reward','t_hours'].forEach(id => document.getElementById(id).value = "");
             }
         }
-
         function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
 
         async function saveTask() {
@@ -265,13 +355,15 @@
             const h = parseFloat(document.getElementById('t_hours').value);
             if(!q || !a || !r || !h) return alert("请完整填写表单！");
 
-            const { error } = await dbClient.from('gamedata').update({
-                activeEvent: { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 3600000) }
-            }).eq('id', ROW_ID);
+            const { error } = await dbClient.from('gamedata').update({ activeEvent: { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 3600000) } }).eq('id', ROW_ID);
             if(!error) { closeTaskModal(); getCoins(); }
         }
 
-        window.onload = () => { getCoins(); setInterval(getCoins, 5000); };
+        window.onload = () => { 
+            getCoins(); 
+            setInterval(getCoins, 5000); 
+            setInterval(updateBuffTimers, 1000);
+        };
     </script>
 </body>
 </html>

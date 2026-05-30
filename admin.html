@@ -55,7 +55,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- 资产操作区 -->
         <div class="card">
             <div class="card-header">
                 <h3>💰 资产余额</h3>
@@ -76,7 +75,6 @@
             </div>
         </div>
 
-        <!-- 实时BUFF监控 -->
         <div class="card">
             <div class="card-header"><h3>✨ 生效中的特权 (BUFF)</h3></div>
             <div id="adminBuffList" style="margin-top: 10px;">
@@ -84,7 +82,6 @@
             </div>
         </div>
 
-        <!-- 增减记录 -->
         <div class="card">
             <div class="card-header"><h3>🕒 增减记录</h3></div>
             <div id="childLogList" style="margin-top:10px;">
@@ -92,12 +89,10 @@
             </div>
         </div>
 
-        <!-- 神秘商店货架管理 -->
         <div class="card">
             <div class="card-header"><h3>🛒 神秘商店管理</h3></div>
             <div style="margin-top: 15px; display:flex; flex-direction: column; gap: 10px;">
                 <div style="display:flex; gap:10px;">
-                    <!-- 核心修改：文本框变为下拉选择框 -->
                     <select id="s_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
                         <option value="🎫">🎫 凭证</option>
                         <option value="⚔️">⚔️ 铁剑</option>
@@ -119,6 +114,7 @@
                         <option value="🍞">🍞 面包</option>
                         <option value="🗝️">🗝️ 钥匙</option>
                         <option value="👑">👑 王冠</option>
+                        <option value="🪟">🪟 窗台</option>
                     </select>
                     <input type="text" id="s_name" class="input-box" style="flex:3;" placeholder="商品名称">
                 </div>
@@ -132,13 +128,11 @@
             <div id="shopList" style="margin-top: 15px;"></div>
         </div>
 
-        <!-- 悬赏任务 -->
         <div class="card">
             <div class="card-header"><h3>📜 挑战任务</h3></div>
             <button class="btn-primary" style="margin-top:10px;" onclick="openTaskModal()">✨ 发布随机悬赏任务</button>
         </div>
 
-        <!-- 自动化规则 -->
         <div class="card">
             <div class="card-header"><h3>⚙️ 自动化扣除规则</h3></div>
             <div class="flex-row" style="margin-top:15px;">
@@ -156,7 +150,6 @@
         <div id="log-status">数据建立握手...</div>
     </div>
 
-    <!-- 弹窗部分 -->
     <div id="taskModal">
         <div class="modal-content">
             <h3>发布悬赏挑战</h3>
@@ -275,13 +268,23 @@
                 const remain = buff.endTime - now;
                 if (remain > 0) {
                     hasActive = true;
-                    let h = Math.floor(remain / 3600000);
-                    let m = Math.floor((remain % 3600000) / 60000);
-                    let s = Math.floor((remain % 60000) / 1000);
+                    
+                    // 时间换算逻辑
+                    let days = Math.floor(remain / (24 * 3600000));
+                    let hours = Math.floor((remain % (24 * 3600000)) / 3600000);
+                    let mins = Math.floor((remain % 3600000) / 60000);
+                    
+                    let timeStr = "";
+                    if (days >= 1) {
+                        timeStr = `${days}天 ${hours}小时`;
+                    } else {
+                        timeStr = `${hours}小时 ${mins}分`;
+                    }
+
                     html += `
                         <div class="buff-item">
                             <div style="font-weight:bold; color:#fff;">${buff.icon} ${buff.name}</div>
-                            <div style="color:#ffb700; font-family:monospace; font-size:14px; font-weight:bold;">${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}</div>
+                            <div style="color:#ffb700; font-size:14px; font-weight:bold;">${timeStr}</div>
                         </div>
                     `;
                 }

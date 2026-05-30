@@ -41,26 +41,23 @@
         .btn-main-action:active:not(:disabled) { transform: scale(0.98); }
         .btn-log { background: #8e44ad; }
 
-        .status-bar { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 14px; display: inline-flex; align-items: center; margin-top: 10px; border: 2px solid #555; }
-        .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
-        .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
-        .message { color: #004400; margin-top: 10px; font-size: 16px; height: 24px; text-shadow: 1px 1px #fff; font-weight: bold; line-height: 1.2;}
-        .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
-
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 400; display: none; justify-content: center; align-items: center; padding: 10px;}
         .challenge-card { background: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 15px; width: 100%; max-width: 360px; text-align: center; display: flex; flex-direction: column; max-height: 90vh;}
         .challenge-title { font-size: 28px; color: #333; margin-bottom: 10px; text-shadow: 1px 1px #fff; flex-shrink: 0;}
         .btn-close-modal { background: #c0392b; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; margin-top: 10px; width: 100%; flex-shrink: 0;}
 
-        /* 改为单列布局，高度自适应，留出充足空间阅读规则 */
+        /* 单列卡片排版布局优化 */
         .reward-grid { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; overflow-y: auto; padding-right: 5px;}
-        .mc-item-btn { position: relative; background: #8b8b8b; border: 3px solid #000; border-right-color: #fff; border-bottom-color: #fff; padding: 12px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; text-align: left; }
+        
+        /* 核心修复：解除 90px 高度封印，变为高度自适应撑开 */
+        .mc-item-btn { position: relative; background: #8b8b8b; border: 3px solid #000; border-right-color: #fff; border-bottom-color: #fff; padding: 12px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; text-align: left; min-height: 90px; height: auto; }
         .mc-item-btn:active:not(.in-cd) { transform: scale(0.98); }
         .mc-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; width: 100%; }
         .mc-item-title { font-size: 18px; color: #000; font-weight: bold; text-shadow: 1px 1px #fff; }
         .mc-item-reward { color: #004400; font-weight: bold; font-size: 22px; text-shadow: 1px 1px #fff;}
-        /* 新增：任务规则小字体 */
-        .mc-item-desc { font-family: -apple-system, sans-serif; font-size: 13px; color: #222; line-height: 1.4; text-shadow: 1px 1px rgba(255,255,255,0.4); }
+        
+        /* 任务描述细节文字排版优化 */
+        .mc-item-desc { font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; color: #222; line-height: 1.4; text-shadow: 1px 1px rgba(255,255,255,0.4); word-break: break-all; margin-top: 2px; padding-bottom: 5px;}
         
         .cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; pointer-events: none; background: conic-gradient(rgba(0,0,0,0.7) var(--progress), transparent 0deg); }
         .cd-timer { position: absolute; bottom: 6px; right: 8px; color: #fff; font-size: 18px; font-weight: bold; text-shadow: 1px 1px #000, -1px -1px #000, 1px -1px #000, -1px 1px #000; display: none; }
@@ -83,6 +80,7 @@
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; }
 
+        /* 骨骼动画 */
         .skin-steve { width: 60px; height: 135px; }
         .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
         .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
@@ -161,12 +159,21 @@
         </div>
     </div>
 
+    <div id="confirmModal" class="modal-overlay" style="z-index: 500;">
+        <div class="challenge-card" style="max-width: 300px;">
+            <div class="challenge-title" style="font-size: 24px;">📋 确认告示</div>
+            <div id="confirmText" style="color:#000; font-size:16px; margin: 15px 0; font-weight:bold; line-height:1.5;">确认已达标并领取奖励吗？</div>
+            <button class="btn-main-action" onclick="executeConfirmedReward()" style="margin-top: 5px;">✅ 确定领取</button>
+            <button class="btn-close-modal" onclick="closeConfirmModal()" style="margin-top: 5px;">❌ 还没完成</button>
+        </div>
+    </div>
+
     <div id="rewardModal" class="modal-overlay">
         <div class="challenge-card">
             <div class="challenge-title">⚔️ 任务告示牌</div>
             <div class="reward-grid">
                 
-                <div class="mc-item-btn" id="btn-sport" onclick="claimReward('sport', '疾跑附魔 (完成基础运动)', 10, 3)">
+                <div class="mc-item-btn" id="btn-sport" onclick="requestReward('sport', '制造工具 (基础运动)', 10, 3)">
                     <div class="cd-overlay"></div>
                     <div class="mc-item-header">
                         <span class="mc-item-title">🏃 疾跑附魔</span>
@@ -176,7 +183,7 @@
                     <span class="cd-timer">--:--</span>
                 </div>
                 
-                <div class="mc-item-btn" id="btn-focus" onclick="claimReward('focus', '凝神药水 (写作业绝对专注)', 10, 3)">
+                <div class="mc-item-btn" id="btn-focus" onclick="requestReward('focus', '凝神药水 (写作业绝对专注)', 10, 3)">
                     <div class="cd-overlay"></div>
                     <div class="mc-item-header">
                         <span class="mc-item-title">🧪 凝神药水</span>
@@ -186,7 +193,7 @@
                     <span class="cd-timer">--:--</span>
                 </div>
                 
-                <div class="mc-item-btn" id="btn-writing" onclick="claimReward('writing', '成书与笔 (字迹工整规范)', 10, 3)">
+                <div class="mc-item-btn" id="btn-writing" onclick="requestReward('writing', '成书与笔 (字迹工整规范)', 10, 3)">
                     <div class="cd-overlay"></div>
                     <div class="mc-item-header">
                         <span class="mc-item-title">📝 成书与笔</span>
@@ -196,7 +203,7 @@
                     <span class="cd-timer">--:--</span>
                 </div>
                 
-                <div class="mc-item-btn" id="btn-extra" onclick="claimReward('extra', '探索下界 (主动做家务/课外)', 10, 3)">
+                <div class="mc-item-btn" id="btn-extra" onclick="requestReward('extra', '探索下界 (主动做家务/课外)', 10, 3)">
                     <div class="cd-overlay"></div>
                     <div class="mc-item-header">
                         <span class="mc-item-title">🌋 探索下界</span>
@@ -206,7 +213,7 @@
                     <span class="cd-timer">--:--</span>
                 </div>
 
-                <div class="mc-item-btn" id="btn-run5k" onclick="claimReward('run5k', '极速附魔 (35分钟内跑完5KM)', 35, 24)">
+                <div class="mc-item-btn" id="btn-run5k" onclick="requestReward('run5k', '极速附魔 (35分钟内跑完5KM)', 35, 24)">
                     <div class="cd-overlay"></div>
                     <div class="mc-item-header">
                         <span class="mc-item-title">⚡ 极速附魔</span>
@@ -216,7 +223,7 @@
                     <span class="cd-timer">--:--</span>
                 </div>
 
-                <div class="mc-item-btn" id="btn-jumprope" onclick="claimReward('jumprope', '轻盈药水 (一天内累计2000跳绳)', 30, 24)">
+                <div class="mc-item-btn" id="btn-jumprope" onclick="requestReward('jumprope', '轻盈药水 (一天内累计2000跳绳)', 30, 24)">
                     <div class="cd-overlay"></div>
                     <div class="mc-item-header">
                         <span class="mc-item-title">🪶 轻盈药水</span>
@@ -226,7 +233,7 @@
                     <span class="cd-timer">--:--</span>
                 </div>
 
-                <div class="mc-item-btn" id="btn-deeplearn" onclick="claimReward('deeplearn', '贤者之书 (费曼式讲解难题)', 20, 12)">
+                <div class="mc-item-btn" id="btn-deeplearn" onclick="requestReward('deeplearn', '贤者之书 (费曼式讲解难题)', 20, 12)">
                     <div class="cd-overlay"></div>
                     <div class="mc-item-header">
                         <span class="mc-item-title">📖 贤者之书</span>
@@ -236,7 +243,7 @@
                     <span class="cd-timer">--:--</span>
                 </div>
 
-                <div class="mc-item-btn" id="btn-reading" onclick="claimReward('reading', '附魔书的馈赠 (单次专注阅读超30分钟)', 20, 12)">
+                <div class="mc-item-btn" id="btn-reading" onclick="requestReward('reading', '附魔书的馈赠 (单次专注阅读超30分钟)', 20, 12)">
                     <div class="cd-overlay"></div>
                     <div class="mc-item-header">
                         <span class="mc-item-title">📚 附魔书的馈赠</span>
@@ -322,10 +329,9 @@
 
         let isMuted = false, lastCoins = null, isAnimating = false, lastScenario = -1; 
         let ambientInterval = null, syncInterval = null, activeEventData = null, timerInterval = null, chestFloatInterval = null; 
-        let currentData = null; 
+        let currentData = null, pendingReward = null; 
         const ROW_ID = 1;
 
-        // 全局任务冷却时长配置池 (单位: 小时)
         const TASK_CDS = {
             'sport': 3, 'focus': 3, 'writing': 3, 'extra': 3,
             'run5k': 24, 'jumprope': 24, 'deeplearn': 12, 'reading': 12
@@ -557,7 +563,8 @@
         function openRewardModal() { rModal.style.display = 'flex'; processCooldowns(); }
         function closeRewardModal() { rModal.style.display = 'none'; }
 
-        async function claimReward(type, actionName, amount, cdHours) {
+        // 💡 拦截交互核心：点击任务按钮时，执行防误触挂起拦截
+        function requestReward(type, actionName, amount, cdHours) {
             const now = Date.now();
             if(currentData.cooldowns && currentData.cooldowns[type] > now) return; 
 
@@ -568,6 +575,31 @@
                 return;
             }
 
+            // 锁定当前悬赏参数池，拉起二次验证告示牌
+            pendingReward = { type, actionName, amount, cdHours };
+            
+            // 提取核心汉字名称
+            let cleanName = actionName.split(' ')[0]; 
+            document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#8b0000; font-size:20px;">【${cleanName}】</span><br>的悬赏奖励吗？`;
+            document.getElementById('confirmModal').style.display = 'flex';
+            clickCoin(); // 触发基础点击反馈
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+            pendingReward = null;
+        }
+
+        // 💡 确认无误，执行真正的云端数据写入
+        async function executeConfirmedReward() {
+            if (!pendingReward) return;
+            const { type, actionName, amount, cdHours } = pendingReward;
+            closeConfirmModal();
+            await proceedWithReward(type, actionName, amount, cdHours);
+        }
+
+        // 领奖实际上报函数
+        async function proceedWithReward(type, actionName, amount, cdHours) {
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 let record = data[0];
@@ -578,7 +610,7 @@
                 logs = logs.slice(0, 10); 
 
                 let cds = record.cooldowns || {}; 
-                cds[type] = now + (cdHours * 3600000); 
+                cds[type] = Date.now() + (cdHours * 3600000); 
 
                 await dbClient.from('gamedata').update({
                     coins: newCoins, childLogs: logs, cooldowns: cds
@@ -676,6 +708,7 @@
                 setTimeout(() => el.remove(), 1000); 
             } 
         }
+        function checkDayNight() { const hour = new Date().getHours(); if (hour >= 18 || hour < 6) document.body.classList.add('night'); else document.body.classList.remove('night'); }
         function clickCoin() { if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); } }
         function toggleMute() { isMuted = !isMuted; bgm[isMuted ? 'pause' : 'play'](); document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊'; }
         function playSound(type) { if(isMuted) return; try { if(type === 'levelup') sfxLevelUp.play(); if(type === 'explode') sfxExplode.play(); if(type === 'hit') sfxHit.play(); if(type === 'fuse') sfxFuse.play(); } catch(e){} }

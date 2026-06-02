@@ -236,7 +236,7 @@
 
         async function initializeDefaultTasks() {
             const defaultTasks = [
-                { id: 'task_sport', icon: '🏃', name: '跑附魔', desc: '认真完成当天的基础体育作业或常规锻炼。', price: 10, hours: 3 },
+                { id: 'task_sport', icon: '🏃', name: '疾跑附魔', desc: '认真完成当天的基础体育作业或常规锻炼。', price: 10, hours: 3 },
                 { id: 'task_focus', icon: '🧪', name: '凝神药水', desc: '写作业期间保持绝对专注，不发呆、不闲聊。', price: 10, hours: 3 },
                 { id: 'task_writing', icon: '📝', name: '成书与笔', desc: '作业书写工整漂亮，完成每日练字任务。', price: 10, hours: 3 },
                 { id: 'task_extra', icon: '🌋', name: '探索下界', desc: '主动帮家里分担家务，或完成额外的课外探索。', price: 10, hours: 3 },
@@ -262,7 +262,6 @@
                 currentData.activeBuffs = currentData.activeBuffs || {};
                 currentData.schulteDaily = currentData.schulteDaily || { lastDate: "", count: 0 };
                 
-                // 💡 重点：如果云端全新创建，数组为空，静默注入种子数据
                 if(!currentData.taskItems || currentData.taskItems.length === 0) {
                     await initializeDefaultTasks();
                     return;

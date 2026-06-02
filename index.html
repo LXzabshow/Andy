@@ -75,7 +75,6 @@
         .in-cd { cursor: not-allowed; opacity: 0.8; }
         .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
 
-        /* 舒尔特游戏方格特调样式 - 移除背景和文字颜色的 important 以支持纯 JS 内联阻断重绘 */
         #schulteGrid { display: grid; width: 100%; aspect-ratio: 1; gap: 5px; background: #373737; padding: 6px; border: 4px solid #000; box-shadow: inset -3px -3px #fff, inset 3px 3px #111; }
         .schulte-cell { background: #c6c6c6; border: 3px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; cursor: pointer; aspect-ratio: 1; transition: transform 0.05s; }
         .schulte-cell:active { transform: scale(0.92); }
@@ -220,9 +219,10 @@
         <div class="challenge-card" style="max-width: 380px; width: 95%;">
             <div class="challenge-title" style="color: #8e44ad;">👁️ 舒尔特专注训练</div>
             <div id="gameMenu">
-                <div id="gameRemainingCount" style="color: #004400; font-weight: bold; margin-bottom: 20px; font-size: 18px; text-shadow: 1px 1px #fff;">今日已领奖次数: -- / 5</div>
-                <button class="btn-main-action" onclick="startGameSession(6)" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 普通难度 (6x6)</button>
-                <button class="btn-main-action" onclick="startGameSession(7)" style="background: #c0392b; margin-bottom: 20px; font-size:22px;">🔴 困难难度 (7x7)</button>
+                <div id="gameRemainingCount" style="color: #000; font-weight: bold; margin-bottom: 20px; font-size: 16px; text-shadow: 1px 1px #fff; background: rgba(255,255,255,0.7); padding: 8px; border: 2px solid #555;">...</div>
+                
+                <button class="btn-main-action" onclick="attemptStartGame(6)" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 普通难度 (6x6)</button>
+                <button class="btn-main-action" onclick="attemptStartGame(7)" style="background: #c0392b; margin-bottom: 20px; font-size:22px;">🔴 困难难度 (7x7)</button>
                 <button class="btn-close-modal" onclick="closeGameModal()">关闭秘境</button>
             </div>
             <div id="gamePlay" style="display: none; flex-direction: column; align-items: center; width: 100%;">
@@ -274,7 +274,7 @@
             <div class="main-btn-grid">
                 <button class="btn-main-action" onclick="openRewardModal()">⚔️ 挑战</button>
                 <button class="btn-main-action btn-shop" onclick="openShopModal()">🛒 商店</button>
-                <button class="btn-main-action btn-game" onclick="openGameModal()">🎮 训练</button>
+                <button class="btn-main-action btn-game" onclick="openGameModal()">🎮 高塔</button>
                 <button class="btn-main-action btn-log" onclick="openLogModal()">📜 账单</button>
             </div>
 
@@ -400,8 +400,15 @@
                 record.currentRank = record.currentRank || 1; 
                 record.shopItems = record.shopItems || [];
                 record.activeBuffs = record.activeBuffs || {};
-                record.schulteDaily = record.schulteDaily || { lastDate: "", count: 0 };
                 record.taskItems = record.taskItems || [];
+                
+                // 💡 重点加固：双轨计数数据平滑过渡
+                record.schulteDaily = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
+                if (record.schulteDaily.count !== undefined) {
+                    record.schulteDaily.winCount = record.schulteDaily.count;
+                    record.schulteDaily.playCount = record.schulteDaily.count;
+                    delete record.schulteDaily.count;
+                }
                 
                 record = await checkAndApplyDailyDeduction(record);
                 currentData = record;
@@ -612,6 +619,7 @@
             const action = pendingAction; closeConfirmModal();
             if (action.actionType === 'reward') await proceedWithReward(action.data);
             else if (action.actionType === 'buy') await proceedWithBuy(action.data);
+            else if (action.actionType === 'schulteTicket') await executeStartGame(action.data.size, true);
         }
 
         async function proceedWithBuy(item) {
@@ -643,7 +651,7 @@
             } catch (e) { alert("申报异常，请重试"); }
         }
 
-        // 舒尔特专注训练逻辑
+        // 💡 舒尔特专注训练逻辑 - 核心门票拦截与防作弊机制
         function openGameModal() {
             if (!currentData) return;
             [sModal, rModal, lModal, cfModal, rankModal].forEach(m => { if(m) m.style.display = 'none'; });
@@ -654,9 +662,80 @@
         function backToGameMenu() {
             clearInterval(gameClockTimer); isGameRunning = false;
             document.getElementById('gameMenu').style.display = 'block'; document.getElementById('gamePlay').style.display = 'none'; document.getElementById('gameResult').style.display = 'none';
-            let schulte = currentData.schulteDaily || { lastDate: "", count: 0 };
-            let displayCount = (schulte.lastDate === getTodayStr()) ? schulte.count : 0;
-            document.getElementById('gameRemainingCount').innerText = `今日已领奖次数: ${displayCount} / 5`;
+            
+            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
+            if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; }
+            let today = getTodayStr();
+            let pCount = (schulte.lastDate === today) ? schulte.playCount : 0;
+            let wCount = (schulte.lastDate === today) ? schulte.winCount : 0;
+            
+            let freeLeft = Math.max(0, 5 - pCount);
+            let rewardLeft = Math.max(0, 5 - wCount);
+            
+            document.getElementById('gameRemainingCount').innerHTML = 
+                `<div style="margin-bottom:8px;">🎫 今日免费开局剩余: <span style="color:${freeLeft > 0 ? '#27ae60' : '#c0392b'};">${freeLeft}</span> / 5</div>
+                 <div>🎁 今日有效领奖剩余: <span style="color:${rewardLeft > 0 ? '#e67e22' : '#c0392b'};">${rewardLeft}</span> / 5</div>`;
+        }
+
+        // 开局拦截与意图确认
+        function attemptStartGame(size) {
+            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
+            if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; }
+            let today = getTodayStr();
+            let pCount = (schulte.lastDate === today) ? schulte.playCount : 0;
+            
+            if (pCount >= 5) {
+                if (currentData.coins < 1) {
+                    playSound('fuse');
+                    alert("❌ 行囊硬币不足，无法支付训练门票！");
+                    return;
+                }
+                document.getElementById('confirmText').innerHTML = `🎫 今日免费训练已用完。<br><br>开启本次秘境将<span style="color:#c0392b;">消耗 1 🪙</span> 门票，<br>是否支付并进入？`;
+                pendingAction = { actionType: 'schulteTicket', data: { size: size } };
+                if(cfModal) cfModal.style.display = 'flex';
+            } else {
+                executeStartGame(size, false);
+            }
+        }
+
+        // 绝对云端扣费与计次校验
+        async function executeStartGame(size, isPaidLocally) {
+            try {
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0]; let today = getTodayStr();
+                let schulte = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
+                if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; delete schulte.count; }
+                if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
+                
+                let newCoins = record.coins;
+                let logs = record.childLogs || [];
+                
+                // 云端反作弊二次验证
+                let needsPayment = schulte.playCount >= 5;
+                if (needsPayment && !isPaidLocally) {
+                    alert("⚠️ 数据状态已刷新，请重新点击开局！");
+                    syncData(); 
+                    return;
+                }
+                if (needsPayment && newCoins < 1) {
+                    alert("❌ 云端校验拦截：余额不足以支付门票！");
+                    syncData();
+                    return;
+                }
+                
+                if (needsPayment) {
+                    newCoins -= 1;
+                    logs.unshift({ time: getFormattedTime(), action: `支付训练门票`, amount: -1 });
+                }
+                
+                schulte.playCount += 1; // 开局必定消耗次数
+                
+                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
+                currentData = { ...record, coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte };
+                localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins);
+                
+                // 扣费记账完毕，正式拉起游戏画面
+                startGameSession(size);
+            } catch(e) { alert("网络异常，无法开启秘境，请检查连接"); }
         }
 
         function startGameSession(size) {
@@ -673,7 +752,6 @@
                 const cell = document.createElement('div'); 
                 cell.className = 'schulte-cell'; 
                 cell.innerText = num; 
-                // 动态字号缩放，防高密度矩阵误触
                 cell.style.fontSize = size === 7 ? '20px' : '24px';
                 cell.onclick = () => handleCellClick(cell, num); 
                 gridContainer.appendChild(cell); 
@@ -691,7 +769,6 @@
                 else document.getElementById('gameTargetNum').innerText = nextTargetNum;
             } else { 
                 playSound('fuse'); 
-                // JS 绝对内联干预，无视 CSS 动画重绘失效问题
                 cell.style.backgroundColor = '#c0392b';
                 cell.style.color = '#fff';
                 if(cell.wrongTimeout) clearTimeout(cell.wrongTimeout);
@@ -708,7 +785,10 @@
             clearInterval(gameClockTimer); isGameRunning = false;
             document.getElementById('gamePlay').style.display = 'none';
             const resultBox = document.getElementById('gameResult'); const rTitle = document.getElementById('gameResultTitle'); const rDesc = document.getElementById('gameResultDesc'); const rBtn = document.getElementById('btnGameRetry');
-            resultBox.style.display = 'block'; rBtn.onclick = () => startGameSession(currentGameSize);
+            resultBox.style.display = 'block'; 
+            
+            // 💡 失败或重来时，必须走校验通道，防止逃票
+            rBtn.onclick = () => attemptStartGame(currentGameSize);
 
             if(!isWin) {
                 playSound('explode'); rTitle.innerText = "⏳ 训练超时 (失败)"; rTitle.style.color = "#c0392b";
@@ -718,12 +798,13 @@
             let elapsed = ((Date.now() - gameStartTime) / 1000).toFixed(1);
             rTitle.innerText = "🎉 挑战成功！"; rTitle.style.color = "#27ae60"; playSound('levelup');
 
-            let schulte = currentData.schulteDaily || { lastDate: "", count: 0 }; let today = getTodayStr();
-            if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.count = 0; }
+            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr();
+            if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
 
-            if(schulte.count < 5) {
+            // 💡 只有有效发奖次数没满时，才给钱
+            if(schulte.winCount < 5) {
                 let rewardAmt = (currentGameSize === 6) ? 3 : 5;
-                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 矩阵！<br><br>🎁 奖励加成：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日已领奖收益数: ${schulte.count + 1} / 5 次)`;
+                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 矩阵！<br><br>🎁 奖励加成：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日有效领奖次数: ${schulte.winCount + 1} / 5 次)`;
                 rBtn.innerText = "再来一局"; await uploadSchulteWin(rewardAmt);
             } else {
                 rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过训练！<br><br>⚠️ 提示：今日 5 次悬赏冒险奖励已被装满。本次通关不再产出硬币，继续保持专注度，锤炼你的视界引擎！`;
@@ -734,8 +815,14 @@
         async function uploadSchulteWin(rewardAmt) {
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0]; let today = getTodayStr();
-                let schulte = record.schulteDaily || { lastDate: "", count: 0 }; if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.count = 0; }
-                schulte.count += 1; let newCoins = record.coins + rewardAmt;
+                let schulte = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; 
+                if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; delete schulte.count; }
+                if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
+                
+                // 仅增加领奖次数
+                schulte.winCount += 1; 
+                
+                let newCoins = record.coins + rewardAmt;
                 const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; if(newCoins > maxCap) newCoins = maxCap;
                 let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `专注挑战成功 (${currentGameSize}x${currentGameSize})`, amount: rewardAmt });
 

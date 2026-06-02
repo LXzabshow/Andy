@@ -261,7 +261,7 @@
                 currentData.shopItems = currentData.shopItems || [];
                 currentData.activeBuffs = currentData.activeBuffs || {};
                 
-                // 💡 重点加固：双轨计数数据平滑过渡
+                // 数据平滑过渡
                 currentData.schulteDaily = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
                 if (currentData.schulteDaily.count !== undefined) {
                     currentData.schulteDaily.winCount = currentData.schulteDaily.count;
@@ -281,7 +281,7 @@
                 
                 let sWin = (currentData.schulteDaily.lastDate === getTodayStr()) ? currentData.schulteDaily.winCount : 0;
                 let sPlay = (currentData.schulteDaily.lastDate === getTodayStr()) ? currentData.schulteDaily.playCount : 0;
-                document.getElementById('buffCardTitle').innerText = `✨ 特权监控 (今日专注 - 开局:${sPlay}次 | 领奖:${sWin}/5)`;
+                document.getElementById('buffCardTitle').innerText = `✨ 特权监控 (今日高塔 - 开局:${sPlay}次 | 领奖:${sWin}/5)`;
 
                 renderLogs(currentData.childLogs);
                 renderShopItems(currentData.shopItems);

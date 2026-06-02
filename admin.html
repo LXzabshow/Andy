@@ -61,7 +61,7 @@
                 <span id="rankBadge" class="rank-info">读取中...</span>
             </div>
             <div id="currentCoins" class="big-num">...</div>
-            <div id="capText" class="cap-text">容量上限: ---</div>
+            <div id="capText" class="cap-text">背包容量上限: ---</div>
             
             <div style="margin-top: 5px;">
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
@@ -87,6 +87,37 @@
             <div id="childLogList" style="margin-top:10px;">
                 <div style="text-align:center; color:#555; padding:20px;">暂无记录</div>
             </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>⚔️ 任务告示牌管理</h3></div>
+            <div style="margin-top: 15px; display:flex; flex-direction: column; gap: 10px;">
+                <div style="display:flex; gap:10px;">
+                    <select id="t_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
+                        <option value="🏃">🏃 运动</option>
+                        <option value="🧪">🧪 专注</option>
+                        <option value="📝">📝 书写</option>
+                        <option value="🌋">🌋 探索</option>
+                        <option value="⚡">⚡ 极速</option>
+                        <option value="🪶">🪶 轻盈</option>
+                        <option value="📖">📖 深度</option>
+                        <option value="📚">📚 阅读</option>
+                        <option value="⚔️">⚔️ 战斗</option>
+                        <option value="🛡️">🛡️ 防御</option>
+                        <option value="⛏️">⛏️ 采掘</option>
+                        <option value="🧹">🧹 家务</option>
+                        <option value="🧠">🧠 思考</option>
+                    </select>
+                    <input type="text" id="t_name" class="input-box" style="flex:3;" placeholder="任务名称">
+                </div>
+                <input type="text" id="t_desc" class="input-box" placeholder="给孩子的底线规则描述">
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="t_price" class="input-box" style="flex:1;" placeholder="奖励(币)">
+                    <input type="number" id="t_hours" class="input-box" style="flex:1;" placeholder="冷却(小时)">
+                </div>
+                <button class="btn-primary" onclick="addTaskItem()" style="background:#27ae60;">➕ 上架新任务</button>
+            </div>
+            <div id="adminTaskList" style="margin-top: 15px;"></div>
         </div>
 
         <div class="card">
@@ -129,8 +160,8 @@
         </div>
 
         <div class="card">
-            <div class="card-header"><h3>📜 挑战任务</h3></div>
-            <button class="btn-primary" style="margin-top:10px;" onclick="openTaskModal()">✨ 发布随机悬赏任务</button>
+            <div class="card-header"><h3>📜 临时空投悬赏</h3></div>
+            <button class="btn-primary" style="margin-top:10px;" onclick="openTaskModal()">✨ 投放随机悬赏宝箱</button>
         </div>
 
         <div class="card">
@@ -152,7 +183,7 @@
 
     <div id="taskModal">
         <div class="modal-content">
-            <h3>发布悬赏挑战</h3>
+            <h3>发布临时悬赏挑战</h3>
             <div class="form-group"><label>问题描述 (可回车换行)</label><textarea id="t_question" class="input-box"></textarea></div>
             <div class="form-group"><label>标准答案</label><input type="text" id="t_answer" class="input-box"></div>
             <div class="grid">
@@ -203,6 +234,22 @@
             return `${month}-${day} ${hours}:${mins}`;
         }
 
+        async function initializeDefaultTasks() {
+            const defaultTasks = [
+                { id: 'task_sport', icon: '🏃', name: '跑附魔', desc: '认真完成当天的基础体育作业或常规锻炼。', price: 10, hours: 3 },
+                { id: 'task_focus', icon: '🧪', name: '凝神药水', desc: '写作业期间保持绝对专注，不发呆、不闲聊。', price: 10, hours: 3 },
+                { id: 'task_writing', icon: '📝', name: '成书与笔', desc: '作业书写工整漂亮，完成每日练字任务。', price: 10, hours: 3 },
+                { id: 'task_extra', icon: '🌋', name: '探索下界', desc: '主动帮家里分担家务，或完成额外的课外探索。', price: 10, hours: 3 },
+                { id: 'task_run5k', icon: '⚡', name: '极速附魔', desc: '挑战自我！必须在 35分钟内 一口气跑完 5公里。', price: 35, hours: 24 },
+                { id: 'task_jumprope', icon: '🪶', name: '轻盈药水', desc: '毅力考验！在 一天之内 累计完成 2000个 跳绳。', price: 30, hours: 24 },
+                { id: 'task_deeplearn', icon: '📖', name: '贤者之书', desc: '独立解出附加难题，并像小老师一样把解题思路讲明白。', price: 20, hours: 12 },
+                { id: 'task_reading', icon: '📚', name: '附魔书的馈赠', desc: '放下电子产品，单次绝对专注阅读课外书籍 超过 30分钟。', price: 20, hours: 12 }
+            ];
+            document.getElementById('log-status').innerText = "⏳ 正在静默部署初始化经典任务池...";
+            await dbClient.from('gamedata').update({ taskItems: defaultTasks }).eq('id', ROW_ID);
+            getCoins();
+        }
+
         async function getCoins() {
             try {
                 const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
@@ -215,17 +262,23 @@
                 currentData.activeBuffs = currentData.activeBuffs || {};
                 currentData.schulteDaily = currentData.schulteDaily || { lastDate: "", count: 0 };
                 
+                // 💡 重点：如果云端全新创建，数组为空，静默注入种子数据
+                if(!currentData.taskItems || currentData.taskItems.length === 0) {
+                    await initializeDefaultTasks();
+                    return;
+                }
+                
                 let rData = RANK_DATA[currentData.currentRank - 1];
                 document.getElementById('currentCoins').innerText = currentData.coins;
                 document.getElementById('rankBadge').innerText = `${rData.title} (Lv.${currentData.currentRank})`;
-                document.getElementById('capText').innerText = `当前容量上限: ${rData.cap === Infinity ? '无限' : rData.cap}`;
+                document.getElementById('capText').innerText = `当前背包容量上限: ${rData.cap === Infinity ? '无限' : rData.cap}`;
                 
-                // 动态刷新特权监控标题：加入舒尔特计数器
                 let sCount = (currentData.schulteDaily.lastDate === getTodayStr()) ? currentData.schulteDaily.count : 0;
                 document.getElementById('buffCardTitle').innerText = `✨ 特权监控 (今日训练领奖: ${sCount}/5次)`;
 
                 renderLogs(currentData.childLogs);
                 renderShopItems(currentData.shopItems);
+                renderTaskItems(currentData.taskItems);
                 
                 if(currentData.dailyConfig) {
                     document.getElementById('dailyToggle').checked = currentData.dailyConfig.enabled;
@@ -268,6 +321,56 @@
             `).join('');
         }
 
+        function renderTaskItems(items) {
+            const container = document.getElementById('adminTaskList');
+            if(!container) return;
+            if(items.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">告示牌空空如也</div>';
+                return;
+            }
+            container.innerHTML = items.map(item => `
+                <div class="shop-item" style="border-color: #27ae60;">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; font-size:15px; color:#2ecc71;">${item.icon} ${item.name}</div>
+                        <div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div>
+                        <div style="font-size:12px; color:#27ae60;">🪙 +${item.price} 币 | ⏳ 冷却: ${item.hours} 小时</div>
+                    </div>
+                    <button class="btn-danger" onclick="deleteTaskItem('${item.id}')">下架</button>
+                </div>
+            `).join('');
+        }
+
+        async function addTaskItem() {
+            const icon = document.getElementById('t_icon').value;
+            const name = document.getElementById('t_name').value.trim();
+            const desc = document.getElementById('t_desc').value.trim();
+            const price = parseInt(document.getElementById('t_price').value);
+            const hours = parseFloat(document.getElementById('t_hours').value);
+
+            if(!name || !desc || !price || !hours) return alert("请完整填写任务信息！");
+
+            let items = currentData.taskItems || [];
+            items.push({ id: 'task_' + Date.now(), icon, name, desc, price, hours });
+
+            document.getElementById('log-status').innerText = "挑战上架中...";
+            const { error } = await dbClient.from('gamedata').update({ taskItems: items }).eq('id', ROW_ID);
+            if(!error) {
+                document.getElementById('t_name').value = '';
+                document.getElementById('t_desc').value = '';
+                document.getElementById('t_price').value = '';
+                document.getElementById('t_hours').value = '';
+                getCoins();
+            }
+        }
+
+        async function deleteTaskItem(id) {
+            if(!confirm("确定下架此项任务挑战吗？")) return;
+            let items = currentData.taskItems.filter(i => i.id !== id);
+            document.getElementById('log-status').innerText = "挑战下架中...";
+            const { error } = await dbClient.from('gamedata').update({ taskItems: items }).eq('id', ROW_ID);
+            if(!error) getCoins();
+        }
+
         function updateBuffTimers() {
             if (!currentData || !currentData.activeBuffs) return;
             const container = document.getElementById('adminBuffList');
@@ -279,7 +382,6 @@
                 const remain = buff.endTime - now;
                 if (remain > 0) {
                     hasActive = true;
-                    
                     let days = Math.floor(remain / (24 * 3600000));
                     let hours = Math.floor((remain % (24 * 3600000)) / 3600000);
                     let mins = Math.floor((remain % 3600000) / 60000);
@@ -295,37 +397,6 @@
                 }
             }
             container.innerHTML = hasActive ? html : '<div style="text-align:center; color:#555; padding:10px;">暂无生效状态</div>';
-        }
-
-        async function addShopItem() {
-            const icon = document.getElementById('s_icon').value;
-            const name = document.getElementById('s_name').value.trim();
-            const desc = document.getElementById('s_desc').value.trim();
-            const price = parseInt(document.getElementById('s_price').value);
-            const hours = parseFloat(document.getElementById('s_hours').value);
-
-            if(!name || !desc || !price || !hours) return alert("请完整填写商品信息！");
-
-            let items = currentData.shopItems || [];
-            items.push({ id: 'item_' + Date.now(), icon, name, desc, price, hours });
-
-            document.getElementById('log-status').innerText = "上架中...";
-            const { error } = await dbClient.from('gamedata').update({ shopItems: items }).eq('id', ROW_ID);
-            if(!error) {
-                document.getElementById('s_name').value = '';
-                document.getElementById('s_desc').value = '';
-                document.getElementById('s_price').value = '';
-                document.getElementById('s_hours').value = '';
-                getCoins();
-            }
-        }
-
-        async function deleteShopItem(id) {
-            if(!confirm("确定下架该商品吗？")) return;
-            let items = currentData.shopItems.filter(i => i.id !== id);
-            document.getElementById('log-status').innerText = "下架中...";
-            const { error } = await dbClient.from('gamedata').update({ shopItems: items }).eq('id', ROW_ID);
-            if(!error) getCoins();
         }
 
         async function modifyCoins(amount, reason) {

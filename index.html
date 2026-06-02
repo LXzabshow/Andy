@@ -26,7 +26,6 @@
         .label { color: #404040; font-size: 20px; margin-top: 10px; font-weight: bold; text-shadow: 1px 1px #fff;}
         .total { font-size: 70px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 5px 0; line-height: 1; }
 
-        /* BUFF 挂载区 */
         #activeBuffsContainer { width: 100%; display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
         .buff-pill { background: rgba(0,0,0,0.7); border: 2px solid #ffb700; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-family: -apple-system, sans-serif; font-weight: bold; text-shadow: 1px 1px #000; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; animation: glow 2s infinite alternate;}
         @keyframes glow { from { box-shadow: 0 0 5px #ffb700; } to { box-shadow: 0 0 15px #ffb700, 0 0 5px #ffb700 inset; } }
@@ -42,11 +41,13 @@
         .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         
+        /* 2x2 四宫格均衡按钮排版 */
         .main-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .btn-main-action { width: 100%; padding: 10px; font-family: inherit; font-size: 20px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 4px 4px rgba(255,255,255,0.3), inset -4px -4px rgba(0,0,0,0.3); }
         .btn-main-action:active:not(:disabled) { transform: scale(0.95); }
         .btn-shop { background: #e67e22; }
-        .btn-log { background: #8e44ad; grid-column: span 2; }
+        .btn-game { background: #8e44ad; } /* 专注训练专属染色 */
+        .btn-log { background: #7f8c8d; }
 
         .status-bar { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 14px; display: inline-flex; align-items: center; margin-top: 10px; border: 2px solid #555; }
         .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; }
@@ -72,6 +73,14 @@
         .in-cd { cursor: not-allowed; opacity: 0.8; }
         .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
 
+        /* 舒尔特游戏方格特调样式 */
+        #schulteGrid { display: grid; width: 100%; aspect-ratio: 1; gap: 5px; background: #373737; padding: 6px; border: 4px solid #000; box-shadow: inset -3px -3px #fff, inset 3px 3px #111; }
+        .schulte-cell { background: #c6c6c6 !important; border: 3px solid #000 !important; box-shadow: inset 2px 2px #fff, inset -2px -2px #555 !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 26px !important; font-weight: bold !important; color: #000 !important; cursor: pointer !important; aspect-ratio: 1 !important; transition: transform 0.05s; }
+        .schulte-cell:active { transform: scale(0.92); }
+        .schulte-cell.correct { background: #2ecc71 !important; color: #fff !important; box-shadow: inset 3px 3px rgba(255,255,255,0.4), inset -3px -3px rgba(0,0,0,0.4) !important; cursor: not-allowed !important; }
+        .schulte-cell.wrong { animation: schulteWrong 0.2s steps(2) 2; }
+        @keyframes schulteWrong { 0%, 100% { background: #c0392b !important; color: #fff !important; } 50% { background: #c6c6c6 !important; color: #000 !important; } }
+
         .log-container { max-height: 250px; overflow-y: auto; text-align: left; background: #fff; border: 2px solid #555; padding: 10px; font-family: -apple-system, sans-serif; font-size: 14px; }
         .log-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; }
         .log-row:last-child { border-bottom: none; }
@@ -88,6 +97,7 @@
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; }
 
+        /* Steve骨骼动画 */
         .skin-steve { width: 60px; height: 135px; }
         .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
         .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
@@ -174,7 +184,7 @@
         <div class="challenge-card">
             <div class="challenge-title">⚔️ 任务告示牌</div>
             <div class="reward-grid">
-                <div class="mc-item-btn" id="btn-sport" onclick="requestAction('reward', {type:'sport', name:'疾跑附魔 (完成基础运动)', amt:10, cd:3})">
+                <div class="mc-item-btn" id="btn-sport" onclick="requestAction('reward', {type:'sport', name:'制造工具 (基础运动)', amt:10, cd:3})">
                     <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">🏃 疾跑附魔</span><span class="mc-item-reward">+10 🪙</span></div>
                     <div class="mc-item-desc">认真完成当天的基础体育作业或常规锻炼。</div><span class="cd-timer">--:--</span>
                 </div>
@@ -183,7 +193,7 @@
                     <div class="mc-item-desc">写作业期间保持绝对专注，不发呆、不闲聊。</div><span class="cd-timer">--:--</span>
                 </div>
                 <div class="mc-item-btn" id="btn-writing" onclick="requestAction('reward', {type:'writing', name:'成书与笔 (字迹工整规范)', amt:10, cd:3})">
-                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">📝 成书与笔</span><span class="mc-item-reward">+10 🪙</span></div>
+                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">📝成书与笔</span><span class="mc-item-reward">+10 🪙</span></div>
                     <div class="mc-item-desc">作业书写工整漂亮，完成每日练字任务。</div><span class="cd-timer">--:--</span>
                 </div>
                 <div class="mc-item-btn" id="btn-extra" onclick="requestAction('reward', {type:'extra', name:'探索下界 (主动做家务/课外)', amt:10, cd:3})">
@@ -221,6 +231,35 @@
         </div>
     </div>
 
+    <div id="gameModal" class="modal-overlay" style="z-index: 600;">
+        <div class="challenge-card" style="max-width: 380px; width: 95%;">
+            <div class="challenge-title" style="color: #8e44ad;">👁️ 舒尔特专注训练</div>
+            
+            <div id="gameMenu">
+                <div id="gameRemainingCount" style="color: #004400; font-weight: bold; margin-bottom: 20px; font-size: 18px; text-shadow: 1px 1px #fff;">今日已领奖次数: -- / 5</div>
+                <button class="btn-main-action" onclick="startGameSession(5)" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 普通难度 (5x5)</button>
+                <button class="btn-main-action" onclick="startGameSession(6)" style="background: #c0392b; margin-bottom: 20px; font-size:22px;">🔴 困难难度 (6x6)</button>
+                <button class="btn-close-modal" onclick="closeGameModal()">关闭秘境</button>
+            </div>
+            
+            <div id="gamePlay" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 22px; font-weight: bold; margin-bottom: 12px; color: #111; text-shadow:1px 1px #fff;">
+                    <span>锁定目标: <span id="gameTargetNum" style="color: #e67e22; font-size: 26px;">1</span></span>
+                    <span>⏳ 倒计时: <span id="gameTimerText" style="color: #c0392b;">30</span>s</span>
+                </div>
+                <div id="schulteGrid"></div>
+                <button class="btn-close-modal" onclick="quitGameSession()" style="margin-top: 15px; background:#7f8c8d;">🏳️ 放弃训练</button>
+            </div>
+
+            <div id="gameResult" style="display: none;">
+                <div id="gameResultTitle" style="font-size: 28px; font-weight: bold; margin-bottom: 12px; text-shadow:2px 2px #fff;"></div>
+                <div id="gameResultDesc" style="font-size: 15px; margin-bottom: 20px; color: #222; font-family: -apple-system, sans-serif; line-height: 1.5; text-align: left; background:#fff; padding:10px; border:2px solid #000;"></div>
+                <button class="btn-main-action" id="btnGameRetry" style="background: #27ae60; font-size:22px;">再来一局</button>
+                <button class="btn-close-modal" onclick="backToGameMenu()" style="margin-top: 10px; width: 100%;">返回菜单</button>
+            </div>
+        </div>
+    </div>
+
     <div id="logModal" class="modal-overlay">
         <div class="challenge-card">
             <div class="challenge-title">📜 探险账单</div>
@@ -251,8 +290,9 @@
             <button id="btnUpgrade" class="btn-upgrade" onclick="upgradeRank()" disabled>🆙 打造更强装备</button>
 
             <div class="main-btn-grid">
-                <button class="btn-main-action" onclick="openRewardModal()">⚔️ 任务</button>
+                <button class="btn-main-action" onclick="openRewardModal()">⚔️ 挑战</button>
                 <button class="btn-main-action btn-shop" onclick="openShopModal()">🛒 商店</button>
+                <button class="btn-main-action btn-game" onclick="openGameModal()">🎮 训练</button>
                 <button class="btn-main-action btn-log" onclick="openLogModal()">📜 账单</button>
             </div>
 
@@ -289,6 +329,7 @@
         const lModal = document.getElementById('logModal');
         const sModal = document.getElementById('shopModal');
         const cfModal = document.getElementById('confirmModal');
+        const gModal = document.getElementById('gameModal');
         
         const bgm = document.getElementById('bgm');
         const sfxLevelUp = document.getElementById('sfx-levelup');
@@ -301,6 +342,9 @@
         let ambientInterval = null, syncInterval = null, activeEventData = null, timerInterval = null, chestFloatInterval = null; 
         let currentData = null, pendingAction = null; 
         const ROW_ID = 1;
+
+        // 舒尔特专属运行时环境句柄池
+        let isGameRunning = false, currentGameSize = 5, nextTargetNum = 1, gameClockTimer = null, gameTimeRemaining = 30, gameStartTime = 0;
 
         const TASK_CDS = {
             'sport': 3, 'focus': 3, 'writing': 3, 'extra': 3,
@@ -364,19 +408,23 @@
             await syncData();
             syncInterval = setInterval(syncData, 5000); 
             setInterval(processCooldowns, 1000); 
-            setInterval(renderBuffs, 1000); // 启动 BUFF 心跳倒计时
+            setInterval(renderBuffs, 1000); 
             playAmbientScenario();
             ambientInterval = setInterval(playAmbientScenario, 12000);
         }
 
         async function syncData() {
-            if(isAnimating) return;
+            // 💡 重点加固：游戏进行时挂起同步，全速保障孩子视觉专注率
+            if(isAnimating || isGameRunning) return;
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 if (!data || data.length === 0) return;
                 
                 let record = data[0];
                 record.currentRank = record.currentRank || 1; 
+                record.shopItems = record.shopItems || [];
+                record.activeBuffs = record.activeBuffs || {};
+                record.schulteDaily = record.schulteDaily || { lastDate: "", count: 0 };
                 
                 record = await checkAndApplyDailyDeduction(record);
                 currentData = record;
@@ -418,14 +466,12 @@
                 if(connStatus) connStatus.innerText = "信号良好";
                 
             } catch (error) { 
-                console.error("数据同步错误: 节点可能未找到", error);
                 if(connStatus) connStatus.innerText = "失去连接..."; 
             }
         }
 
         function updateRankUI(coins, rank) {
             const rData = RANK_DATA[rank - 1] || RANK_DATA[0];
-            
             if (uiCard) {
                 uiCard.style.setProperty('--card-border', rData.color);
                 uiCard.style.setProperty('--card-bg', rData.bg);
@@ -477,12 +523,7 @@
                     let hours = Math.floor((remain % (24 * 3600000)) / 3600000);
                     let mins = Math.floor((remain % 3600000) / 60000);
                     
-                    let timeStr = "";
-                    if (days >= 1) {
-                        timeStr = `${days}天 ${hours}小时`;
-                    } else {
-                        timeStr = `${hours}小时 ${mins}分`;
-                    }
+                    let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}小时 ${mins}分`;
 
                     html += `
                         <div class="buff-pill">
@@ -517,11 +558,7 @@
             `).join('');
         }
         function closeShopModal() { if(sModal) sModal.style.display = 'none'; }
-        
-        function triggerBuy(itemId) {
-            const item = currentData.shopItems.find(i => i.id === itemId);
-            if(item) requestAction('buy', item);
-        }
+        function triggerBuy(itemId) { const item = currentData.shopItems.find(i => i.id === itemId); if(item) requestAction('buy', item); }
 
         function requestAction(actionType, data) {
             clickCoin();
@@ -534,7 +571,6 @@
                     playSound('fuse');
                     return alert("🎒 背包承载力不足！\n新奖励无法装下，请先突破界限腾出空间。");
                 }
-                
                 let cleanName = data.name.split(' ')[0]; 
                 document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#27ae60; font-size:20px;">【${cleanName}】</span><br>的悬赏奖励吗？`;
             } 
@@ -550,21 +586,14 @@
             if(cfModal) cfModal.style.display = 'flex';
         }
 
-        function closeConfirmModal() {
-            if(cfModal) cfModal.style.display = 'none';
-            pendingAction = null;
-        }
+        function closeConfirmModal() { if(cfModal) cfModal.style.display = 'none'; pendingAction = null; }
 
         async function executeConfirmedAction() {
             if (!pendingAction) return;
             const action = pendingAction;
             closeConfirmModal();
-
-            if (action.actionType === 'reward') {
-                await proceedWithReward(action.data);
-            } else if (action.actionType === 'buy') {
-                await proceedWithBuy(action.data);
-            }
+            if (action.actionType === 'reward') await proceedWithReward(action.data);
+            else if (action.actionType === 'buy') await proceedWithBuy(action.data);
         }
 
         async function proceedWithBuy(item) {
@@ -572,7 +601,6 @@
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 let record = data[0];
                 const newCoins = record.coins - item.price;
-                
                 let logs = record.childLogs || [];
                 logs.unshift({ time: getFormattedTime(), action: `兑换法宝: ${item.name}`, amount: -item.price });
 
@@ -586,14 +614,11 @@
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), activeBuffs: buffs }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs, activeBuffs: buffs };
                 localStorage.setItem('andy_last_seen_coins', newCoins);
-                
                 closeShopModal();
-                
                 playSound('levelup');
                 createParticles(50, ['✨', item.icon, '🔮']);
                 updateValue(newCoins);
                 renderBuffs();
-
             } catch (e) { alert("兑换受阻，请重试！"); }
         }
 
@@ -602,7 +627,6 @@
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 let record = data[0];
                 const newCoins = record.coins + rewardData.amt;
-                
                 let logs = record.childLogs || [];
                 logs.unshift({ time: getFormattedTime(), action: rewardData.name.split(' ')[0], amount: rewardData.amt });
 
@@ -612,12 +636,166 @@
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), cooldowns: cds }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs, cooldowns: cds };
                 localStorage.setItem('andy_last_seen_coins', newCoins);
-                
                 closeRewardModal();
                 playAttackSequence(rewardData.amt, newCoins);
             } catch (e) { alert("申报异常，请重试"); }
         }
 
+        // 💡 核心实现：舒尔特专注训练模块
+        function openGameModal() {
+            if (!currentData) return;
+            [sModal, rModal, lModal, cfModal].forEach(m => { if(m) m.style.display = 'none'; });
+            gModal.style.display = 'flex';
+            backToGameMenu();
+        }
+        function closeGameModal() { quitGameSession(); gModal.style.display = 'none'; }
+        
+        function backToGameMenu() {
+            clearInterval(gameClockTimer);
+            isGameRunning = false;
+            document.getElementById('gameMenu').style.display = 'block';
+            document.getElementById('gamePlay').style.display = 'none';
+            document.getElementById('gameResult').style.display = 'none';
+            
+            let schulte = currentData.schulteDaily || { lastDate: "", count: 0 };
+            let displayCount = (schulte.lastDate === getTodayStr()) ? schulte.count : 0;
+            document.getElementById('gameRemainingCount').innerText = `今日已领奖次数: ${displayCount} / 5`;
+        }
+
+        function startGameSession(size) {
+            currentGameSize = size;
+            nextTargetNum = 1;
+            gameTimeRemaining = (size === 5) ? 30 : 45;
+            isGameRunning = true;
+
+            document.getElementById('gameMenu').style.display = 'none';
+            document.getElementById('gameResult').style.display = 'none';
+            document.getElementById('gamePlay').style.display = 'flex';
+
+            document.getElementById('gameTargetNum').innerText = nextTargetNum;
+            document.getElementById('gameTimerText').innerText = gameTimeRemaining;
+
+            // Fisher-Yates 游戏级高频洗牌生成算法
+            let totalCells = size * size;
+            let numberPool = [];
+            for(let i = 1; i <= totalCells; i++) numberPool.push(i);
+            for(let i = numberPool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]];
+            }
+
+            // 动态注入 Grid 分页比率
+            const gridContainer = document.getElementById('schulteGrid');
+            gridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            gridContainer.innerHTML = '';
+
+            numberPool.forEach(num => {
+                const cell = document.createElement('div');
+                cell.className = 'schulte-cell';
+                cell.innerText = num;
+                cell.onclick = () => handleCellClick(cell, num);
+                gridContainer.appendChild(cell);
+            });
+
+            clearInterval(gameClockTimer);
+            gameStartTime = Date.now();
+            gameClockTimer = setInterval(() => {
+                gameTimeRemaining--;
+                document.getElementById('gameTimerText').innerText = gameTimeRemaining;
+                if(gameTimeRemaining <= 0) endGameSession(false);
+            }, 1000);
+        }
+
+        function handleCellClick(cell, num) {
+            if(!isGameRunning || cell.classList.contains('correct')) return;
+            if(num === nextTargetNum) {
+                cell.classList.add('correct');
+                clickCoin();
+                nextTargetNum++;
+                if(nextTargetNum > currentGameSize * currentGameSize) {
+                    endGameSession(true);
+                } else {
+                    document.getElementById('gameTargetNum').innerText = nextTargetNum;
+                }
+            } else {
+                cell.classList.add('wrong');
+                playSound('fuse');
+                setTimeout(() => cell.classList.remove('wrong'), 400);
+            }
+        }
+
+        function quitGameSession() { clearInterval(gameClockTimer); isGameRunning = false; backToGameMenu(); }
+
+        async function endGameSession(isWin) {
+            clearInterval(gameClockTimer);
+            isGameRunning = false;
+
+            document.getElementById('gamePlay').style.display = 'none';
+            const resultBox = document.getElementById('gameResult');
+            const rTitle = document.getElementById('gameResultTitle');
+            const rDesc = document.getElementById('gameResultDesc');
+            const rBtn = document.getElementById('btnGameRetry');
+            resultBox.style.display = 'block';
+
+            rBtn.onclick = () => startGameSession(currentGameSize);
+
+            if(!isWin) {
+                playSound('explode');
+                rTitle.innerText = "⏳ 训练超时 (失败)";
+                rTitle.style.color = "#c0392b";
+                rDesc.innerHTML = "沙漏空了！你的眼睛搜寻速度慢了一步，潜能未能完全激发。是否重新开启高能核心，再次向极限发起挑战？";
+                rBtn.innerText = "重新接受挑战";
+                return;
+            }
+
+            // 成功通关：提取时间戳
+            let elapsed = ((Date.now() - gameStartTime) / 1000).toFixed(1);
+            rTitle.innerText = "🎉 挑战成功！";
+            rTitle.style.color = "#27ae60";
+            playSound('levelup');
+
+            let schulte = currentData.schulteDaily || { lastDate: "", count: 0 };
+            let today = getTodayStr();
+            if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.count = 0; }
+
+            if(schulte.count < 5) {
+                let rewardAmt = (currentGameSize === 5) ? 2 : 5;
+                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 矩阵！<br><br>🎁 奖励加成：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入探险背包。<br>(今日已领奖收益数: ${schulte.count + 1} / 5 次)`;
+                rBtn.innerText = "再来一局";
+                
+                // 静默异步上报，杜绝UI阻塞卡死
+                await uploadSchulteWin(rewardAmt);
+            } else {
+                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过训练！<br><br>⚠️ 提示：今日 5 次悬赏冒险奖励已被装满。本次通关不再产出硬币，继续保持专注度，锤炼你的视界引擎！`;
+                rBtn.innerText = "纯粹训练模式";
+            }
+        }
+
+        async function uploadSchulteWin(rewardAmt) {
+            try {
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
+                let record = data[0];
+                let today = getTodayStr();
+                let schulte = record.schulteDaily || { lastDate: "", count: 0 };
+                
+                if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.count = 0; }
+                schulte.count += 1;
+
+                let newCoins = record.coins + rewardAmt;
+                const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap;
+                if(newCoins > maxCap) newCoins = maxCap;
+
+                let logs = record.childLogs || [];
+                logs.unshift({ time: getFormattedTime(), action: `专注挑战成功 (${currentGameSize}x${currentGameSize})`, amount: rewardAmt });
+
+                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
+                currentData = { ...record, coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte };
+                localStorage.setItem('andy_last_seen_coins', newCoins);
+                updateValue(newCoins);
+            } catch (e) { console.error(e); }
+        }
+
+        // --- 核心动画与辅助底层 ---
         async function upgradeRank() {
             if (!currentData || isAnimating) return;
             const rank = currentData.currentRank || 1;
@@ -636,7 +814,6 @@
                 playSound('fuse');
                 document.body.classList.add('shake');
                 if(uiLayer) uiLayer.style.transform = 'scale(0.95)';
-                
                 const dbUpdatePromise = dbClient.from('gamedata').update({ coins: newCoins, currentRank: nextRank, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
 
                 setTimeout(async () => {
@@ -671,12 +848,7 @@
                         isAnimating = false;
                     }, 500); 
                 }, 1000); 
-            } catch (e) { 
-                alert("突破受阻！"); 
-                isAnimating = false; 
-                if(uiLayer) { uiLayer.style.opacity = '1'; uiLayer.style.transform = 'scale(1)'; }
-                document.body.classList.remove('shake'); 
-            }
+            } catch (e) { alert("突破受阻！"); isAnimating = false; document.body.classList.remove('shake'); }
         }
 
         function openLogModal() { if(lModal) lModal.style.display = 'flex'; }
@@ -729,8 +901,7 @@
             if(sword) sword.style.display = 'block'; 
             
             setTimeout(() => { 
-                if(sword) sword.classList.add('anim-attack'); 
-                playSound('hit'); 
+                if(sword) sword.classList.add('anim-attack'); playSound('hit'); 
                 setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); 
             }, 500);
             
@@ -739,22 +910,16 @@
                 createParticles(60, '💰'); playSound('levelup'); 
                 if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; }
             }, 1200);
-            
             setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000);
         }
 
         function playExplodeSequence(amount, finalCoins, customMsg) {
             isAnimating = true; clearAmbientActors(); 
             if(uiLayer) uiLayer.style.opacity = '0';
-            if(heroCreeper) {
-                heroCreeper.style.display = 'block'; 
-                heroCreeper.style.right = "45%";
-            }
-            
+            if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "45%"; }
             setTimeout(() => { playSound('fuse'); if(heroCreeper) heroCreeper.classList.add('anim-swell'); }, 500);
             setTimeout(() => {
-                if(heroCreeper) heroCreeper.style.opacity = '0'; 
-                document.body.classList.add('shake'); 
+                if(heroCreeper) heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); 
                 createParticles(40, '🟥'); playSound('explode');
                 if(statusMsg) { statusMsg.innerText = customMsg; statusMsg.style.color = "#8b0000"; }
             }, 2500);
@@ -764,27 +929,19 @@
         function resetStage() { 
             if(uiLayer) uiLayer.style.opacity = '1'; 
             if(heroSteve) heroSteve.style.display = 'none'; 
-            if(heroCreeper) {
-                heroCreeper.style.display = 'none'; 
-                heroCreeper.style.opacity = '1'; 
-                heroCreeper.className='actor skin-creeper'; 
-            }
+            if(heroCreeper) { heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; }
             isAnimating = false; 
         }
-        
-        function updateValue(coins) { 
-            if(totalDisplay) totalDisplay.innerText = coins; 
-            updateRankUI(coins, currentData ? (currentData.currentRank || 1) : 1); 
-        }
+        function updateValue(coins) { if(totalDisplay) totalDisplay.innerText = coins; updateRankUI(coins, currentData ? (currentData.currentRank || 1) : 1); }
         
         function playAmbientScenario() { 
-            if (isAnimating) return; 
+            if (isAnimating || isGameRunning) return; 
             let scenario; do { scenario = Math.floor(Math.random() * 2); } while (scenario === lastScenario); 
             lastScenario = scenario; 
             if (scenario === 0) { spawnActor('skin-villager', 'left', 12); } else { spawnActor('skin-creeper', 'right', 12); } 
         }
         function spawnActor(skinClass, direction, duration) { 
-            if (isAnimating || !stage) return; 
+            if (isAnimating || isGameRunning || !stage) return; 
             const el = document.createElement('div'); el.className = `actor ambient-actor ${skinClass}`; el.style.bottom = (22 + Math.floor(Math.random() * 8)) + 'px'; 
             let inner = '';
             if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>';
@@ -797,11 +954,7 @@
 
         function startFloatingChest() { if(!chestFloatInterval) { moveChest(); chestFloatInterval = setInterval(moveChest, 3500); } }
         function stopFloatingChest() { clearInterval(chestFloatInterval); chestFloatInterval = null; }
-        function moveChest() { 
-            if(!chest) return;
-            const randomX = Math.floor(Math.random() * 70) + 10, randomY = Math.floor(Math.random() * 20) + 5; 
-            chest.style.left = randomX + '%'; chest.style.top = randomY + '%'; 
-        }
+        function moveChest() { if(!chest) return; const randomX = Math.floor(Math.random() * 70) + 10, randomY = Math.floor(Math.random() * 20) + 5; chest.style.left = randomX + '%'; chest.style.top = randomY + '%'; }
         
         function createParticles(c, chars) { 
             const isArray = Array.isArray(chars);
@@ -812,7 +965,6 @@
                 document.body.appendChild(el); setTimeout(() => el.remove(), 1000); 
             } 
         }
-        
         function clickCoin() { if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); } }
         function toggleMute() { isMuted = !isMuted; bgm[isMuted ? 'pause' : 'play'](); document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊'; }
         function playSound(type) { if(isMuted) return; try { if(type === 'levelup') sfxLevelUp.play(); if(type === 'explode') sfxExplode.play(); if(type === 'hit') sfxHit.play(); if(type === 'fuse') sfxFuse.play(); } catch(e){} }
@@ -822,24 +974,17 @@
         function updateTimer() { let diff = activeEventData.expireTime - Date.now(); if(diff <= 0) { closeChallengeModal(); if(chest) chest.style.display = 'none'; return; } let h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000); let cTimer = document.getElementById('c_timer'); if(cTimer) cTimer.innerText = `消散倒计时: ${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }
         
         async function submitAnswer() { 
-            let inputEl = document.getElementById('c_input');
-            if(!inputEl) return;
+            let inputEl = document.getElementById('c_input'); if(!inputEl) return;
             if(inputEl.value.trim() === activeEventData.answer.trim()) { 
                 const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
-                if (currentData.coins + activeEventData.reward > maxCap) {
-                    playSound('fuse');
-                    alert("🎒 背包承载力不足！\n新战利品无法装下，请先突破界限腾出空间。");
-                    closeChallengeModal(); return;
-                }
-
+                if (currentData.coins + activeEventData.reward > maxCap) { playSound('fuse'); alert("🎒 背包承载力不足！"); closeChallengeModal(); return; }
                 closeChallengeModal(); if(chest) chest.style.display = 'none'; 
                 try { 
                     const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); 
                     let record = data[0], newCoins = record.coins + activeEventData.reward; 
                     let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: "破解悬赏令宝箱", amount: activeEventData.reward });
                     await dbClient.from('gamedata').update({ coins: newCoins, activeEvent: null, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID); 
-                    localStorage.setItem('andy_last_seen_coins', newCoins); 
-                    playAttackSequence(activeEventData.reward, newCoins); 
+                    localStorage.setItem('andy_last_seen_coins', newCoins); playAttackSequence(activeEventData.reward, newCoins); 
                 } catch(e){} 
             } else { playSound('fuse'); alert("❌ 密码破解失败！"); } 
         }

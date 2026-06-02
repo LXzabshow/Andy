@@ -76,7 +76,7 @@
         </div>
 
         <div class="card">
-            <div class="card-header"><h3>✨ 生效中的特权 (BUFF)</h3></div>
+            <div class="card-header"><h3 id="buffCardTitle">✨ 生效中的特权 (BUFF)</h3></div>
             <div id="adminBuffList" style="margin-top: 10px;">
                 <div style="text-align:center; color:#555; padding:10px;">暂无生效状态</div>
             </div>
@@ -188,6 +188,12 @@
             { rank: 10, cap: Infinity, title: "🐲 末影屠龙者" }
         ];
 
+        function getTodayStr() { 
+            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+            let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
+            return `${y}-${m}-${d}`;
+        }
+
         function getFormattedTime() {
             const now = new Date();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -207,12 +213,17 @@
                 currentData.currentRank = currentData.currentRank || 1;
                 currentData.shopItems = currentData.shopItems || [];
                 currentData.activeBuffs = currentData.activeBuffs || {};
+                currentData.schulteDaily = currentData.schulteDaily || { lastDate: "", count: 0 };
                 
                 let rData = RANK_DATA[currentData.currentRank - 1];
                 document.getElementById('currentCoins').innerText = currentData.coins;
                 document.getElementById('rankBadge').innerText = `${rData.title} (Lv.${currentData.currentRank})`;
                 document.getElementById('capText').innerText = `当前容量上限: ${rData.cap === Infinity ? '无限' : rData.cap}`;
                 
+                // 动态刷新特权监控标题：加入舒尔特计数器
+                let sCount = (currentData.schulteDaily.lastDate === getTodayStr()) ? currentData.schulteDaily.count : 0;
+                document.getElementById('buffCardTitle').innerText = `✨ 特权监控 (今日训练领奖: ${sCount}/5次)`;
+
                 renderLogs(currentData.childLogs);
                 renderShopItems(currentData.shopItems);
                 
@@ -269,17 +280,11 @@
                 if (remain > 0) {
                     hasActive = true;
                     
-                    // 时间换算逻辑
                     let days = Math.floor(remain / (24 * 3600000));
                     let hours = Math.floor((remain % (24 * 3600000)) / 3600000);
                     let mins = Math.floor((remain % 3600000) / 60000);
                     
-                    let timeStr = "";
-                    if (days >= 1) {
-                        timeStr = `${days}天 ${hours}小时`;
-                    } else {
-                        timeStr = `${hours}小时 ${mins}分`;
-                    }
+                    let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}小时 ${mins}分`;
 
                     html += `
                         <div class="buff-item">
@@ -360,11 +365,7 @@
 
         async function saveDaily() {
             document.getElementById('log-status').innerText = "保存设置中...";
-            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-            let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
-            const localDateStr = `${y}-${m}-${d}`;
-            
-            let dailyConfig = { enabled: document.getElementById('dailyToggle').checked, amount: parseInt(document.getElementById('dailyAmount').value) || 0, lastDeductDate: localDateStr };
+            let dailyConfig = { enabled: document.getElementById('dailyToggle').checked, amount: parseInt(document.getElementById('dailyAmount').value) || 0, lastDeductDate: getTodayStr() };
             const { error } = await dbClient.from('gamedata').update({ dailyConfig }).eq('id', ROW_ID);
             if(!error) getCoins();
         }

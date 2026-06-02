@@ -19,7 +19,11 @@
         .card { background-color: var(--card-bg, #c6c6c6); border: 5px solid var(--card-border, #000); box-shadow: inset 4px 4px rgba(255,255,255,0.4), inset -4px -4px rgba(0,0,0,0.4); padding: 20px; position: relative; transition: all 0.5s ease; }
         
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
-        .rank-badge { background: #333; color: var(--card-border, #f1c40f); padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 10px; font-size: 20px; border-radius: 4px; box-shadow: 2px 2px #000;}
+        /* 称号区域升级为可点击交互态 */
+        .rank-badge { background: #333; color: var(--card-border, #f1c40f); padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 10px; font-size: 20px; border-radius: 4px; box-shadow: 2px 2px #000; cursor: pointer; transition: transform 0.1s;}
+        .rank-badge:active { transform: scale(0.95); }
+        .rank-badge::after { content: ' 🔍'; font-size: 14px; opacity: 0.8; }
+
         .slot { background: #8b8b8b; width: 100px; height: 100px; margin: 0 auto; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
         .slot:active .coin-icon { transform: scale(0.8); }
         .coin-icon { font-size: 60px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
@@ -41,12 +45,11 @@
         .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         
-        /* 2x2 四宫格均衡按钮排版 */
         .main-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .btn-main-action { width: 100%; padding: 10px; font-family: inherit; font-size: 20px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 4px 4px rgba(255,255,255,0.3), inset -4px -4px rgba(0,0,0,0.3); }
         .btn-main-action:active:not(:disabled) { transform: scale(0.95); }
         .btn-shop { background: #e67e22; }
-        .btn-game { background: #8e44ad; } /* 专注训练专属染色 */
+        .btn-game { background: #8e44ad; }
         .btn-log { background: #7f8c8d; }
 
         .status-bar { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 14px; display: inline-flex; align-items: center; margin-top: 10px; border: 2px solid #555; }
@@ -80,6 +83,15 @@
         .schulte-cell.correct { background: #2ecc71 !important; color: #fff !important; box-shadow: inset 3px 3px rgba(255,255,255,0.4), inset -3px -3px rgba(0,0,0,0.4) !important; cursor: not-allowed !important; }
         .schulte-cell.wrong { animation: schulteWrong 0.2s steps(2) 2; }
         @keyframes schulteWrong { 0%, 100% { background: #c0392b !important; color: #fff !important; } 50% { background: #c6c6c6 !important; color: #000 !important; } }
+
+        /* 境界图鉴专属列表样式 */
+        .rank-list-item { background: #fff; border: 2px solid #555; padding: 12px; margin-bottom: 10px; text-align: left; font-family: -apple-system, sans-serif; }
+        .rank-list-item.unlocked { border-left-width: 6px; background: #f0f8ff; }
+        .rank-list-item.next-target { border: 3px dashed #e67e22; background: #fffdf5; box-shadow: inset 0 0 15px rgba(230,126,34,0.2); }
+        .rank-list-item.locked { background: #d5d5d5; opacity: 0.6; filter: grayscale(1); border: 2px solid #888; }
+        .r-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #000; }
+        .r-desc { font-size: 13px; color: #333; line-height: 1.4; }
+        .r-cost { font-size: 14px; font-weight: bold; color: #c0392b; margin-top: 5px; }
 
         .log-container { max-height: 250px; overflow-y: auto; text-align: left; background: #fff; border: 2px solid #555; padding: 10px; font-family: -apple-system, sans-serif; font-size: 14px; }
         .log-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; }
@@ -180,6 +192,15 @@
         </div>
     </div>
 
+    <div id="rankModal" class="modal-overlay" style="z-index: 600;">
+        <div class="challenge-card" style="max-width: 360px; max-height: 85vh;">
+            <div class="challenge-title" style="color: #d35400;">👑 境界图鉴</div>
+            <div id="rankListContainer" style="width: 100%; overflow-y: auto; margin-top: 10px; padding-right: 5px;">
+                </div>
+            <button class="btn-close-modal" onclick="closeRankModal()" style="margin-top: 15px;">关闭图鉴</button>
+        </div>
+    </div>
+
     <div id="rewardModal" class="modal-overlay">
         <div class="challenge-card">
             <div class="challenge-title">⚔️ 任务告示牌</div>
@@ -234,14 +255,12 @@
     <div id="gameModal" class="modal-overlay" style="z-index: 600;">
         <div class="challenge-card" style="max-width: 380px; width: 95%;">
             <div class="challenge-title" style="color: #8e44ad;">👁️ 舒尔特专注训练</div>
-            
             <div id="gameMenu">
                 <div id="gameRemainingCount" style="color: #004400; font-weight: bold; margin-bottom: 20px; font-size: 18px; text-shadow: 1px 1px #fff;">今日已领奖次数: -- / 5</div>
                 <button class="btn-main-action" onclick="startGameSession(5)" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 普通难度 (5x5)</button>
                 <button class="btn-main-action" onclick="startGameSession(6)" style="background: #c0392b; margin-bottom: 20px; font-size:22px;">🔴 困难难度 (6x6)</button>
                 <button class="btn-close-modal" onclick="closeGameModal()">关闭秘境</button>
             </div>
-            
             <div id="gamePlay" style="display: none; flex-direction: column; align-items: center; width: 100%;">
                 <div style="display: flex; justify-content: space-between; width: 100%; font-size: 22px; font-weight: bold; margin-bottom: 12px; color: #111; text-shadow:1px 1px #fff;">
                     <span>锁定目标: <span id="gameTargetNum" style="color: #e67e22; font-size: 26px;">1</span></span>
@@ -250,7 +269,6 @@
                 <div id="schulteGrid"></div>
                 <button class="btn-close-modal" onclick="quitGameSession()" style="margin-top: 15px; background:#7f8c8d;">🏳️ 放弃训练</button>
             </div>
-
             <div id="gameResult" style="display: none;">
                 <div id="gameResultTitle" style="font-size: 28px; font-weight: bold; margin-bottom: 12px; text-shadow:2px 2px #fff;"></div>
                 <div id="gameResultDesc" style="font-size: 15px; margin-bottom: 20px; color: #222; font-family: -apple-system, sans-serif; line-height: 1.5; text-align: left; background:#fff; padding:10px; border:2px solid #000;"></div>
@@ -272,7 +290,7 @@
         <div class="card" id="ui-card">
             <div class="mute-btn" onclick="toggleMute()">🔊</div>
             <h2>Andy的探险背包</h2>
-            <div id="rankBadge" class="rank-badge">同步中...</div>
+            <div id="rankBadge" class="rank-badge" onclick="openRankModal()">同步中...</div>
             <div class="slot" onclick="clickCoin()"><div class="coin-icon" id="icon">🪙</div></div>
             <div class="label">行囊内硬币</div>
             <div id="totalDisplay" class="total">...</div>
@@ -281,7 +299,7 @@
 
             <div class="health-bar-container">
                 <div class="health-bar-label">
-                    <span>承载力:</span>
+                    <span>容量:</span>
                     <span id="capacityText">0 / 200</span>
                 </div>
                 <div class="health-bar-bg"><div id="healthBarFill" class="health-bar-fill"></div></div>
@@ -330,6 +348,7 @@
         const sModal = document.getElementById('shopModal');
         const cfModal = document.getElementById('confirmModal');
         const gModal = document.getElementById('gameModal');
+        const rankModal = document.getElementById('rankModal'); // 迷雾图鉴弹窗
         
         const bgm = document.getElementById('bgm');
         const sfxLevelUp = document.getElementById('sfx-levelup');
@@ -343,7 +362,6 @@
         let currentData = null, pendingAction = null; 
         const ROW_ID = 1;
 
-        // 舒尔特专属运行时环境句柄池
         let isGameRunning = false, currentGameSize = 5, nextTargetNum = 1, gameClockTimer = null, gameTimeRemaining = 30, gameStartTime = 0;
 
         const TASK_CDS = {
@@ -414,7 +432,6 @@
         }
 
         async function syncData() {
-            // 💡 重点加固：游戏进行时挂起同步，全速保障孩子视觉专注率
             if(isAnimating || isGameRunning) return;
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
@@ -443,8 +460,7 @@
                     activeEventData = record.activeEvent;
                     if(chest && chest.style.display !== 'block') { chest.style.display = 'block'; startFloatingChest(); }
                 } else {
-                    if(chest) chest.style.display = 'none'; 
-                    stopFloatingChest();
+                    if(chest) chest.style.display = 'none'; stopFloatingChest();
                 }
 
                 let localStr = localStorage.getItem('andy_last_seen_coins');
@@ -472,10 +488,7 @@
 
         function updateRankUI(coins, rank) {
             const rData = RANK_DATA[rank - 1] || RANK_DATA[0];
-            if (uiCard) {
-                uiCard.style.setProperty('--card-border', rData.color);
-                uiCard.style.setProperty('--card-bg', rData.bg);
-            }
+            if (uiCard) { uiCard.style.setProperty('--card-border', rData.color); uiCard.style.setProperty('--card-bg', rData.bg); }
             if (rankBadge) rankBadge.innerText = rData.title;
 
             const hour = new Date().getHours();
@@ -484,7 +497,6 @@
 
             let maxCap = rData.cap;
             let ratio = maxCap === Infinity ? 0 : (coins / maxCap) * 100;
-            
             const capText = document.getElementById('capacityText');
             if (capText) capText.innerText = `${coins} / ${maxCap === Infinity ? '∞' : maxCap}`;
             
@@ -501,18 +513,62 @@
                     btnUpgrade.innerText = "已达最高境界 👑";
                     btnUpgrade.disabled = true;
                 } else {
-                    let cost = rData.cost;
-                    btnUpgrade.innerText = `🆙 突破界限 (需花费 ${cost} 币)`;
-                    btnUpgrade.disabled = coins < cost;
+                    btnUpgrade.innerText = `🆙 突破界限 (需花费 ${rData.cost} 币)`;
+                    btnUpgrade.disabled = coins < rData.cost;
                 }
             }
         }
+
+        // 💡 新增：迷雾图鉴渲染与展示逻辑
+        function openRankModal() {
+            if(!rankModal || !currentData) return;
+            clickCoin();
+            rankModal.style.display = 'flex';
+            const container = document.getElementById('rankListContainer');
+            if(!container) return;
+
+            let currentLevel = currentData.currentRank || 1;
+            let html = '';
+
+            RANK_DATA.forEach((r, index) => {
+                let rankLevel = index + 1;
+                
+                if (rankLevel <= currentLevel) {
+                    // 状态 A：已解锁
+                    let isCurrent = (rankLevel === currentLevel);
+                    html += `
+                        <div class="rank-list-item unlocked" style="border-left-color: ${r.color};">
+                            <div class="r-title">${r.title} <span style="font-size:12px;color:#27ae60;">(${isCurrent ? '👉 当前所在' : '✅ 已解锁'})</span></div>
+                            <div class="r-desc">容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div>
+                        </div>`;
+                } else if (rankLevel === currentLevel + 1) {
+                    // 状态 B：突破目标 (高亮展示所需币数)
+                    html += `
+                        <div class="rank-list-item next-target">
+                            <div class="r-title" style="color:#e67e22;">🎯 突破目标: ${r.title}</div>
+                            <div class="r-desc">升级后容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div>
+                            <div class="r-cost">突破消耗: -${RANK_DATA[currentLevel - 1].cost} 🪙</div>
+                        </div>`;
+                } else {
+                    // 状态 C：迷雾屏蔽区
+                    html += `
+                        <div class="rank-list-item locked">
+                            <div class="r-title" style="color:#555;">第 ${rankLevel} 阶: ??? (未知的境界)</div>
+                            <div class="r-desc" style="color:#666;">容量上限: ???</div>
+                            <div class="r-cost" style="color:#666;">突破消耗: ???</div>
+                        </div>`;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function closeRankModal() { if(rankModal) rankModal.style.display = 'none'; }
 
         function renderBuffs() {
             if (!currentData || !currentData.activeBuffs) return;
             const container = document.getElementById('activeBuffsContainer');
             if (!container) return; 
-            
             let html = '';
             const now = Date.now();
             
@@ -522,37 +578,24 @@
                     let days = Math.floor(remain / (24 * 3600000));
                     let hours = Math.floor((remain % (24 * 3600000)) / 3600000);
                     let mins = Math.floor((remain % 3600000) / 60000);
-                    
                     let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}小时 ${mins}分`;
-
-                    html += `
-                        <div class="buff-pill">
-                            <span>${buff.icon} ${buff.name}</span>
-                            <span>${timeStr}</span>
-                        </div>
-                    `;
+                    html += `<div class="buff-pill"><span>${buff.icon} ${buff.name}</span><span>${timeStr}</span></div>`;
                 }
             }
             container.innerHTML = html;
         }
 
         function openShopModal() { 
-            if(!sModal) return;
-            sModal.style.display = 'flex'; 
+            if(!sModal) return; sModal.style.display = 'flex'; 
             const container = document.getElementById('shopListContainer');
             if(!container) return;
 
             if(!currentData || !currentData.shopItems || currentData.shopItems.length === 0) {
-                container.innerHTML = '<div style="padding:20px; color:#555;">货架空空如也，暂无商品</div>';
-                return;
+                container.innerHTML = '<div style="padding:20px; color:#555;">货架空空如也，暂无商品</div>'; return;
             }
-            
             container.innerHTML = currentData.shopItems.map(item => `
                 <div class="mc-item-btn" onclick="triggerBuy('${item.id}')" style="border-color:#8e44ad;">
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">${item.icon} ${item.name}</span>
-                        <span class="mc-item-reward" style="color:#c0392b;">-${item.price} 🪙</span>
-                    </div>
+                    <div class="mc-item-header"><span class="mc-item-title">${item.icon} ${item.name}</span><span class="mc-item-reward" style="color:#c0392b;">-${item.price} 🪙</span></div>
                     <div class="mc-item-desc">${item.desc} <br><span style="color:#555;">(持续 ${item.hours >= 24 ? (item.hours/24 + ' 天') : (item.hours + ' 小时')})</span></div>
                 </div>
             `).join('');
@@ -565,23 +608,15 @@
             if (actionType === 'reward') {
                 const now = Date.now();
                 if(currentData.cooldowns && currentData.cooldowns[data.type] > now) return; 
-
                 const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
-                if (currentData.coins + data.amt > maxCap) {
-                    playSound('fuse');
-                    return alert("🎒 背包承载力不足！\n新奖励无法装下，请先突破界限腾出空间。");
-                }
+                if (currentData.coins + data.amt > maxCap) { playSound('fuse'); return alert("🎒 背包容量不足！\n新奖励无法装下，请先突破界限腾出空间。"); }
                 let cleanName = data.name.split(' ')[0]; 
                 document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#27ae60; font-size:20px;">【${cleanName}】</span><br>的悬赏奖励吗？`;
             } 
             else if (actionType === 'buy') {
-                if (currentData.coins < data.price) {
-                    playSound('fuse');
-                    return alert("❌ 行囊硬币不足，无法兑换该法宝！");
-                }
+                if (currentData.coins < data.price) { playSound('fuse'); return alert("❌ 行囊硬币不足，无法兑换该法宝！"); }
                 document.getElementById('confirmText').innerHTML = `确认花费 <span style="color:#c0392b;">${data.price}币</span> 兑换<br><span style="color:#8e44ad; font-size:20px;">【${data.name}】</span> 吗？<br><span style="font-size:12px; color:#555;">(若已有该法宝，时间将叠加延长)</span>`;
             }
-
             pendingAction = { actionType, data };
             if(cfModal) cfModal.style.display = 'flex';
         }
@@ -590,181 +625,104 @@
 
         async function executeConfirmedAction() {
             if (!pendingAction) return;
-            const action = pendingAction;
-            closeConfirmModal();
+            const action = pendingAction; closeConfirmModal();
             if (action.actionType === 'reward') await proceedWithReward(action.data);
             else if (action.actionType === 'buy') await proceedWithBuy(action.data);
         }
 
         async function proceedWithBuy(item) {
             try {
-                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
-                let record = data[0];
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0];
                 const newCoins = record.coins - item.price;
-                let logs = record.childLogs || [];
-                logs.unshift({ time: getFormattedTime(), action: `兑换法宝: ${item.name}`, amount: -item.price });
-
-                let buffs = record.activeBuffs || {};
-                let currentEndTime = buffs[item.id] ? buffs[item.id].endTime : 0;
+                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `兑换法宝: ${item.name}`, amount: -item.price });
+                let buffs = record.activeBuffs || {}; let currentEndTime = buffs[item.id] ? buffs[item.id].endTime : 0;
                 if (currentEndTime < Date.now()) currentEndTime = Date.now();
-                let newEndTime = currentEndTime + (item.hours * 3600000);
-
-                buffs[item.id] = { name: item.name, icon: item.icon, endTime: newEndTime };
+                buffs[item.id] = { name: item.name, icon: item.icon, endTime: currentEndTime + (item.hours * 3600000) };
 
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), activeBuffs: buffs }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs, activeBuffs: buffs };
-                localStorage.setItem('andy_last_seen_coins', newCoins);
-                closeShopModal();
-                playSound('levelup');
-                createParticles(50, ['✨', item.icon, '🔮']);
-                updateValue(newCoins);
-                renderBuffs();
+                localStorage.setItem('andy_last_seen_coins', newCoins); closeShopModal(); playSound('levelup');
+                createParticles(50, ['✨', item.icon, '🔮']); updateValue(newCoins); renderBuffs();
             } catch (e) { alert("兑换受阻，请重试！"); }
         }
 
         async function proceedWithReward(rewardData) {
             try {
-                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
-                let record = data[0];
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0];
                 const newCoins = record.coins + rewardData.amt;
-                let logs = record.childLogs || [];
-                logs.unshift({ time: getFormattedTime(), action: rewardData.name.split(' ')[0], amount: rewardData.amt });
-
-                let cds = record.cooldowns || {}; 
-                cds[rewardData.type] = Date.now() + (rewardData.cd * 3600000); 
+                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: rewardData.name.split(' ')[0], amount: rewardData.amt });
+                let cds = record.cooldowns || {}; cds[rewardData.type] = Date.now() + (rewardData.cd * 3600000); 
 
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), cooldowns: cds }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs, cooldowns: cds };
-                localStorage.setItem('andy_last_seen_coins', newCoins);
-                closeRewardModal();
-                playAttackSequence(rewardData.amt, newCoins);
+                localStorage.setItem('andy_last_seen_coins', newCoins); closeRewardModal(); playAttackSequence(rewardData.amt, newCoins);
             } catch (e) { alert("申报异常，请重试"); }
         }
 
-        // 💡 核心实现：舒尔特专注训练模块
+        // 舒尔特专注训练逻辑
         function openGameModal() {
             if (!currentData) return;
             [sModal, rModal, lModal, cfModal].forEach(m => { if(m) m.style.display = 'none'; });
-            gModal.style.display = 'flex';
-            backToGameMenu();
+            gModal.style.display = 'flex'; backToGameMenu();
         }
         function closeGameModal() { quitGameSession(); gModal.style.display = 'none'; }
         
         function backToGameMenu() {
-            clearInterval(gameClockTimer);
-            isGameRunning = false;
-            document.getElementById('gameMenu').style.display = 'block';
-            document.getElementById('gamePlay').style.display = 'none';
-            document.getElementById('gameResult').style.display = 'none';
-            
+            clearInterval(gameClockTimer); isGameRunning = false;
+            document.getElementById('gameMenu').style.display = 'block'; document.getElementById('gamePlay').style.display = 'none'; document.getElementById('gameResult').style.display = 'none';
             let schulte = currentData.schulteDaily || { lastDate: "", count: 0 };
             let displayCount = (schulte.lastDate === getTodayStr()) ? schulte.count : 0;
             document.getElementById('gameRemainingCount').innerText = `今日已领奖次数: ${displayCount} / 5`;
         }
 
         function startGameSession(size) {
-            currentGameSize = size;
-            nextTargetNum = 1;
-            gameTimeRemaining = (size === 5) ? 30 : 45;
-            isGameRunning = true;
+            currentGameSize = size; nextTargetNum = 1; gameTimeRemaining = (size === 5) ? 30 : 45; isGameRunning = true;
+            document.getElementById('gameMenu').style.display = 'none'; document.getElementById('gameResult').style.display = 'none'; document.getElementById('gamePlay').style.display = 'flex';
+            document.getElementById('gameTargetNum').innerText = nextTargetNum; document.getElementById('gameTimerText').innerText = gameTimeRemaining;
 
-            document.getElementById('gameMenu').style.display = 'none';
-            document.getElementById('gameResult').style.display = 'none';
-            document.getElementById('gamePlay').style.display = 'flex';
-
-            document.getElementById('gameTargetNum').innerText = nextTargetNum;
-            document.getElementById('gameTimerText').innerText = gameTimeRemaining;
-
-            // Fisher-Yates 游戏级高频洗牌生成算法
-            let totalCells = size * size;
-            let numberPool = [];
+            let totalCells = size * size; let numberPool = [];
             for(let i = 1; i <= totalCells; i++) numberPool.push(i);
-            for(let i = numberPool.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]];
-            }
+            for(let i = numberPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]]; }
 
-            // 动态注入 Grid 分页比率
-            const gridContainer = document.getElementById('schulteGrid');
-            gridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
-            gridContainer.innerHTML = '';
+            const gridContainer = document.getElementById('schulteGrid'); gridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`; gridContainer.innerHTML = '';
+            numberPool.forEach(num => { const cell = document.createElement('div'); cell.className = 'schulte-cell'; cell.innerText = num; cell.onclick = () => handleCellClick(cell, num); gridContainer.appendChild(cell); });
 
-            numberPool.forEach(num => {
-                const cell = document.createElement('div');
-                cell.className = 'schulte-cell';
-                cell.innerText = num;
-                cell.onclick = () => handleCellClick(cell, num);
-                gridContainer.appendChild(cell);
-            });
-
-            clearInterval(gameClockTimer);
-            gameStartTime = Date.now();
-            gameClockTimer = setInterval(() => {
-                gameTimeRemaining--;
-                document.getElementById('gameTimerText').innerText = gameTimeRemaining;
-                if(gameTimeRemaining <= 0) endGameSession(false);
-            }, 1000);
+            clearInterval(gameClockTimer); gameStartTime = Date.now();
+            gameClockTimer = setInterval(() => { gameTimeRemaining--; document.getElementById('gameTimerText').innerText = gameTimeRemaining; if(gameTimeRemaining <= 0) endGameSession(false); }, 1000);
         }
 
         function handleCellClick(cell, num) {
             if(!isGameRunning || cell.classList.contains('correct')) return;
             if(num === nextTargetNum) {
-                cell.classList.add('correct');
-                clickCoin();
-                nextTargetNum++;
-                if(nextTargetNum > currentGameSize * currentGameSize) {
-                    endGameSession(true);
-                } else {
-                    document.getElementById('gameTargetNum').innerText = nextTargetNum;
-                }
-            } else {
-                cell.classList.add('wrong');
-                playSound('fuse');
-                setTimeout(() => cell.classList.remove('wrong'), 400);
-            }
+                cell.classList.add('correct'); clickCoin(); nextTargetNum++;
+                if(nextTargetNum > currentGameSize * currentGameSize) endGameSession(true);
+                else document.getElementById('gameTargetNum').innerText = nextTargetNum;
+            } else { cell.classList.add('wrong'); playSound('fuse'); setTimeout(() => cell.classList.remove('wrong'), 400); }
         }
 
         function quitGameSession() { clearInterval(gameClockTimer); isGameRunning = false; backToGameMenu(); }
 
         async function endGameSession(isWin) {
-            clearInterval(gameClockTimer);
-            isGameRunning = false;
-
+            clearInterval(gameClockTimer); isGameRunning = false;
             document.getElementById('gamePlay').style.display = 'none';
-            const resultBox = document.getElementById('gameResult');
-            const rTitle = document.getElementById('gameResultTitle');
-            const rDesc = document.getElementById('gameResultDesc');
-            const rBtn = document.getElementById('btnGameRetry');
-            resultBox.style.display = 'block';
-
-            rBtn.onclick = () => startGameSession(currentGameSize);
+            const resultBox = document.getElementById('gameResult'); const rTitle = document.getElementById('gameResultTitle'); const rDesc = document.getElementById('gameResultDesc'); const rBtn = document.getElementById('btnGameRetry');
+            resultBox.style.display = 'block'; rBtn.onclick = () => startGameSession(currentGameSize);
 
             if(!isWin) {
-                playSound('explode');
-                rTitle.innerText = "⏳ 训练超时 (失败)";
-                rTitle.style.color = "#c0392b";
-                rDesc.innerHTML = "沙漏空了！你的眼睛搜寻速度慢了一步，潜能未能完全激发。是否重新开启高能核心，再次向极限发起挑战？";
-                rBtn.innerText = "重新接受挑战";
-                return;
+                playSound('explode'); rTitle.innerText = "⏳ 训练超时 (失败)"; rTitle.style.color = "#c0392b";
+                rDesc.innerHTML = "沙漏空了！你的眼睛搜寻速度慢了一步，潜能未能完全激发。是否重新开启高能核心，再次向极限发起挑战？"; rBtn.innerText = "重新接受挑战"; return;
             }
 
-            // 成功通关：提取时间戳
             let elapsed = ((Date.now() - gameStartTime) / 1000).toFixed(1);
-            rTitle.innerText = "🎉 挑战成功！";
-            rTitle.style.color = "#27ae60";
-            playSound('levelup');
+            rTitle.innerText = "🎉 挑战成功！"; rTitle.style.color = "#27ae60"; playSound('levelup');
 
-            let schulte = currentData.schulteDaily || { lastDate: "", count: 0 };
-            let today = getTodayStr();
+            let schulte = currentData.schulteDaily || { lastDate: "", count: 0 }; let today = getTodayStr();
             if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.count = 0; }
 
             if(schulte.count < 5) {
                 let rewardAmt = (currentGameSize === 5) ? 2 : 5;
                 rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 矩阵！<br><br>🎁 奖励加成：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入探险背包。<br>(今日已领奖收益数: ${schulte.count + 1} / 5 次)`;
-                rBtn.innerText = "再来一局";
-                
-                // 静默异步上报，杜绝UI阻塞卡死
-                await uploadSchulteWin(rewardAmt);
+                rBtn.innerText = "再来一局"; await uploadSchulteWin(rewardAmt);
             } else {
                 rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过训练！<br><br>⚠️ 提示：今日 5 次悬赏冒险奖励已被装满。本次通关不再产出硬币，继续保持专注度，锤炼你的视界引擎！`;
                 rBtn.innerText = "纯粹训练模式";
@@ -773,82 +731,43 @@
 
         async function uploadSchulteWin(rewardAmt) {
             try {
-                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
-                let record = data[0];
-                let today = getTodayStr();
-                let schulte = record.schulteDaily || { lastDate: "", count: 0 };
-                
-                if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.count = 0; }
-                schulte.count += 1;
-
-                let newCoins = record.coins + rewardAmt;
-                const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap;
-                if(newCoins > maxCap) newCoins = maxCap;
-
-                let logs = record.childLogs || [];
-                logs.unshift({ time: getFormattedTime(), action: `专注挑战成功 (${currentGameSize}x${currentGameSize})`, amount: rewardAmt });
+                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0]; let today = getTodayStr();
+                let schulte = record.schulteDaily || { lastDate: "", count: 0 }; if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.count = 0; }
+                schulte.count += 1; let newCoins = record.coins + rewardAmt;
+                const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; if(newCoins > maxCap) newCoins = maxCap;
+                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `专注挑战成功 (${currentGameSize}x${currentGameSize})`, amount: rewardAmt });
 
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte };
-                localStorage.setItem('andy_last_seen_coins', newCoins);
-                updateValue(newCoins);
+                localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins);
             } catch (e) { console.error(e); }
         }
 
-        // --- 核心动画与辅助底层 ---
         async function upgradeRank() {
             if (!currentData || isAnimating) return;
-            const rank = currentData.currentRank || 1;
-            const rData = RANK_DATA[rank - 1];
+            const rank = currentData.currentRank || 1; const rData = RANK_DATA[rank - 1];
             if (currentData.coins < rData.cost) return; 
             
-            const nextRank = rank + 1;
-            const nextRData = RANK_DATA[nextRank - 1];
-            const newCoins = currentData.coins - rData.cost;
-
-            let logs = currentData.childLogs || [];
-            logs.unshift({ time: getFormattedTime(), action: `突破境界: ${nextRData.title}`, amount: -rData.cost });
+            const nextRank = rank + 1; const nextRData = RANK_DATA[nextRank - 1]; const newCoins = currentData.coins - rData.cost;
+            let logs = currentData.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `突破境界: ${nextRData.title}`, amount: -rData.cost });
             
             try {
-                isAnimating = true; 
-                playSound('fuse');
-                document.body.classList.add('shake');
-                if(uiLayer) uiLayer.style.transform = 'scale(0.95)';
+                isAnimating = true; playSound('fuse'); document.body.classList.add('shake'); if(uiLayer) uiLayer.style.transform = 'scale(0.95)';
                 const dbUpdatePromise = dbClient.from('gamedata').update({ coins: newCoins, currentRank: nextRank, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
 
                 setTimeout(async () => {
-                    document.body.classList.remove('shake');
-                    playSound('explode');
-                    setTimeout(() => playSound('levelup'), 400); 
-                    
-                    let flash = document.createElement('div');
-                    flash.className = 'flash-overlay';
-                    document.body.appendChild(flash);
-                    setTimeout(() => flash.remove(), 1200);
-
-                    createParticles(80, ['✨', '💎', '💠', '🔥', '⚡', '❇️']);
-                    if(uiLayer) uiLayer.style.opacity = '0';
-                    if(uiLayer) uiLayer.style.transform = 'scale(1)';
+                    document.body.classList.remove('shake'); playSound('explode'); setTimeout(() => playSound('levelup'), 400); 
+                    let flash = document.createElement('div'); flash.className = 'flash-overlay'; document.body.appendChild(flash); setTimeout(() => flash.remove(), 1200);
+                    createParticles(80, ['✨', '💎', '💠', '🔥', '⚡', '❇️']); if(uiLayer) { uiLayer.style.opacity = '0'; uiLayer.style.transform = 'scale(1)'; }
 
                     await dbUpdatePromise; 
-
                     setTimeout(() => {
-                        localStorage.setItem('andy_last_seen_coins', newCoins);
-                        currentData.coins = newCoins;
-                        currentData.currentRank = nextRank;
-                        updateValue(newCoins);
-                        
-                        let banner = document.createElement('div');
-                        banner.className = 'level-up-banner';
-                        banner.innerHTML = `<div style="font-size:40px; color:#fff;">境界突破</div><div style="font-size:75px; color:${nextRData.color};">${nextRData.title}</div>`;
-                        document.body.appendChild(banner);
-                        setTimeout(() => banner.remove(), 3500);
-
-                        if(uiLayer) uiLayer.style.opacity = '1';
-                        isAnimating = false;
+                        localStorage.setItem('andy_last_seen_coins', newCoins); currentData.coins = newCoins; currentData.currentRank = nextRank; updateValue(newCoins);
+                        let banner = document.createElement('div'); banner.className = 'level-up-banner'; banner.innerHTML = `<div style="font-size:40px; color:#fff;">境界突破</div><div style="font-size:75px; color:${nextRData.color};">${nextRData.title}</div>`; document.body.appendChild(banner); setTimeout(() => banner.remove(), 3500);
+                        if(uiLayer) uiLayer.style.opacity = '1'; isAnimating = false;
                     }, 500); 
                 }, 1000); 
-            } catch (e) { alert("突破受阻！"); isAnimating = false; document.body.classList.remove('shake'); }
+            } catch (e) { alert("突破受阻！"); isAnimating = false; if(uiLayer) { uiLayer.style.opacity = '1'; uiLayer.style.transform = 'scale(1)'; } document.body.classList.remove('shake'); }
         }
 
         function openLogModal() { if(lModal) lModal.style.display = 'flex'; }
@@ -857,78 +776,49 @@
         function closeRewardModal() { if(rModal) rModal.style.display = 'none'; }
 
         function renderLogs(logs) {
-            const container = document.getElementById('logListContent');
-            if(!container) return;
+            const container = document.getElementById('logListContent'); if(!container) return;
             if(logs && logs.length > 0) {
                 container.innerHTML = logs.map(log => {
-                    const amountClass = log.amount > 0 ? "log-v" : "log-v sub";
-                    const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
+                    const amountClass = log.amount > 0 ? "log-v" : "log-v sub"; const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
                     return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`;
                 }).join('');
-            } else {
-                container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>';
-            }
+            } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>';
         }
 
         function processCooldowns() {
             if(!currentData || !currentData.cooldowns) return;
             const now = Date.now();
             Object.keys(TASK_CDS).forEach(type => {
-                const btn = document.getElementById(`btn-${type}`);
-                if (!btn) return;
+                const btn = document.getElementById(`btn-${type}`); if (!btn) return;
                 const remain = (currentData.cooldowns[type] || 0) - now;
                 if(remain > 0) {
-                    btn.classList.add('in-cd');
-                    const totalMs = TASK_CDS[type] * 3600000;
-                    btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg');
+                    btn.classList.add('in-cd'); const totalMs = TASK_CDS[type] * 3600000; btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg');
                     const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000);
-                    let timerEl = btn.querySelector('.cd-timer');
-                    if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-                } else {
-                    btn.classList.remove('in-cd');
-                }
+                    let timerEl = btn.querySelector('.cd-timer'); if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+                } else btn.classList.remove('in-cd');
             });
         }
 
         function playAttackSequence(amount, finalCoins) {
-            isAnimating = true; clearAmbientActors(); 
-            if(uiLayer) uiLayer.style.opacity = '0'; 
-            if(heroSteve) heroSteve.style.display = 'block'; 
-            if(heroCreeper) heroCreeper.style.display = 'block';
-            if(heroSteve) heroSteve.style.left = "35%"; 
-            if(heroCreeper) heroCreeper.style.right = "35%";
-            let sword = document.querySelector('.skin-steve .sword');
-            if(sword) sword.style.display = 'block'; 
-            
-            setTimeout(() => { 
-                if(sword) sword.classList.add('anim-attack'); playSound('hit'); 
-                setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); 
-            }, 500);
-            
-            setTimeout(() => { 
-                if(heroCreeper) heroCreeper.style.display = 'none'; 
-                createParticles(60, '💰'); playSound('levelup'); 
-                if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; }
-            }, 1200);
+            isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0'; 
+            if(heroSteve) { heroSteve.style.display = 'block'; heroSteve.style.left = "35%"; }
+            if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "35%"; }
+            let sword = document.querySelector('.skin-steve .sword'); if(sword) sword.style.display = 'block'; 
+            setTimeout(() => { if(sword) sword.classList.add('anim-attack'); playSound('hit'); setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); }, 500);
+            setTimeout(() => { if(heroCreeper) heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; } }, 1200);
             setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000);
         }
 
         function playExplodeSequence(amount, finalCoins, customMsg) {
-            isAnimating = true; clearAmbientActors(); 
-            if(uiLayer) uiLayer.style.opacity = '0';
+            isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0';
             if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "45%"; }
             setTimeout(() => { playSound('fuse'); if(heroCreeper) heroCreeper.classList.add('anim-swell'); }, 500);
-            setTimeout(() => {
-                if(heroCreeper) heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); 
-                createParticles(40, '🟥'); playSound('explode');
-                if(statusMsg) { statusMsg.innerText = customMsg; statusMsg.style.color = "#8b0000"; }
-            }, 2500);
+            setTimeout(() => { if(heroCreeper) heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); createParticles(40, '🟥'); playSound('explode'); if(statusMsg) { statusMsg.innerText = customMsg; statusMsg.style.color = "#8b0000"; } }, 2500);
             setTimeout(() => { document.body.classList.remove('shake'); updateValue(finalCoins); resetStage(); }, 4000);
         }
 
         function resetStage() { 
-            if(uiLayer) uiLayer.style.opacity = '1'; 
-            if(heroSteve) heroSteve.style.display = 'none'; 
+            if(uiLayer) uiLayer.style.opacity = '1'; if(heroSteve) heroSteve.style.display = 'none'; 
             if(heroCreeper) { heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; }
             isAnimating = false; 
         }
@@ -960,8 +850,7 @@
             const isArray = Array.isArray(chars);
             for (let i = 0; i < c; i++) { 
                 const el = document.createElement('div'); el.classList.add('confetti'); el.innerText = isArray ? chars[Math.floor(Math.random() * chars.length)] : chars; 
-                const angle = Math.random() * 360, dist = 50 + Math.random() * 100; 
-                el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw'); el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh'); 
+                const angle = Math.random() * 360, dist = 50 + Math.random() * 100; el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw'); el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh'); 
                 document.body.appendChild(el); setTimeout(() => el.remove(), 1000); 
             } 
         }
@@ -977,11 +866,10 @@
             let inputEl = document.getElementById('c_input'); if(!inputEl) return;
             if(inputEl.value.trim() === activeEventData.answer.trim()) { 
                 const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
-                if (currentData.coins + activeEventData.reward > maxCap) { playSound('fuse'); alert("🎒 背包承载力不足！"); closeChallengeModal(); return; }
+                if (currentData.coins + activeEventData.reward > maxCap) { playSound('fuse'); alert("🎒 背包容量不足！"); closeChallengeModal(); return; }
                 closeChallengeModal(); if(chest) chest.style.display = 'none'; 
                 try { 
-                    const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); 
-                    let record = data[0], newCoins = record.coins + activeEventData.reward; 
+                    const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0], newCoins = record.coins + activeEventData.reward; 
                     let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: "破解悬赏令宝箱", amount: activeEventData.reward });
                     await dbClient.from('gamedata').update({ coins: newCoins, activeEvent: null, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID); 
                     localStorage.setItem('andy_last_seen_coins', newCoins); playAttackSequence(activeEventData.reward, newCoins); 

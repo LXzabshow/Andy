@@ -19,7 +19,6 @@
         .card { background-color: var(--card-bg, #c6c6c6); border: 5px solid var(--card-border, #000); box-shadow: inset 4px 4px rgba(255,255,255,0.4), inset -4px -4px rgba(0,0,0,0.4); padding: 20px; position: relative; transition: all 0.5s ease; }
         
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 32px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
-        /* 称号区域升级为可点击交互态 */
         .rank-badge { background: #333; color: var(--card-border, #f1c40f); padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 10px; font-size: 20px; border-radius: 4px; box-shadow: 2px 2px #000; cursor: pointer; transition: transform 0.1s;}
         .rank-badge:active { transform: scale(0.95); }
         .rank-badge::after { content: ' 🔍'; font-size: 14px; opacity: 0.8; }
@@ -76,7 +75,6 @@
         .in-cd { cursor: not-allowed; opacity: 0.8; }
         .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
 
-        /* 舒尔特游戏方格特调样式 */
         #schulteGrid { display: grid; width: 100%; aspect-ratio: 1; gap: 5px; background: #373737; padding: 6px; border: 4px solid #000; box-shadow: inset -3px -3px #fff, inset 3px 3px #111; }
         .schulte-cell { background: #c6c6c6 !important; border: 3px solid #000 !important; box-shadow: inset 2px 2px #fff, inset -2px -2px #555 !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 26px !important; font-weight: bold !important; color: #000 !important; cursor: pointer !important; aspect-ratio: 1 !important; transition: transform 0.05s; }
         .schulte-cell:active { transform: scale(0.92); }
@@ -84,7 +82,6 @@
         .schulte-cell.wrong { animation: schulteWrong 0.2s steps(2) 2; }
         @keyframes schulteWrong { 0%, 100% { background: #c0392b !important; color: #fff !important; } 50% { background: #c6c6c6 !important; color: #000 !important; } }
 
-        /* 境界图鉴专属列表样式 */
         .rank-list-item { background: #fff; border: 2px solid #555; padding: 12px; margin-bottom: 10px; text-align: left; font-family: -apple-system, sans-serif; }
         .rank-list-item.unlocked { border-left-width: 6px; background: #f0f8ff; }
         .rank-list-item.next-target { border: 3px dashed #e67e22; background: #fffdf5; box-shadow: inset 0 0 15px rgba(230,126,34,0.2); }
@@ -109,7 +106,7 @@
         .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 5px; width: 80%; text-align: center; border: 2px solid #000; margin-bottom: 15px;}
         .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 2px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; }
 
-        /* Steve骨骼动画 */
+        /* 模型动画 */
         .skin-steve { width: 60px; height: 135px; }
         .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; }
         .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; }
@@ -195,8 +192,7 @@
     <div id="rankModal" class="modal-overlay" style="z-index: 600;">
         <div class="challenge-card" style="max-width: 360px; max-height: 85vh;">
             <div class="challenge-title" style="color: #d35400;">👑 境界图鉴</div>
-            <div id="rankListContainer" style="width: 100%; overflow-y: auto; margin-top: 10px; padding-right: 5px;">
-                </div>
+            <div id="rankListContainer" style="width: 100%; overflow-y: auto; margin-top: 10px; padding-right: 5px;"></div>
             <button class="btn-close-modal" onclick="closeRankModal()" style="margin-top: 15px;">关闭图鉴</button>
         </div>
     </div>
@@ -204,39 +200,8 @@
     <div id="rewardModal" class="modal-overlay">
         <div class="challenge-card">
             <div class="challenge-title">⚔️ 任务告示牌</div>
-            <div class="reward-grid">
-                <div class="mc-item-btn" id="btn-sport" onclick="requestAction('reward', {type:'sport', name:'制造工具 (基础运动)', amt:10, cd:3})">
-                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">🏃 疾跑附魔</span><span class="mc-item-reward">+10 🪙</span></div>
-                    <div class="mc-item-desc">认真完成当天的基础体育作业或常规锻炼。</div><span class="cd-timer">--:--</span>
-                </div>
-                <div class="mc-item-btn" id="btn-focus" onclick="requestAction('reward', {type:'focus', name:'凝神药水 (写作业绝对专注)', amt:10, cd:3})">
-                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">🧪 凝神药水</span><span class="mc-item-reward">+10 🪙</span></div>
-                    <div class="mc-item-desc">写作业期间保持绝对专注，不发呆、不闲聊。</div><span class="cd-timer">--:--</span>
-                </div>
-                <div class="mc-item-btn" id="btn-writing" onclick="requestAction('reward', {type:'writing', name:'成书与笔 (字迹工整规范)', amt:10, cd:3})">
-                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">📝成书与笔</span><span class="mc-item-reward">+10 🪙</span></div>
-                    <div class="mc-item-desc">作业书写工整漂亮，完成每日练字任务。</div><span class="cd-timer">--:--</span>
-                </div>
-                <div class="mc-item-btn" id="btn-extra" onclick="requestAction('reward', {type:'extra', name:'探索下界 (主动做家务/课外)', amt:10, cd:3})">
-                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">🌋 探索下界</span><span class="mc-item-reward">+10 🪙</span></div>
-                    <div class="mc-item-desc">主动帮家里分担家务，或完成额外的课外探索。</div><span class="cd-timer">--:--</span>
-                </div>
-                <div class="mc-item-btn" id="btn-run5k" onclick="requestAction('reward', {type:'run5k', name:'极速附魔 (35分钟内跑完5KM)', amt:35, cd:24})">
-                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">⚡ 极速附魔</span><span class="mc-item-reward">+35 🪙</span></div>
-                    <div class="mc-item-desc">挑战自我！必须在 <strong>35分钟内</strong> 一口气跑完 5公里。</div><span class="cd-timer">--:--</span>
-                </div>
-                <div class="mc-item-btn" id="btn-jumprope" onclick="requestAction('reward', {type:'jumprope', name:'轻盈药水 (一天内累计2000跳绳)', amt:30, cd:24})">
-                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">🪶 轻盈药水</span><span class="mc-item-reward">+30 🪙</span></div>
-                    <div class="mc-item-desc">毅力考验！在 <strong>一天之内</strong> 累计完成 2000个 跳绳。</div><span class="cd-timer">--:--</span>
-                </div>
-                <div class="mc-item-btn" id="btn-deeplearn" onclick="requestAction('reward', {type:'deeplearn', name:'贤者之书 (费曼式讲解难题)', amt:20, cd:12})">
-                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">📖 贤者之书</span><span class="mc-item-reward">+20 🪙</span></div>
-                    <div class="mc-item-desc">独立解出附加难题，并像小老师一样把解题思路讲明白。</div><span class="cd-timer">--:--</span>
-                </div>
-                <div class="mc-item-btn" id="btn-reading" onclick="requestAction('reward', {type:'reading', name:'附魔书的馈赠 (单次专注阅读超30分钟)', amt:20, cd:12})">
-                    <div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">📚 附魔书的馈赠</span><span class="mc-item-reward">+20 🪙</span></div>
-                    <div class="mc-item-desc">放下电子产品，单次绝对专注阅读课外书籍 <strong>超过 30分钟</strong>。</div><span class="cd-timer">--:--</span>
-                </div>
+            <div class="reward-grid" id="rewardListContainer">
+                <div style="padding:20px; color:#555;">正在同步悬赏任务...</div>
             </div>
             <button class="btn-close-modal" onclick="closeRewardModal()">返回营地</button>
         </div>
@@ -299,7 +264,7 @@
 
             <div class="health-bar-container">
                 <div class="health-bar-label">
-                    <span>容量:</span>
+                    <span>背包容量:</span>
                     <span id="capacityText">0 / 200</span>
                 </div>
                 <div class="health-bar-bg"><div id="healthBarFill" class="health-bar-fill"></div></div>
@@ -348,7 +313,7 @@
         const sModal = document.getElementById('shopModal');
         const cfModal = document.getElementById('confirmModal');
         const gModal = document.getElementById('gameModal');
-        const rankModal = document.getElementById('rankModal'); // 迷雾图鉴弹窗
+        const rankModal = document.getElementById('rankModal');
         
         const bgm = document.getElementById('bgm');
         const sfxLevelUp = document.getElementById('sfx-levelup');
@@ -363,11 +328,6 @@
         const ROW_ID = 1;
 
         let isGameRunning = false, currentGameSize = 5, nextTargetNum = 1, gameClockTimer = null, gameTimeRemaining = 30, gameStartTime = 0;
-
-        const TASK_CDS = {
-            'sport': 3, 'focus': 3, 'writing': 3, 'extra': 3,
-            'run5k': 24, 'jumprope': 24, 'deeplearn': 12, 'reading': 12
-        };
 
         const RANK_DATA = [
             { rank: 1, cap: 200, cost: 150, title: "🪵 新手伐木工", color: "#8B5A2B", bg: "#d2b48c", pageBg: "#76b5fe", nightBg: "#1d3557" },
@@ -442,6 +402,7 @@
                 record.shopItems = record.shopItems || [];
                 record.activeBuffs = record.activeBuffs || {};
                 record.schulteDaily = record.schulteDaily || { lastDate: "", count: 0 };
+                record.taskItems = record.taskItems || [];
                 
                 record = await checkAndApplyDailyDeduction(record);
                 currentData = record;
@@ -488,7 +449,10 @@
 
         function updateRankUI(coins, rank) {
             const rData = RANK_DATA[rank - 1] || RANK_DATA[0];
-            if (uiCard) { uiCard.style.setProperty('--card-border', rData.color); uiCard.style.setProperty('--card-bg', rData.bg); }
+            if (uiCard) {
+                uiCard.style.setProperty('--card-border', rData.color);
+                uiCard.style.setProperty('--card-bg', rData.bg);
+            }
             if (rankBadge) rankBadge.innerText = rData.title;
 
             const hour = new Date().getHours();
@@ -519,7 +483,6 @@
             }
         }
 
-        // 💡 新增：迷雾图鉴渲染与展示逻辑
         function openRankModal() {
             if(!rankModal || !currentData) return;
             clickCoin();
@@ -532,37 +495,31 @@
 
             RANK_DATA.forEach((r, index) => {
                 let rankLevel = index + 1;
-                
                 if (rankLevel <= currentLevel) {
-                    // 状态 A：已解锁
                     let isCurrent = (rankLevel === currentLevel);
                     html += `
                         <div class="rank-list-item unlocked" style="border-left-color: ${r.color};">
                             <div class="r-title">${r.title} <span style="font-size:12px;color:#27ae60;">(${isCurrent ? '👉 当前所在' : '✅ 已解锁'})</span></div>
-                            <div class="r-desc">容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div>
+                            <div class="r-desc">背包容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div>
                         </div>`;
                 } else if (rankLevel === currentLevel + 1) {
-                    // 状态 B：突破目标 (高亮展示所需币数)
                     html += `
                         <div class="rank-list-item next-target">
                             <div class="r-title" style="color:#e67e22;">🎯 突破目标: ${r.title}</div>
-                            <div class="r-desc">升级后容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div>
+                            <div class="r-desc">升级后背包容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div>
                             <div class="r-cost">突破消耗: -${RANK_DATA[currentLevel - 1].cost} 🪙</div>
                         </div>`;
                 } else {
-                    // 状态 C：迷雾屏蔽区
                     html += `
                         <div class="rank-list-item locked">
                             <div class="r-title" style="color:#555;">第 ${rankLevel} 阶: ??? (未知的境界)</div>
-                            <div class="r-desc" style="color:#666;">容量上限: ???</div>
+                            <div class="r-desc" style="color:#666;">背包容量上限: ???</div>
                             <div class="r-cost" style="color:#666;">突破消耗: ???</div>
                         </div>`;
                 }
             });
-
             container.innerHTML = html;
         }
-
         function closeRankModal() { if(rankModal) rankModal.style.display = 'none'; }
 
         function renderBuffs() {
@@ -583,6 +540,35 @@
                 }
             }
             container.innerHTML = html;
+        }
+
+        function openRewardModal() { 
+            if(rModal) { rModal.style.display = 'flex'; renderDynamicTasks(); processCooldowns(); } 
+        }
+        function closeRewardModal() { if(rModal) rModal.style.display = 'none'; }
+
+        function renderDynamicTasks() {
+            const container = document.getElementById('rewardListContainer');
+            if(!container) return;
+            if(!currentData || !currentData.taskItems || currentData.taskItems.length === 0) {
+                container.innerHTML = '<div style="padding:20px; color:#555; text-align:center;">告示牌空空如也，暂无悬赏挑战</div>';
+                return;
+            }
+            container.innerHTML = currentData.taskItems.map(task => `
+                <div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'>
+                    <div class="cd-overlay"></div>
+                    <div class="mc-item-header">
+                        <span class="mc-item-title">${task.icon || '⚔️'} ${task.name}</span>
+                        <span class="mc-item-reward">+${task.price} 🪙</span>
+                    </div>
+                    <div class="mc-item-desc">${task.desc}</div>
+                    <span class="cd-timer">--:--</span>
+                </div>
+            `).join('');
+        }
+        function triggerTaskClick(taskId) {
+            const task = currentData.taskItems.find(t => t.id === taskId);
+            if(task) requestAction('reward', task);
         }
 
         function openShopModal() { 
@@ -607,11 +593,10 @@
             clickCoin();
             if (actionType === 'reward') {
                 const now = Date.now();
-                if(currentData.cooldowns && currentData.cooldowns[data.type] > now) return; 
+                if(currentData.cooldowns && currentData.cooldowns[data.id] > now) return; 
                 const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
-                if (currentData.coins + data.amt > maxCap) { playSound('fuse'); return alert("🎒 背包容量不足！\n新奖励无法装下，请先突破界限腾出空间。"); }
-                let cleanName = data.name.split(' ')[0]; 
-                document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#27ae60; font-size:20px;">【${cleanName}】</span><br>的悬赏奖励吗？`;
+                if (currentData.coins + data.price > maxCap) { playSound('fuse'); return alert("🎒 背包容量上限不足！\n新奖励无法装下，请先突破界限腾出空间。"); }
+                document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#27ae60; font-size:20px;">【${data.name}】</span><br>的悬赏奖励吗？`;
             } 
             else if (actionType === 'buy') {
                 if (currentData.coins < data.price) { playSound('fuse'); return alert("❌ 行囊硬币不足，无法兑换该法宝！"); }
@@ -646,23 +631,23 @@
             } catch (e) { alert("兑换受阻，请重试！"); }
         }
 
-        async function proceedWithReward(rewardData) {
+        async function proceedWithReward(taskData) {
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0];
-                const newCoins = record.coins + rewardData.amt;
-                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: rewardData.name.split(' ')[0], amount: rewardData.amt });
-                let cds = record.cooldowns || {}; cds[rewardData.type] = Date.now() + (rewardData.cd * 3600000); 
+                const newCoins = record.coins + taskData.price;
+                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `挑战: ${taskData.name}`, amount: taskData.price });
+                let cds = record.cooldowns || {}; cds[taskData.id] = Date.now() + (taskData.hours * 3600000); 
 
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), cooldowns: cds }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs, cooldowns: cds };
-                localStorage.setItem('andy_last_seen_coins', newCoins); closeRewardModal(); playAttackSequence(rewardData.amt, newCoins);
+                localStorage.setItem('andy_last_seen_coins', newCoins); closeRewardModal(); playAttackSequence(taskData.price, newCoins);
             } catch (e) { alert("申报异常，请重试"); }
         }
 
         // 舒尔特专注训练逻辑
         function openGameModal() {
             if (!currentData) return;
-            [sModal, rModal, lModal, cfModal].forEach(m => { if(m) m.style.display = 'none'; });
+            [sModal, rModal, lModal, cfModal, rankModal].forEach(m => { if(m) m.style.display = 'none'; });
             gModal.style.display = 'flex'; backToGameMenu();
         }
         function closeGameModal() { quitGameSession(); gModal.style.display = 'none'; }
@@ -721,7 +706,7 @@
 
             if(schulte.count < 5) {
                 let rewardAmt = (currentGameSize === 5) ? 2 : 5;
-                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 矩阵！<br><br>🎁 奖励加成：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入探险背包。<br>(今日已领奖收益数: ${schulte.count + 1} / 5 次)`;
+                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 矩阵！<br><br>🎁 奖励加成：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日已领奖收益数: ${schulte.count + 1} / 5 次)`;
                 rBtn.innerText = "再来一局"; await uploadSchulteWin(rewardAmt);
             } else {
                 rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过训练！<br><br>⚠️ 提示：今日 5 次悬赏冒险奖励已被装满。本次通关不再产出硬币，继续保持专注度，锤炼你的视界引擎！`;
@@ -772,8 +757,6 @@
 
         function openLogModal() { if(lModal) lModal.style.display = 'flex'; }
         function closeLogModal() { if(lModal) lModal.style.display = 'none'; }
-        function openRewardModal() { if(rModal) rModal.style.display = 'flex'; processCooldowns(); }
-        function closeRewardModal() { if(rModal) rModal.style.display = 'none'; }
 
         function renderLogs(logs) {
             const container = document.getElementById('logListContent'); if(!container) return;
@@ -785,14 +768,18 @@
             } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>';
         }
 
+        // 💡 重点加固：由硬编码任务池遍历，进化为针对家长发布的 taskItems 进行精确动态倒计时渲染
         function processCooldowns() {
-            if(!currentData || !currentData.cooldowns) return;
+            if(!currentData || !currentData.cooldowns || !currentData.taskItems) return;
             const now = Date.now();
-            Object.keys(TASK_CDS).forEach(type => {
-                const btn = document.getElementById(`btn-${type}`); if (!btn) return;
-                const remain = (currentData.cooldowns[type] || 0) - now;
+            currentData.taskItems.forEach(task => {
+                const btn = document.getElementById(`btn-${task.id}`);
+                if (!btn) return;
+                const remain = (currentData.cooldowns[task.id] || 0) - now;
                 if(remain > 0) {
-                    btn.classList.add('in-cd'); const totalMs = TASK_CDS[type] * 3600000; btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg');
+                    btn.classList.add('in-cd'); 
+                    const totalMs = (task.hours || 3) * 3600000; 
+                    btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg');
                     const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000);
                     let timerEl = btn.querySelector('.cd-timer'); if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
                 } else btn.classList.remove('in-cd');
@@ -866,7 +853,7 @@
             let inputEl = document.getElementById('c_input'); if(!inputEl) return;
             if(inputEl.value.trim() === activeEventData.answer.trim()) { 
                 const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
-                if (currentData.coins + activeEventData.reward > maxCap) { playSound('fuse'); alert("🎒 背包容量不足！"); closeChallengeModal(); return; }
+                if (currentData.coins + activeEventData.reward > maxCap) { playSound('fuse'); alert("🎒 背包容量上限不足！"); closeChallengeModal(); return; }
                 closeChallengeModal(); if(chest) chest.style.display = 'none'; 
                 try { 
                     const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0], newCoins = record.coins + activeEventData.reward; 

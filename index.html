@@ -75,12 +75,11 @@
         .in-cd { cursor: not-allowed; opacity: 0.8; }
         .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
 
+        /* 舒尔特游戏方格特调样式 - 移除背景和文字颜色的 important 以支持纯 JS 内联阻断重绘 */
         #schulteGrid { display: grid; width: 100%; aspect-ratio: 1; gap: 5px; background: #373737; padding: 6px; border: 4px solid #000; box-shadow: inset -3px -3px #fff, inset 3px 3px #111; }
-        .schulte-cell { background: #c6c6c6 !important; border: 3px solid #000 !important; box-shadow: inset 2px 2px #fff, inset -2px -2px #555 !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 26px !important; font-weight: bold !important; color: #000 !important; cursor: pointer !important; aspect-ratio: 1 !important; transition: transform 0.05s; }
+        .schulte-cell { background: #c6c6c6; border: 3px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; cursor: pointer; aspect-ratio: 1; transition: transform 0.05s; }
         .schulte-cell:active { transform: scale(0.92); }
         .schulte-cell.correct { background: #2ecc71 !important; color: #fff !important; box-shadow: inset 3px 3px rgba(255,255,255,0.4), inset -3px -3px rgba(0,0,0,0.4) !important; cursor: not-allowed !important; }
-        .schulte-cell.wrong { animation: schulteWrong 0.2s steps(2) 2; }
-        @keyframes schulteWrong { 0%, 100% { background: #c0392b !important; color: #fff !important; } 50% { background: #c6c6c6 !important; color: #000 !important; } }
 
         .rank-list-item { background: #fff; border: 2px solid #555; padding: 12px; margin-bottom: 10px; text-align: left; font-family: -apple-system, sans-serif; }
         .rank-list-item.unlocked { border-left-width: 6px; background: #f0f8ff; }
@@ -222,8 +221,8 @@
             <div class="challenge-title" style="color: #8e44ad;">👁️ 舒尔特专注训练</div>
             <div id="gameMenu">
                 <div id="gameRemainingCount" style="color: #004400; font-weight: bold; margin-bottom: 20px; font-size: 18px; text-shadow: 1px 1px #fff;">今日已领奖次数: -- / 5</div>
-                <button class="btn-main-action" onclick="startGameSession(5)" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 普通难度 (5x5)</button>
-                <button class="btn-main-action" onclick="startGameSession(6)" style="background: #c0392b; margin-bottom: 20px; font-size:22px;">🔴 困难难度 (6x6)</button>
+                <button class="btn-main-action" onclick="startGameSession(6)" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 普通难度 (6x6)</button>
+                <button class="btn-main-action" onclick="startGameSession(7)" style="background: #c0392b; margin-bottom: 20px; font-size:22px;">🔴 困难难度 (7x7)</button>
                 <button class="btn-close-modal" onclick="closeGameModal()">关闭秘境</button>
             </div>
             <div id="gamePlay" style="display: none; flex-direction: column; align-items: center; width: 100%;">
@@ -327,7 +326,7 @@
         let currentData = null, pendingAction = null; 
         const ROW_ID = 1;
 
-        let isGameRunning = false, currentGameSize = 5, nextTargetNum = 1, gameClockTimer = null, gameTimeRemaining = 30, gameStartTime = 0;
+        let isGameRunning = false, currentGameSize = 6, nextTargetNum = 1, gameClockTimer = null, gameTimeRemaining = 40, gameStartTime = 0;
 
         const RANK_DATA = [
             { rank: 1, cap: 200, cost: 150, title: "🪵 新手伐木工", color: "#8B5A2B", bg: "#d2b48c", pageBg: "#76b5fe", nightBg: "#1d3557" },
@@ -661,7 +660,7 @@
         }
 
         function startGameSession(size) {
-            currentGameSize = size; nextTargetNum = 1; gameTimeRemaining = (size === 5) ? 30 : 45; isGameRunning = true;
+            currentGameSize = size; nextTargetNum = 1; gameTimeRemaining = (size === 6) ? 40 : 75; isGameRunning = true;
             document.getElementById('gameMenu').style.display = 'none'; document.getElementById('gameResult').style.display = 'none'; document.getElementById('gamePlay').style.display = 'flex';
             document.getElementById('gameTargetNum').innerText = nextTargetNum; document.getElementById('gameTimerText').innerText = gameTimeRemaining;
 
@@ -670,7 +669,15 @@
             for(let i = numberPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]]; }
 
             const gridContainer = document.getElementById('schulteGrid'); gridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`; gridContainer.innerHTML = '';
-            numberPool.forEach(num => { const cell = document.createElement('div'); cell.className = 'schulte-cell'; cell.innerText = num; cell.onclick = () => handleCellClick(cell, num); gridContainer.appendChild(cell); });
+            numberPool.forEach(num => { 
+                const cell = document.createElement('div'); 
+                cell.className = 'schulte-cell'; 
+                cell.innerText = num; 
+                // 动态字号缩放，防高密度矩阵误触
+                cell.style.fontSize = size === 7 ? '20px' : '24px';
+                cell.onclick = () => handleCellClick(cell, num); 
+                gridContainer.appendChild(cell); 
+            });
 
             clearInterval(gameClockTimer); gameStartTime = Date.now();
             gameClockTimer = setInterval(() => { gameTimeRemaining--; document.getElementById('gameTimerText').innerText = gameTimeRemaining; if(gameTimeRemaining <= 0) endGameSession(false); }, 1000);
@@ -682,7 +689,17 @@
                 cell.classList.add('correct'); clickCoin(); nextTargetNum++;
                 if(nextTargetNum > currentGameSize * currentGameSize) endGameSession(true);
                 else document.getElementById('gameTargetNum').innerText = nextTargetNum;
-            } else { cell.classList.add('wrong'); playSound('fuse'); setTimeout(() => cell.classList.remove('wrong'), 400); }
+            } else { 
+                playSound('fuse'); 
+                // JS 绝对内联干预，无视 CSS 动画重绘失效问题
+                cell.style.backgroundColor = '#c0392b';
+                cell.style.color = '#fff';
+                if(cell.wrongTimeout) clearTimeout(cell.wrongTimeout);
+                cell.wrongTimeout = setTimeout(() => {
+                    cell.style.backgroundColor = '';
+                    cell.style.color = '';
+                }, 200);
+            }
         }
 
         function quitGameSession() { clearInterval(gameClockTimer); isGameRunning = false; backToGameMenu(); }
@@ -705,7 +722,7 @@
             if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.count = 0; }
 
             if(schulte.count < 5) {
-                let rewardAmt = (currentGameSize === 5) ? 2 : 5;
+                let rewardAmt = (currentGameSize === 6) ? 3 : 5;
                 rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 矩阵！<br><br>🎁 奖励加成：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日已领奖收益数: ${schulte.count + 1} / 5 次)`;
                 rBtn.innerText = "再来一局"; await uploadSchulteWin(rewardAmt);
             } else {
@@ -768,7 +785,6 @@
             } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>';
         }
 
-        // 💡 重点加固：由硬编码任务池遍历，进化为针对家长发布的 taskItems 进行精确动态倒计时渲染
         function processCooldowns() {
             if(!currentData || !currentData.cooldowns || !currentData.taskItems) return;
             const now = Date.now();

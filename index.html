@@ -23,11 +23,11 @@
         .rank-badge:active { transform: scale(0.95); }
         .rank-badge::after { content: ' 🔍'; font-size: 14px; opacity: 0.8; }
 
-        .slot { background: #8b8b8b; width: 100px; height: 100px; margin: 0 auto; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+        /* 💡 UI横向堆叠优化：移除文字，缩小槽位，同行展示 */
+        .slot { background: #8b8b8b; width: 75px; height: 75px; margin: 0; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; flex-shrink: 0;}
         .slot:active .coin-icon { transform: scale(0.8); }
-        .coin-icon { font-size: 60px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
-        .label { color: #404040; font-size: 20px; margin-top: 10px; font-weight: bold; text-shadow: 1px 1px #fff;}
-        .total { font-size: 70px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 5px 0; line-height: 1; }
+        .coin-icon { font-size: 45px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
+        .total { font-size: 55px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 0; line-height: 1; flex-shrink: 0;}
 
         #activeBuffsContainer { width: 100%; display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
         .buff-pill { background: rgba(0,0,0,0.7); border: 2px solid #ffb700; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-family: -apple-system, sans-serif; font-weight: bold; text-shadow: 1px 1px #000; box-shadow: 0 2px 8px rgba(0,0,0,0.5); display: flex; justify-content: space-between; align-items: center; animation: glow 2s infinite alternate;}
@@ -178,7 +178,7 @@
         </div>
     </div>
 
-    <div id="confirmModal" class="modal-overlay" style="z-index: 500;">
+    <div id="confirmModal" class="modal-overlay" style="z-index: 1000;">
         <div class="challenge-card" style="max-width: 300px;">
             <div class="challenge-title" style="font-size: 24px;">📋 确认告示</div>
             <div id="confirmText" style="color:#000; font-size:16px; margin: 15px 0; font-weight:bold; line-height:1.5;">...</div>
@@ -217,13 +217,13 @@
 
     <div id="gameModal" class="modal-overlay" style="z-index: 600;">
         <div class="challenge-card" style="max-width: 380px; width: 95%;">
-            <div class="challenge-title" style="color: #8e44ad;">👁️ 舒尔特专注训练</div>
+            <div class="challenge-title" style="color: #8e44ad;">👁️ 试炼高塔</div>
             <div id="gameMenu">
                 <div id="gameRemainingCount" style="color: #000; font-weight: bold; margin-bottom: 20px; font-size: 16px; text-shadow: 1px 1px #fff; background: rgba(255,255,255,0.7); padding: 8px; border: 2px solid #555;">...</div>
                 
-                <button class="btn-main-action" onclick="attemptStartGame(6)" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 普通难度 (6x6)</button>
-                <button class="btn-main-action" onclick="attemptStartGame(7)" style="background: #c0392b; margin-bottom: 20px; font-size:22px;">🔴 困难难度 (7x7)</button>
-                <button class="btn-close-modal" onclick="closeGameModal()">关闭秘境</button>
+                <button class="btn-main-action" onclick="attemptStartGame(6)" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 攀登高塔 (6x6)</button>
+                <button class="btn-main-action" onclick="attemptStartGame(7)" style="background: #c0392b; margin-bottom: 20px; font-size:22px;">🔴 极限高塔 (7x7)</button>
+                <button class="btn-close-modal" onclick="closeGameModal()">离开高塔</button>
             </div>
             <div id="gamePlay" style="display: none; flex-direction: column; align-items: center; width: 100%;">
                 <div style="display: flex; justify-content: space-between; width: 100%; font-size: 22px; font-weight: bold; margin-bottom: 12px; color: #111; text-shadow:1px 1px #fff;">
@@ -231,7 +231,7 @@
                     <span>⏳ 倒计时: <span id="gameTimerText" style="color: #c0392b;">30</span>s</span>
                 </div>
                 <div id="schulteGrid"></div>
-                <button class="btn-close-modal" onclick="quitGameSession()" style="margin-top: 15px; background:#7f8c8d;">🏳️ 放弃训练</button>
+                <button class="btn-close-modal" onclick="quitGameSession()" style="margin-top: 15px; background:#7f8c8d;">🏳️ 放弃攀登</button>
             </div>
             <div id="gameResult" style="display: none;">
                 <div id="gameResultTitle" style="font-size: 28px; font-weight: bold; margin-bottom: 12px; text-shadow:2px 2px #fff;"></div>
@@ -255,9 +255,11 @@
             <div class="mute-btn" onclick="toggleMute()">🔊</div>
             <h2>Andy的探险背包</h2>
             <div id="rankBadge" class="rank-badge" onclick="openRankModal()">同步中...</div>
-            <div class="slot" onclick="clickCoin()"><div class="coin-icon" id="icon">🪙</div></div>
-            <div class="label">行囊内硬币</div>
-            <div id="totalDisplay" class="total">...</div>
+            
+            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin: 5px 0 15px 0;">
+                <div class="slot" onclick="clickCoin()"><div class="coin-icon" id="icon">🪙</div></div>
+                <div id="totalDisplay" class="total">...</div>
+            </div>
 
             <div id="activeBuffsContainer"></div>
 
@@ -402,7 +404,6 @@
                 record.activeBuffs = record.activeBuffs || {};
                 record.taskItems = record.taskItems || [];
                 
-                // 💡 重点加固：双轨计数数据平滑过渡
                 record.schulteDaily = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
                 if (record.schulteDaily.count !== undefined) {
                     record.schulteDaily.winCount = record.schulteDaily.count;
@@ -651,7 +652,7 @@
             } catch (e) { alert("申报异常，请重试"); }
         }
 
-        // 💡 舒尔特专注训练逻辑 - 核心门票拦截与防作弊机制
+        // 💡 视觉拦截阻断与高塔文案重构
         function openGameModal() {
             if (!currentData) return;
             [sModal, rModal, lModal, cfModal, rankModal].forEach(m => { if(m) m.style.display = 'none'; });
@@ -677,7 +678,6 @@
                  <div>🎁 今日有效领奖剩余: <span style="color:${rewardLeft > 0 ? '#e67e22' : '#c0392b'};">${rewardLeft}</span> / 5</div>`;
         }
 
-        // 开局拦截与意图确认
         function attemptStartGame(size) {
             let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
             if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; }
@@ -687,10 +687,10 @@
             if (pCount >= 5) {
                 if (currentData.coins < 1) {
                     playSound('fuse');
-                    alert("❌ 行囊硬币不足，无法支付训练门票！");
+                    alert("❌ 行囊硬币不足，无法支付高塔门票！");
                     return;
                 }
-                document.getElementById('confirmText').innerHTML = `🎫 今日免费训练已用完。<br><br>开启本次秘境将<span style="color:#c0392b;">消耗 1 🪙</span> 门票，<br>是否支付并进入？`;
+                document.getElementById('confirmText').innerHTML = `🎫 今日高塔免费进入次数已用完。<br><br>开启本次秘境将<span style="color:#c0392b;">消耗 1 🪙</span> 门票，<br>是否支付并进入？`;
                 pendingAction = { actionType: 'schulteTicket', data: { size: size } };
                 if(cfModal) cfModal.style.display = 'flex';
             } else {
@@ -698,7 +698,6 @@
             }
         }
 
-        // 绝对云端扣费与计次校验
         async function executeStartGame(size, isPaidLocally) {
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0]; let today = getTodayStr();
@@ -709,10 +708,9 @@
                 let newCoins = record.coins;
                 let logs = record.childLogs || [];
                 
-                // 云端反作弊二次验证
                 let needsPayment = schulte.playCount >= 5;
                 if (needsPayment && !isPaidLocally) {
-                    alert("⚠️ 数据状态已刷新，请重新点击开局！");
+                    alert("⚠️ 数据状态已刷新，请重新点击进入高塔！");
                     syncData(); 
                     return;
                 }
@@ -724,24 +722,30 @@
                 
                 if (needsPayment) {
                     newCoins -= 1;
-                    logs.unshift({ time: getFormattedTime(), action: `支付训练门票`, amount: -1 });
+                    logs.unshift({ time: getFormattedTime(), action: `支付高塔门票`, amount: -1 });
                 }
                 
-                schulte.playCount += 1; // 开局必定消耗次数
+                schulte.playCount += 1;
                 
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte };
                 localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins);
                 
-                // 扣费记账完毕，正式拉起游戏画面
                 startGameSession(size);
-            } catch(e) { alert("网络异常，无法开启秘境，请检查连接"); }
+            } catch(e) { alert("网络异常，无法开启高塔秘境，请检查连接"); }
         }
 
         function startGameSession(size) {
             currentGameSize = size; nextTargetNum = 1; gameTimeRemaining = (size === 6) ? 40 : 75; isGameRunning = true;
-            document.getElementById('gameMenu').style.display = 'none'; document.getElementById('gameResult').style.display = 'none'; document.getElementById('gamePlay').style.display = 'flex';
-            document.getElementById('gameTargetNum').innerText = nextTargetNum; document.getElementById('gameTimerText').innerText = gameTimeRemaining;
+            
+            // 💡 物理阻断拦截：暴力拉起父级蒙版，强制接管屏幕
+            document.getElementById('gameModal').style.display = 'flex';
+            
+            document.getElementById('gameMenu').style.display = 'none'; 
+            document.getElementById('gameResult').style.display = 'none'; 
+            document.getElementById('gamePlay').style.display = 'flex';
+            document.getElementById('gameTargetNum').innerText = nextTargetNum; 
+            document.getElementById('gameTimerText').innerText = gameTimeRemaining;
 
             let totalCells = size * size; let numberPool = [];
             for(let i = 1; i <= totalCells; i++) numberPool.push(i);
@@ -787,12 +791,11 @@
             const resultBox = document.getElementById('gameResult'); const rTitle = document.getElementById('gameResultTitle'); const rDesc = document.getElementById('gameResultDesc'); const rBtn = document.getElementById('btnGameRetry');
             resultBox.style.display = 'block'; 
             
-            // 💡 失败或重来时，必须走校验通道，防止逃票
             rBtn.onclick = () => attemptStartGame(currentGameSize);
 
             if(!isWin) {
-                playSound('explode'); rTitle.innerText = "⏳ 训练超时 (失败)"; rTitle.style.color = "#c0392b";
-                rDesc.innerHTML = "沙漏空了！你的眼睛搜寻速度慢了一步，潜能未能完全激发。是否重新开启高能核心，再次向极限发起挑战？"; rBtn.innerText = "重新接受挑战"; return;
+                playSound('explode'); rTitle.innerText = "⏳ 攀塔超时 (失败)"; rTitle.style.color = "#c0392b";
+                rDesc.innerHTML = "沙漏空了！你的眼睛搜寻速度慢了一步，潜能未能完全激发。是否重新开启高能核心，再次向高塔极限发起冲击？"; rBtn.innerText = "重新尝试攀登"; return;
             }
 
             let elapsed = ((Date.now() - gameStartTime) / 1000).toFixed(1);
@@ -801,14 +804,13 @@
             let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr();
             if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
 
-            // 💡 只有有效发奖次数没满时，才给钱
             if(schulte.winCount < 5) {
                 let rewardAmt = (currentGameSize === 6) ? 3 : 5;
-                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 矩阵！<br><br>🎁 奖励加成：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日有效领奖次数: ${schulte.winCount + 1} / 5 次)`;
-                rBtn.innerText = "再来一局"; await uploadSchulteWin(rewardAmt);
+                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 高塔层！<br><br>🎁 战利品：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日有效领奖次数: ${schulte.winCount + 1} / 5 次)`;
+                rBtn.innerText = "继续向上攀登"; await uploadSchulteWin(rewardAmt);
             } else {
-                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过训练！<br><br>⚠️ 提示：今日 5 次悬赏冒险奖励已被装满。本次通关不再产出硬币，继续保持专注度，锤炼你的视界引擎！`;
-                rBtn.innerText = "纯粹训练模式";
+                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过高塔试炼！<br><br>⚠️ 提示：今日 5 次高塔战利品已被装满。本次攀登不再产出硬币，继续保持专注度，锤炼你的视界引擎！`;
+                rBtn.innerText = "纯粹攀塔模式";
             }
         }
 
@@ -819,12 +821,11 @@
                 if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; delete schulte.count; }
                 if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
                 
-                // 仅增加领奖次数
                 schulte.winCount += 1; 
                 
                 let newCoins = record.coins + rewardAmt;
                 const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; if(newCoins > maxCap) newCoins = maxCap;
-                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `专注挑战成功 (${currentGameSize}x${currentGameSize})`, amount: rewardAmt });
+                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `高塔试炼成功 (${currentGameSize}x${currentGameSize})`, amount: rewardAmt });
 
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte };

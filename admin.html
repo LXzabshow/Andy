@@ -50,6 +50,9 @@
         .modal-btns { display: flex; gap: 10px; margin-top: 25px; }
         .btn-cancel { background: #444; color: white; flex: 1; }
         .btn-confirm { background: #34c759; color: white; flex: 1; }
+        
+        /* 针对配置面板的小型输入框调整 */
+        .config-input { width: 60px; padding: 5px; text-align: center; border-radius: 4px; border: 1px solid #555; background: #222; color: #fff;}
     </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
@@ -79,6 +82,34 @@
             <div class="card-header"><h3 id="buffCardTitle">✨ 生效中的特权 (BUFF)</h3></div>
             <div id="adminBuffList" style="margin-top: 10px;">
                 <div style="text-align:center; color:#555; padding:10px;">暂无生效状态</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3 style="color:#d35400;">🏰 高塔经济学配置</h3></div>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-top:15px; font-size: 14px;">
+                <div class="flex-row">
+                    <span style="color:#aaa;">每日免费次数:</span>
+                    <input type="number" id="tc_free" class="config-input">
+                </div>
+                <div class="flex-row">
+                    <span style="color:#aaa;">每日领奖上限:</span>
+                    <input type="number" id="tc_max" class="config-input">
+                </div>
+                <hr style="border-color:#333; margin:0;">
+                <div class="flex-row">
+                    <span style="color:#2ecc71; font-weight:bold;">🟢 普通(6x6)</span>
+                    <div>门票: <input type="number" id="tc_n_t" class="config-input" style="width:45px;"> | 奖: <input type="number" id="tc_n_r" class="config-input" style="width:45px;"></div>
+                </div>
+                <div class="flex-row">
+                    <span style="color:#e74c3c; font-weight:bold;">🔴 困难(7x7)</span>
+                    <div>门票: <input type="number" id="tc_h_t" class="config-input" style="width:45px;"> | 奖: <input type="number" id="tc_h_r" class="config-input" style="width:45px;"></div>
+                </div>
+                <div class="flex-row">
+                    <span style="color:#9b59b6; font-weight:bold;">💀 生存(7x7)</span>
+                    <div>门票: <input type="number" id="tc_s_t" class="config-input" style="width:45px;"> | 奖: <input type="number" id="tc_s_r" class="config-input" style="width:45px;"></div>
+                </div>
+                <button class="btn-primary" onclick="saveTowerConfig()" style="background:#d35400; margin-top:5px;">💾 覆写高塔法则</button>
             </div>
         </div>
 
@@ -234,22 +265,6 @@
             return `${month}-${day} ${hours}:${mins}`;
         }
 
-        async function initializeDefaultTasks() {
-            const defaultTasks = [
-                { id: 'task_sport', icon: '🏃', name: '疾跑附魔', desc: '认真完成当天的基础体育作业或常规锻炼。', price: 10, hours: 3 },
-                { id: 'task_focus', icon: '🧪', name: '凝神药水', desc: '写作业期间保持绝对专注，不发呆、不闲聊。', price: 10, hours: 3 },
-                { id: 'task_writing', icon: '📝', name: '成书与笔', desc: '作业书写工整漂亮，完成每日练字任务。', price: 10, hours: 3 },
-                { id: 'task_extra', icon: '🌋', name: '探索下界', desc: '主动帮家里分担家务，或完成额外的课外探索。', price: 10, hours: 3 },
-                { id: 'task_run5k', icon: '⚡', name: '极速附魔', desc: '挑战自我！必须在 35分钟内 一口气跑完 5公里。', price: 35, hours: 24 },
-                { id: 'task_jumprope', icon: '🪶', name: '轻盈药水', desc: '毅力考验！在 一天之内 累计完成 2000个 跳绳。', price: 30, hours: 24 },
-                { id: 'task_deeplearn', icon: '📖', name: '贤者之书', desc: '独立解出附加难题，并像小老师一样把解题思路讲明白。', price: 20, hours: 12 },
-                { id: 'task_reading', icon: '📚', name: '附魔书的馈赠', desc: '放下电子产品，单次绝对专注阅读课外书籍 超过 30分钟。', price: 20, hours: 12 }
-            ];
-            document.getElementById('log-status').innerText = "⏳ 正在静默部署初始化经典任务池...";
-            await dbClient.from('gamedata').update({ taskItems: defaultTasks }).eq('id', ROW_ID);
-            getCoins();
-        }
-
         async function getCoins() {
             try {
                 const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
@@ -260,19 +275,23 @@
                 currentData.currentRank = currentData.currentRank || 1;
                 currentData.shopItems = currentData.shopItems || [];
                 currentData.activeBuffs = currentData.activeBuffs || {};
+                currentData.taskItems = currentData.taskItems || [];
                 
                 // 数据平滑过渡
                 currentData.schulteDaily = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
-                if (currentData.schulteDaily.count !== undefined) {
-                    currentData.schulteDaily.winCount = currentData.schulteDaily.count;
-                    currentData.schulteDaily.playCount = currentData.schulteDaily.count;
-                    delete currentData.schulteDaily.count;
+                
+                // 💡 高塔默认配置初始化与绑定
+                if(!currentData.towerConfig) {
+                    currentData.towerConfig = {
+                        freePlays: 5, maxRewards: 5,
+                        normal: { ticket: 1, reward: 2 },
+                        hard: { ticket: 1, reward: 4 },
+                        survival: { ticket: 2, reward: 6 }
+                    };
+                    // 仅首次缺失时静默注入，防打断
+                    dbClient.from('gamedata').update({ towerConfig: currentData.towerConfig }).eq('id', ROW_ID);
                 }
-
-                if(!currentData.taskItems || currentData.taskItems.length === 0) {
-                    await initializeDefaultTasks();
-                    return;
-                }
+                bindTowerConfigUI(currentData.towerConfig);
                 
                 let rData = RANK_DATA[currentData.currentRank - 1];
                 document.getElementById('currentCoins').innerText = currentData.coins;
@@ -281,7 +300,8 @@
                 
                 let sWin = (currentData.schulteDaily.lastDate === getTodayStr()) ? currentData.schulteDaily.winCount : 0;
                 let sPlay = (currentData.schulteDaily.lastDate === getTodayStr()) ? currentData.schulteDaily.playCount : 0;
-                document.getElementById('buffCardTitle').innerText = `✨ 特权监控 (今日高塔 - 开局:${sPlay}次 | 领奖:${sWin}/5)`;
+                let tMax = currentData.towerConfig.maxRewards;
+                document.getElementById('buffCardTitle').innerText = `✨ 特权监控 (今日高塔 - 开局:${sPlay}次 | 领奖:${sWin}/${tMax})`;
 
                 renderLogs(currentData.childLogs);
                 renderShopItems(currentData.shopItems);
@@ -296,6 +316,33 @@
                 document.getElementById('log-status').innerText = "❌ 刷新失败: " + e.message; 
             }
         }
+
+        // --- 高塔配置管理区 ---
+        function bindTowerConfigUI(conf) {
+            document.getElementById('tc_free').value = conf.freePlays;
+            document.getElementById('tc_max').value = conf.maxRewards;
+            document.getElementById('tc_n_t').value = conf.normal.ticket;
+            document.getElementById('tc_n_r').value = conf.normal.reward;
+            document.getElementById('tc_h_t').value = conf.hard.ticket;
+            document.getElementById('tc_h_r').value = conf.hard.reward;
+            document.getElementById('tc_s_t').value = conf.survival.ticket;
+            document.getElementById('tc_s_r').value = conf.survival.reward;
+        }
+
+        async function saveTowerConfig() {
+            const conf = {
+                freePlays: parseInt(document.getElementById('tc_free').value),
+                maxRewards: parseInt(document.getElementById('tc_max').value),
+                normal: { ticket: parseInt(document.getElementById('tc_n_t').value), reward: parseInt(document.getElementById('tc_n_r').value) },
+                hard: { ticket: parseInt(document.getElementById('tc_h_t').value), reward: parseInt(document.getElementById('tc_h_r').value) },
+                survival: { ticket: parseInt(document.getElementById('tc_s_t').value), reward: parseInt(document.getElementById('tc_s_r').value) }
+            };
+            document.getElementById('log-status').innerText = "正在覆写高塔法则...";
+            const { error } = await dbClient.from('gamedata').update({ towerConfig: conf }).eq('id', ROW_ID);
+            if(!error) { alert("高塔法则覆写成功！孩子端已同步。"); getCoins(); }
+            else { alert("保存失败，请检查网络！"); }
+        }
+        // --- 高塔配置结束 ---
 
         function renderLogs(logs) {
             const logContainer = document.getElementById('childLogList');

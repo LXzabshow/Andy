@@ -23,7 +23,7 @@
         .rank-badge:active { transform: scale(0.95); }
         .rank-badge::after { content: ' 🔍'; font-size: 14px; opacity: 0.8; }
 
-        /* 💡 UI横向堆叠优化：移除文字，缩小槽位，同行展示 */
+        /* UI空间释放重构 */
         .slot { background: #8b8b8b; width: 75px; height: 75px; margin: 0; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; flex-shrink: 0;}
         .slot:active .coin-icon { transform: scale(0.8); }
         .coin-icon { font-size: 45px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
@@ -75,10 +75,16 @@
         .in-cd { cursor: not-allowed; opacity: 0.8; }
         .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
 
-        #schulteGrid { display: grid; width: 100%; aspect-ratio: 1; gap: 5px; background: #373737; padding: 6px; border: 4px solid #000; box-shadow: inset -3px -3px #fff, inset 3px 3px #111; }
-        .schulte-cell { background: #c6c6c6; border: 3px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; cursor: pointer; aspect-ratio: 1; transition: transform 0.05s; }
+        /* 高塔引擎优化：移除强制覆盖，允许药水干扰挂载 */
+        #schulteGrid { display: grid; width: 100%; aspect-ratio: 1; gap: 5px; background: #373737; padding: 6px; border: 4px solid #000; box-shadow: inset -3px -3px #fff, inset 3px 3px #111; touch-action: none; /* 防止多点触控的浏览器默认放大缩放缩 */ }
+        .schulte-cell { background: #c6c6c6; border: 3px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; cursor: pointer; aspect-ratio: 1; transition: transform 0.05s, filter 0.3s; }
         .schulte-cell:active { transform: scale(0.92); }
-        .schulte-cell.correct { background: #2ecc71 !important; color: #fff !important; box-shadow: inset 3px 3px rgba(255,255,255,0.4), inset -3px -3px rgba(0,0,0,0.4) !important; cursor: not-allowed !important; }
+        .schulte-cell.correct { background: #2ecc71 !important; color: #fff !important; box-shadow: inset 3px 3px rgba(255,255,255,0.4), inset -3px -3px rgba(0,0,0,0.4) !important; cursor: not-allowed !important; filter: none !important;}
+        .schulte-cell.debuff { background: #111 !important; color: #444 !important; filter: blur(1px); } /* 生存模式干扰 */
+
+        /* 飘字特效容器 */
+        .fly-text { position: fixed; z-index: 1000; font-family: 'VT323', monospace; font-size: 40px; font-weight: bold; text-shadow: 2px 2px #000, -2px -2px #000, 2px -2px #000, -2px 2px #000; pointer-events: none; opacity: 1; animation: floatUp 1s cubic-bezier(0.1, 0.8, 0.3, 1) forwards; }
+        @keyframes floatUp { 0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -20px) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -60px) scale(1); opacity: 0; } }
 
         .rank-list-item { background: #fff; border: 2px solid #555; padding: 12px; margin-bottom: 10px; text-align: left; font-family: -apple-system, sans-serif; }
         .rank-list-item.unlocked { border-left-width: 6px; background: #f0f8ff; }
@@ -221,8 +227,9 @@
             <div id="gameMenu">
                 <div id="gameRemainingCount" style="color: #000; font-weight: bold; margin-bottom: 20px; font-size: 16px; text-shadow: 1px 1px #fff; background: rgba(255,255,255,0.7); padding: 8px; border: 2px solid #555;">...</div>
                 
-                <button class="btn-main-action" onclick="attemptStartGame(6)" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 攀登高塔 (6x6)</button>
-                <button class="btn-main-action" onclick="attemptStartGame(7)" style="background: #c0392b; margin-bottom: 20px; font-size:22px;">🔴 极限高塔 (7x7)</button>
+                <button class="btn-main-action" onclick="attemptStartGame('normal')" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 攀登高塔 (6x6)</button>
+                <button class="btn-main-action" onclick="attemptStartGame('hard')" style="background: #e67e22; margin-bottom: 12px; font-size:22px;">🔴 极限高塔 (7x7)</button>
+                <button class="btn-main-action" onclick="attemptStartGame('survival')" style="background: #8e44ad; margin-bottom: 20px; font-size:22px;">💀 凋零高塔 (生存)</button>
                 <button class="btn-close-modal" onclick="closeGameModal()">离开高塔</button>
             </div>
             <div id="gamePlay" style="display: none; flex-direction: column; align-items: center; width: 100%;">
@@ -328,7 +335,10 @@
         let currentData = null, pendingAction = null; 
         const ROW_ID = 1;
 
-        let isGameRunning = false, currentGameSize = 6, nextTargetNum = 1, gameClockTimer = null, gameTimeRemaining = 40, gameStartTime = 0;
+        // --- 高塔试炼核心变量 ---
+        let isGameRunning = false, currentTowerMode = 'normal', currentGameSize = 6;
+        let nextTargetNum = 1, gameClockTimer = null, potionTimer = null, gameTimeRemaining = 40, gameStartTime = 0;
+        let comboCount = 0, maxCombo = 0, lastHitTime = 0;
 
         const RANK_DATA = [
             { rank: 1, cap: 200, cost: 150, title: "🪵 新手伐木工", color: "#8B5A2B", bg: "#d2b48c", pageBg: "#76b5fe", nightBg: "#1d3557" },
@@ -410,6 +420,9 @@
                     record.schulteDaily.playCount = record.schulteDaily.count;
                     delete record.schulteDaily.count;
                 }
+
+                // 高塔云端经济学字典兜底
+                record.towerConfig = record.towerConfig || { freePlays:5, maxRewards:5, normal:{ticket:1, reward:2}, hard:{ticket:1, reward:4}, survival:{ticket:2, reward:6} };
                 
                 record = await checkAndApplyDailyDeduction(record);
                 currentData = record;
@@ -620,7 +633,7 @@
             const action = pendingAction; closeConfirmModal();
             if (action.actionType === 'reward') await proceedWithReward(action.data);
             else if (action.actionType === 'buy') await proceedWithBuy(action.data);
-            else if (action.actionType === 'schulteTicket') await executeStartGame(action.data.size, true);
+            else if (action.actionType === 'schulteTicket') await executeStartGame(action.data.mode, true);
         }
 
         async function proceedWithBuy(item) {
@@ -652,93 +665,95 @@
             } catch (e) { alert("申报异常，请重试"); }
         }
 
-        // 💡 视觉拦截阻断与高塔文案重构
+        // 🏰 全新高塔引擎：包含动态经济配置、单指防作弊与Combo连击
         function openGameModal() {
-            if (!currentData) return;
+            if (!currentData || !currentData.towerConfig) return;
             [sModal, rModal, lModal, cfModal, rankModal].forEach(m => { if(m) m.style.display = 'none'; });
             gModal.style.display = 'flex'; backToGameMenu();
         }
         function closeGameModal() { quitGameSession(); gModal.style.display = 'none'; }
         
         function backToGameMenu() {
-            clearInterval(gameClockTimer); isGameRunning = false;
+            clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false;
             document.getElementById('gameMenu').style.display = 'block'; document.getElementById('gamePlay').style.display = 'none'; document.getElementById('gameResult').style.display = 'none';
             
             let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
-            if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; }
             let today = getTodayStr();
             let pCount = (schulte.lastDate === today) ? schulte.playCount : 0;
             let wCount = (schulte.lastDate === today) ? schulte.winCount : 0;
             
-            let freeLeft = Math.max(0, 5 - pCount);
-            let rewardLeft = Math.max(0, 5 - wCount);
+            let cfg = currentData.towerConfig;
+            let freeLeft = Math.max(0, cfg.freePlays - pCount);
+            let rewardLeft = Math.max(0, cfg.maxRewards - wCount);
             
             document.getElementById('gameRemainingCount').innerHTML = 
-                `<div style="margin-bottom:8px;">🎫 今日免费开局剩余: <span style="color:${freeLeft > 0 ? '#27ae60' : '#c0392b'};">${freeLeft}</span> / 5</div>
-                 <div>🎁 今日有效领奖剩余: <span style="color:${rewardLeft > 0 ? '#e67e22' : '#c0392b'};">${rewardLeft}</span> / 5</div>`;
+                `<div style="margin-bottom:8px;">🎫 今日免费开局剩余: <span style="color:${freeLeft > 0 ? '#27ae60' : '#c0392b'};">${freeLeft}</span> / ${cfg.freePlays}</div>
+                 <div>🎁 今日有效领奖剩余: <span style="color:${rewardLeft > 0 ? '#e67e22' : '#c0392b'};">${rewardLeft}</span> / ${cfg.maxRewards}</div>`;
         }
 
-        function attemptStartGame(size) {
+        function attemptStartGame(mode) {
             let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
-            if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; }
             let today = getTodayStr();
             let pCount = (schulte.lastDate === today) ? schulte.playCount : 0;
+            let cfg = currentData.towerConfig;
+            let requiredTicket = cfg[mode].ticket;
             
-            if (pCount >= 5) {
-                if (currentData.coins < 1) {
-                    playSound('fuse');
-                    alert("❌ 行囊硬币不足，无法支付高塔门票！");
-                    return;
+            if (pCount >= cfg.freePlays) {
+                if (currentData.coins < requiredTicket) {
+                    playSound('fuse'); alert("❌ 行囊硬币不足，无法支付高塔门票！"); return;
                 }
-                document.getElementById('confirmText').innerHTML = `🎫 今日高塔免费进入次数已用完。<br><br>开启本次秘境将<span style="color:#c0392b;">消耗 1 🪙</span> 门票，<br>是否支付并进入？`;
-                pendingAction = { actionType: 'schulteTicket', data: { size: size } };
+                document.getElementById('confirmText').innerHTML = `🎫 今日高塔免费进入次数已用完。<br><br>开启本次秘境将<span style="color:#c0392b;">消耗 ${requiredTicket} 🪙</span> 门票，<br>是否支付并进入？`;
+                pendingAction = { actionType: 'schulteTicket', data: { mode: mode } };
                 if(cfModal) cfModal.style.display = 'flex';
             } else {
-                executeStartGame(size, false);
+                executeStartGame(mode, false);
             }
         }
 
-        async function executeStartGame(size, isPaidLocally) {
+        async function executeStartGame(mode, isPaidLocally) {
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0]; let today = getTodayStr();
                 let schulte = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
-                if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; delete schulte.count; }
                 if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
+                let cfg = record.towerConfig;
+                let requiredTicket = cfg[mode].ticket;
                 
                 let newCoins = record.coins;
                 let logs = record.childLogs || [];
                 
-                let needsPayment = schulte.playCount >= 5;
+                let needsPayment = schulte.playCount >= cfg.freePlays;
                 if (needsPayment && !isPaidLocally) {
-                    alert("⚠️ 数据状态已刷新，请重新点击进入高塔！");
-                    syncData(); 
-                    return;
+                    alert("⚠️ 数据状态已刷新，请重新点击进入高塔！"); syncData(); return;
                 }
-                if (needsPayment && newCoins < 1) {
-                    alert("❌ 云端校验拦截：余额不足以支付门票！");
-                    syncData();
-                    return;
+                if (needsPayment && newCoins < requiredTicket) {
+                    alert("❌ 云端校验拦截：余额不足以支付门票！"); syncData(); return;
                 }
                 
                 if (needsPayment) {
-                    newCoins -= 1;
-                    logs.unshift({ time: getFormattedTime(), action: `支付高塔门票`, amount: -1 });
+                    newCoins -= requiredTicket;
+                    logs.unshift({ time: getFormattedTime(), action: `支付高塔门票 (${mode})`, amount: -requiredTicket });
                 }
                 
                 schulte.playCount += 1;
-                
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte };
                 localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins);
                 
-                startGameSession(size);
+                startGameSession(mode);
             } catch(e) { alert("网络异常，无法开启高塔秘境，请检查连接"); }
         }
 
-        function startGameSession(size) {
-            currentGameSize = size; nextTargetNum = 1; gameTimeRemaining = (size === 6) ? 40 : 75; isGameRunning = true;
+        function startGameSession(mode) {
+            currentTowerMode = mode;
+            currentGameSize = (mode === 'normal') ? 6 : 7;
+            nextTargetNum = 1; gameStartTime = Date.now();
+            comboCount = 0; maxCombo = 0; lastHitTime = gameStartTime;
             
-            // 💡 物理阻断拦截：暴力拉起父级蒙版，强制接管屏幕
+            // 倒计时映射配置
+            gameTimeRemaining = (mode === 'normal') ? 40 : 75; 
+            isGameRunning = true;
+            
+            // 💡 物理阻断拦截，确保高塔UI凌驾一切之上
             document.getElementById('gameModal').style.display = 'flex';
             
             document.getElementById('gameMenu').style.display = 'none'; 
@@ -747,51 +762,111 @@
             document.getElementById('gameTargetNum').innerText = nextTargetNum; 
             document.getElementById('gameTimerText').innerText = gameTimeRemaining;
 
-            let totalCells = size * size; let numberPool = [];
+            let totalCells = currentGameSize * currentGameSize; let numberPool = [];
             for(let i = 1; i <= totalCells; i++) numberPool.push(i);
             for(let i = numberPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]]; }
 
-            const gridContainer = document.getElementById('schulteGrid'); gridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`; gridContainer.innerHTML = '';
+            const gridContainer = document.getElementById('schulteGrid'); 
+            gridContainer.style.gridTemplateColumns = `repeat(${currentGameSize}, 1fr)`; 
+            gridContainer.innerHTML = '';
+            
             numberPool.forEach(num => { 
                 const cell = document.createElement('div'); 
                 cell.className = 'schulte-cell'; 
                 cell.innerText = num; 
-                cell.style.fontSize = size === 7 ? '20px' : '24px';
+                cell.style.fontSize = currentGameSize === 7 ? '20px' : '24px';
                 cell.onclick = () => handleCellClick(cell, num); 
                 gridContainer.appendChild(cell); 
             });
 
-            clearInterval(gameClockTimer); gameStartTime = Date.now();
+            // 💡 严格防多点触控（时空坍塌）
+            gridContainer.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                    e.preventDefault(); triggerAntiCheat();
+                }
+            }, {passive: false});
+
+            clearInterval(gameClockTimer); clearInterval(potionTimer);
+            
+            // 生存难度 动态视觉盲区干扰
+            if (mode === 'survival') {
+                potionTimer = setInterval(() => {
+                    if(!isGameRunning) { clearInterval(potionTimer); return; }
+                    let cells = Array.from(document.querySelectorAll('.schulte-cell:not(.correct)'));
+                    if(cells.length > 5) {
+                        for(let i=0; i<3; i++) {
+                            let rIdx = Math.floor(Math.random() * cells.length);
+                            let target = cells[rIdx];
+                            if(!target.classList.contains('debuff')) {
+                                target.classList.add('debuff');
+                                setTimeout(() => { target.classList.remove('debuff'); }, 1500);
+                            }
+                        }
+                    }
+                }, 2500);
+            }
+
             gameClockTimer = setInterval(() => { gameTimeRemaining--; document.getElementById('gameTimerText').innerText = gameTimeRemaining; if(gameTimeRemaining <= 0) endGameSession(false); }, 1000);
+        }
+
+        function showComboText(text) {
+            let el = document.createElement('div');
+            el.className = 'fly-text';
+            el.style.color = '#ffb700';
+            el.style.left = '50%';
+            el.style.top = '40%';
+            el.innerText = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        function triggerAntiCheat() {
+            if(!isGameRunning) return;
+            clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false;
+            document.getElementById('gamePlay').style.display = 'none';
+            const resultBox = document.getElementById('gameResult');
+            resultBox.style.display = 'block';
+            document.getElementById('gameResultTitle').innerText = "🚨 时空坍塌！";
+            document.getElementById('gameResultTitle').style.color = "#c0392b";
+            document.getElementById('gameResultDesc').innerText = "检测到多点触控作弊！末影人已将高塔封锁。请收起副手，保持对决的纯粹。本次门票不予退还！";
+            document.getElementById('btnGameRetry').innerText = "重新接受试炼";
+            playSound('explode');
         }
 
         function handleCellClick(cell, num) {
             if(!isGameRunning || cell.classList.contains('correct')) return;
             if(num === nextTargetNum) {
                 cell.classList.add('correct'); clickCoin(); nextTargetNum++;
+                
+                // 💡 核心 Combo 连击判定
+                let now = Date.now();
+                if (now - lastHitTime <= 1500) {
+                    comboCount++;
+                    if (comboCount > maxCombo) maxCombo = comboCount;
+                    if ([5, 10, 15, 20, 30].includes(comboCount)) showComboText("Combo x" + comboCount + "!");
+                } else comboCount = 1;
+                lastHitTime = now;
+
                 if(nextTargetNum > currentGameSize * currentGameSize) endGameSession(true);
                 else document.getElementById('gameTargetNum').innerText = nextTargetNum;
             } else { 
                 playSound('fuse'); 
-                cell.style.backgroundColor = '#c0392b';
-                cell.style.color = '#fff';
+                comboCount = 0; // 断连击
+                cell.style.backgroundColor = '#c0392b'; cell.style.color = '#fff';
                 if(cell.wrongTimeout) clearTimeout(cell.wrongTimeout);
-                cell.wrongTimeout = setTimeout(() => {
-                    cell.style.backgroundColor = '';
-                    cell.style.color = '';
-                }, 200);
+                cell.wrongTimeout = setTimeout(() => { cell.style.backgroundColor = ''; cell.style.color = ''; }, 200);
             }
         }
 
-        function quitGameSession() { clearInterval(gameClockTimer); isGameRunning = false; backToGameMenu(); }
+        function quitGameSession() { clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; backToGameMenu(); }
 
         async function endGameSession(isWin) {
-            clearInterval(gameClockTimer); isGameRunning = false;
+            clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false;
             document.getElementById('gamePlay').style.display = 'none';
             const resultBox = document.getElementById('gameResult'); const rTitle = document.getElementById('gameResultTitle'); const rDesc = document.getElementById('gameResultDesc'); const rBtn = document.getElementById('btnGameRetry');
             resultBox.style.display = 'block'; 
             
-            rBtn.onclick = () => attemptStartGame(currentGameSize);
+            rBtn.onclick = () => attemptStartGame(currentTowerMode);
 
             if(!isWin) {
                 playSound('explode'); rTitle.innerText = "⏳ 攀塔超时 (失败)"; rTitle.style.color = "#c0392b";
@@ -804,28 +879,29 @@
             let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr();
             if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
 
-            if(schulte.winCount < 5) {
-                let rewardAmt = (currentGameSize === 6) ? 3 : 5;
-                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了 ${currentGameSize}x${currentGameSize} 高塔层！<br><br>🎁 战利品：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日有效领奖次数: ${schulte.winCount + 1} / 5 次)`;
-                rBtn.innerText = "继续向上攀登"; await uploadSchulteWin(rewardAmt);
+            let cfg = currentData.towerConfig;
+            let rewardAmt = cfg[currentTowerMode].reward;
+            let comboBadge = maxCombo >= 10 ? `<br><br>✨ <span style="color:#8e44ad; font-weight:bold;">隐藏成就：你达到了惊人的最高连击数 [Combo x${maxCombo}]，视觉引擎运转堪称完美！</span>` : "";
+
+            if(schulte.winCount < cfg.maxRewards) {
+                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了高塔层！<br><br>🎁 战利品：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日有效领奖次数: ${schulte.winCount + 1} / ${cfg.maxRewards} 次) ${comboBadge}`;
+                rBtn.innerText = "继续向上攀登"; await uploadSchulteWin(rewardAmt, currentTowerMode);
             } else {
-                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过高塔试炼！<br><br>⚠️ 提示：今日 5 次高塔战利品已被装满。本次攀登不再产出硬币，继续保持专注度，锤炼你的视界引擎！`;
+                rDesc.innerHTML = `卓越的视界与专注！你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过高塔试炼！<br><br>⚠️ 提示：今日高塔战利品上限已满。本次攀登不再产出硬币，继续保持专注度，锤炼你的视界引擎！ ${comboBadge}`;
                 rBtn.innerText = "纯粹攀塔模式";
             }
         }
 
-        async function uploadSchulteWin(rewardAmt) {
+        async function uploadSchulteWin(rewardAmt, mode) {
             try {
                 const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID); let record = data[0]; let today = getTodayStr();
                 let schulte = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; 
-                if (schulte.count !== undefined) { schulte.winCount = schulte.count; schulte.playCount = schulte.count; delete schulte.count; }
                 if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
                 
                 schulte.winCount += 1; 
-                
                 let newCoins = record.coins + rewardAmt;
                 const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; if(newCoins > maxCap) newCoins = maxCap;
-                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `高塔试炼成功 (${currentGameSize}x${currentGameSize})`, amount: rewardAmt });
+                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `高塔试炼通关 (${mode})`, amount: rewardAmt });
 
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
                 currentData = { ...record, coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte };

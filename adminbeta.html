@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家长控制面板</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px 10px; background: #121212; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 15px; }
+        .card { background: #1e1e1e; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #333; }
+        .card-header h3 { margin: 0; color: #888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center;}
+        .rank-info { font-size: 12px; color: #ffb700; background: #333; padding: 3px 8px; border-radius: 4px;}
+        .big-num { font-size: 60px; font-weight: bold; margin: 10px 0 20px 0; color: #ffb700; text-align: center; font-family: 'Courier New', monospace;}
+        .cap-text { font-size: 12px; color: #888; text-align: center; margin-top: -15px; margin-bottom: 15px; }
+        
+        .log-item { background: #252525; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; border-left: 4px solid #007aff; display: flex; justify-content: space-between; }
+        .log-time { color: #888; font-family: monospace; font-size: 11px; margin-right: 8px; min-width: 80px;}
+        .log-action { color: #ddd; font-weight: bold; flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .log-amount { color: #27ae60; font-weight: bold; min-width: 30px; text-align: right; }
+        .log-amount.sub { color: #e74c3c; }
+        .log-amount.milestone { color: #ffb700; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;}
+        button { padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.1s; }
+        button:active { transform: scale(0.95); }
+        .btn-add { background: #1c7a44; color: white; }
+        .btn-sub { background: #962d22; color: white; }
+        .btn-primary { background: #007aff; color: white; width: 100%; }
+        .btn-danger { background: #c0392b; color: white; padding: 8px; font-size: 12px; }
+        .btn-success { background: #27ae60; color: white; }
+        .input-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #121212; color: white; font-size: 15px; box-sizing: border-box; }
+        textarea.input-box { resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5; }
+        
+        .flex-row { display: flex; justify-content: space-between; align-items: center; }
+        .switch { position: relative; width: 44px; height: 24px; display: inline-block; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #34c759; }
+        input:checked + .slider:before { transform: translateX(20px); }
+        
+        #log-status { color: #888; font-size: 12px; text-align: center; padding: 10px; }
+
+        .shop-item { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #444;}
+        .buff-item { background: rgba(139,0,0,0.2); border-left: 4px solid #ffb700; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .config-input { width: 60px; padding: 5px; text-align: center; border-radius: 4px; border: 1px solid #555; background: #222; color: #fff;}
+        .badge-milestone { background: #8e44ad; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+
+        .contract-box { background: #2c3e50; border: 2px dashed #e67e22; border-radius: 8px; padding: 15px; margin-top: 10px; }
+    </style>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 资产操作区 -->
+        <div class="card">
+            <div class="card-header">
+                <h3>💰 资产余额</h3>
+                <span id="rankBadge" class="rank-info">读取中...</span>
+            </div>
+            <div id="currentCoins" class="big-num">...</div>
+            <div id="capText" class="cap-text">背包容量上限: ---</div>
+            
+            <div style="margin-top: 5px;">
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="number" id="manualInput" class="input-box" style="flex:1;" placeholder="数额">
+                    <input type="text" id="manualReason" class="input-box" style="flex:2;" placeholder="输入增减理由 (选填)">
+                </div>
+                <div class="grid">
+                    <button class="btn-add" onclick="manualMod(1)">奖励 (+)</button>
+                    <button class="btn-sub" onclick="manualMod(-1)">扣减 (-)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 契约审批中心 -->
+        <div class="card">
+            <div class="card-header"><h3 style="color:#e67e22;">📜 对赌契约中心</h3></div>
+            <div id="adminContractArea">
+                <div style="text-align:center; color:#555; padding:15px;">暂无进行中的契约</div>
+            </div>
+        </div>
+
+        <!-- 实时BUFF监控 -->
+        <div class="card">
+            <div class="card-header"><h3 id="buffCardTitle">✨ 生效中的特权 (BUFF)</h3></div>
+            <div id="adminBuffList" style="margin-top: 10px;">
+                <div style="text-align:center; color:#555; padding:10px;">暂无生效状态</div>
+            </div>
+        </div>
+
+        <!-- 高塔经济学配置面板 -->
+        <div class="card">
+            <div class="card-header"><h3 style="color:#d35400;">🏰 高塔经济学配置</h3></div>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-top:15px; font-size: 14px;">
+                <div class="flex-row">
+                    <span style="color:#aaa;">每日免费次数:</span>
+                    <input type="number" id="tc_free" class="config-input">
+                </div>
+                <div class="flex-row">
+                    <span style="color:#aaa;">每日领奖上限:</span>
+                    <input type="number" id="tc_max" class="config-input">
+                </div>
+                <hr style="border-color:#333; margin:0;">
+                <div class="flex-row">
+                    <span style="color:#2ecc71; font-weight:bold;">🟢 普通(6x6)</span>
+                    <div>门票: <input type="number" id="tc_n_t" class="config-input" style="width:45px;"> | 奖: <input type="number" id="tc_n_r" class="config-input" style="width:45px;"></div>
+                </div>
+                <div class="flex-row">
+                    <span style="color:#e74c3c; font-weight:bold;">🔴 困难(7x7)</span>
+                    <div>门票: <input type="number" id="tc_h_t" class="config-input" style="width:45px;"> | 奖: <input type="number" id="tc_h_r" class="config-input" style="width:45px;"></div>
+                </div>
+                <div class="flex-row">
+                    <span style="color:#9b59b6; font-weight:bold;">💀 生存(7x7)</span>
+                    <div>门票: <input type="number" id="tc_s_t" class="config-input" style="width:45px;"> | 奖: <input type="number" id="tc_s_r" class="config-input" style="width:45px;"></div>
+                </div>
+                <button class="btn-primary" onclick="saveTowerConfig()" style="background:#d35400; margin-top:5px;">💾 覆写高塔法则</button>
+            </div>
+        </div>
+
+        <!-- 增减记录 -->
+        <div class="card">
+            <div class="card-header"><h3>🕒 增减记录</h3></div>
+            <div id="childLogList" style="margin-top:10px;">
+                <div style="text-align:center; color:#555; padding:20px;">暂无记录</div>
+            </div>
+        </div>
+
+        <!-- 动态悬赏任务管理 -->
+        <div class="card">
+            <div class="card-header"><h3>⚔️ 任务告示牌管理</h3></div>
+            <div style="margin-top: 15px; display:flex; flex-direction: column; gap: 10px;">
+                <div style="display:flex; gap:10px;">
+                    <select id="t_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
+                        <option value="🏃">🏃</option><option value="🧪">🧪</option><option value="📝">📝</option><option value="🌋">🌋</option><option value="⚡">⚡</option><option value="🪶">🪶</option><option value="📖">📖</option><option value="📚">📚</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="⛏️">⛏️</option><option value="🧹">🧹</option><option value="🧠">🧠</option><option value="🎹">🎹</option>
+                    </select>
+                    <input type="text" id="t_name" class="input-box" style="flex:3;" placeholder="任务名称">
+                </div>
+                <input type="text" id="t_desc" class="input-box" placeholder="任务规则描述">
+                
+                <!-- 里程碑绑定下拉框 -->
+                <select id="t_milestone" class="input-box" style="color: #ffb700; border-color: #8e44ad;">
+                    <option value="">(无里程碑绑定)</option>
+                    <option value="run">🏃 挂载追踪: 跑步</option>
+                    <option value="jump">🪶 挂载追踪: 跳绳</option>
+                    <option value="read">📖 挂载追踪: 阅读</option>
+                    <option value="piano">🎹 挂载追踪: 钢琴</option>
+                </select>
+
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="t_price" class="input-box" style="flex:1;" placeholder="奖励(币)">
+                    <input type="number" id="t_hours" class="input-box" style="flex:1;" placeholder="冷却(小时)">
+                </div>
+                <button class="btn-primary" onclick="addTaskItem()" style="background:#27ae60;">➕ 上架新任务</button>
+            </div>
+            <div id="adminTaskList" style="margin-top: 15px;"></div>
+        </div>
+
+        <!-- 神秘商店货架管理 -->
+        <div class="card">
+            <div class="card-header"><h3>🛒 神秘商店管理</h3></div>
+            <div style="margin-top: 15px; display:flex; flex-direction: column; gap: 10px;">
+                <div style="display:flex; gap:10px;">
+                    <select id="s_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
+                        <option value="🎫">🎫</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="⛏️">⛏️</option><option value="🪓">🪓</option><option value="💎">💎</option><option value="🥇">🥇</option><option value="🟢">🟢</option><option value="🔮">🔮</option><option value="🪵">🪵</option><option value="🪨">🪨</option><option value="🧪">🧪</option><option value="⚡">⚡</option><option value="✨">✨</option><option value="📜">📜</option><option value="🍎">🍎</option><option value="🍖">🍖</option><option value="🍞">🍞</option><option value="🗝️">🗝️</option><option value="👑">👑</option><option value="🪟">🪟</option>
+                    </select>
+                    <input type="text" id="s_name" class="input-box" style="flex:3;" placeholder="商品名称">
+                </div>
+                <input type="text" id="s_desc" class="input-box" placeholder="兑换权益描述">
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="s_price" class="input-box" style="flex:1;" placeholder="售价(币)">
+                    <input type="number" id="s_hours" class="input-box" style="flex:1;" placeholder="时效(小时)">
+                </div>
+                <button class="btn-primary" onclick="addShopItem()">➕ 部署上架</button>
+            </div>
+            <div id="shopList" style="margin-top: 15px;"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>⚙️ 自动化扣除规则</h3></div>
+            <div class="flex-row" style="margin-top:15px;">
+                <span>每日自动消耗:</span>
+                <label class="switch">
+                    <input type="checkbox" id="dailyToggle" onchange="saveDaily()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="flex-row" style="margin-top:10px;">
+                <span>每日数额:</span>
+                <input type="number" id="dailyAmount" class="input-box" style="width:70px; padding:5px; text-align:center;" onchange="saveDaily()">
+            </div>
+        </div>
+        <div id="log-status">数据建立握手...</div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
+        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentData = null;
+        const ROW_ID = 1; 
+
+        const RANK_DATA = [
+            { rank: 1, cap: 200, title: "🪵 新手伐木工" }, { rank: 2, cap: 350, title: "🪨 洞穴探索者" }, { rank: 3, cap: 600, title: "🛡️ 铁甲护卫" },
+            { rank: 4, cap: 1000, title: "🥇 寻金探险家" }, { rank: 5, cap: 1500, title: "⚡ 红石工程师" }, { rank: 6, cap: 2500, title: "💎 钻石先锋" },
+            { rank: 7, cap: 4000, title: "🔮 黑曜石行者" }, { rank: 8, cap: 6000, title: "🟢 绿宝石领主" }, { rank: 9, cap: 10000, title: "🔥 合金战神" }, { rank: 10, cap: Infinity, title: "🐲 末影屠龙者" }
+        ];
+
+        const MILESTONES = [
+            { count: 5, reward: 50, name: "铁阶" }, { count: 10, reward: 100, name: "金阶" }, { count: 20, reward: 250, name: "钻石" },
+            { count: 30, reward: 400, name: "绿宝石" }, { count: 50, reward: 600, name: "下界之星" }, { count: 75, reward: 900, name: "龙蛋" }, { count: 100, reward: 1500, name: "终界信标" }
+        ];
+
+        const MS_NAMES = { run: '跑步', jump: '跳绳', contract: '契约完成', read: '阅读', piano: '钢琴' };
+
+        function getTodayStr() { 
+            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+            let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
+            return `${y}-${m}-${d}`;
+        }
+
+        function getFormattedTime() {
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const mins = String(now.getMinutes()).padStart(2, '0');
+            return `${month}-${day} ${hours}:${mins}`;
+        }
+
+        async function getCoins() {
+            try {
+                const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
+                if (error) throw error;
+                if(!data || data.length === 0) return;
+                
+                currentData = data[0];
+                currentData.currentRank = currentData.currentRank || 1;
+                currentData.shopItems = currentData.shopItems || [];
+                currentData.activeBuffs = currentData.activeBuffs || {};
+                currentData.taskItems = currentData.taskItems || [];
+                currentData.schulteDaily = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
+                currentData.milestones = currentData.milestones || { run: 0, jump: 0, contract: 0, read: 0, piano: 0 };
+                currentData.milestoneClaimed = currentData.milestoneClaimed || { run: [], jump: [], contract: [], read: [], piano: [] };
+                
+                if(!currentData.towerConfig) {
+                    currentData.towerConfig = { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
+                }
+                bindTowerConfigUI(currentData.towerConfig);
+                
+                let rData = RANK_DATA[currentData.currentRank - 1];
+                document.getElementById('currentCoins').innerText = currentData.coins;
+                document.getElementById('rankBadge').innerText = `${rData.title} (Lv.${currentData.currentRank})`;
+                document.getElementById('capText').innerText = `当前背包容量上限: ${rData.cap === Infinity ? '无限' : rData.cap}`;
+                
+                let sWin = (currentData.schulteDaily.lastDate === getTodayStr()) ? currentData.schulteDaily.winCount : 0;
+                let sPlay = (currentData.schulteDaily.lastDate === getTodayStr()) ? currentData.schulteDaily.playCount : 0;
+                let tMax = currentData.towerConfig.maxRewards;
+                document.getElementById('buffCardTitle').innerText = `✨ 特权监控 (今日高塔 - 开局:${sPlay}次 | 领奖:${sWin}/${tMax})`;
+
+                renderLogs(currentData.childLogs);
+                renderShopItems(currentData.shopItems);
+                renderTaskItems(currentData.taskItems);
+                renderContract(currentData.activeContract);
+                
+                if(currentData.dailyConfig) {
+                    document.getElementById('dailyToggle').checked = currentData.dailyConfig.enabled;
+                    document.getElementById('dailyAmount').value = currentData.dailyConfig.amount;
+                }
+                document.getElementById('log-status').innerText = "✅ 数据同步良好 - " + new Date().toLocaleTimeString();
+            } catch (e) { 
+                document.getElementById('log-status').innerText = "❌ 刷新失败: " + e.message; 
+            }
+        }
+
+        function renderContract(contract) {
+            const container = document.getElementById('adminContractArea');
+            if(!contract) {
+                container.innerHTML = '<div style="text-align:center; color:#555; padding:15px;">暂无进行中的契约</div>';
+                return;
+            }
+            if(contract.status === 'pending') {
+                container.innerHTML = `
+                    <div class="contract-box">
+                        <div style="color:#f1c40f; font-weight:bold; font-size:16px; margin-bottom:10px;">⚠️ 收到新契约申请</div>
+                        <div style="margin-bottom:8px;">🎯 目标: <span style="color:#fff;">${contract.desc}</span></div>
+                        <div style="margin-bottom:15px;">💰 已扣除质押: <span style="color:#e74c3c; font-weight:bold;">-${contract.wager} 币</span></div>
+                        
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                            <span style="color:#2ecc71;">动态修改胜利奖金:</span>
+                            <input type="number" id="contract_reward_mod" class="input-box" style="width:80px; padding:5px; text-align:center;" value="${contract.wager}">
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-primary" style="flex:1; background:#e74c3c;" onclick="processContract(false)">驳回 (退钱)</button>
+                            <button class="btn-primary" style="flex:1; background:#27ae60;" onclick="processContract(true)">批准生效</button>
+                        </div>
+                    </div>`;
+            } else if (contract.status === 'active') {
+                container.innerHTML = `
+                    <div class="contract-box" style="border-color:#27ae60;">
+                        <div style="color:#27ae60; font-weight:bold; font-size:16px; margin-bottom:10px;">🔥 契约正在执行中</div>
+                        <div style="margin-bottom:8px;">🎯 目标: <span style="color:#fff;">${contract.desc}</span></div>
+                        <div style="margin-bottom:8px;">💰 已质押: <span style="color:#aaa;">${contract.wager} 币</span></div>
+                        <div style="margin-bottom:15px;">🎁 成功奖金: <span style="color:#2ecc71; font-weight:bold;">${contract.reward} 币</span></div>
+                        
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-primary" style="flex:1; background:#c0392b;" onclick="settleContract(false)">判定失败 (吞没)</button>
+                            <button class="btn-primary" style="flex:1; background:#27ae60;" onclick="settleContract(true)">判定成功 (发奖)</button>
+                        </div>
+                    </div>`;
+            }
+        }
+
+        async function processContract(isApprove) {
+            let record = currentData;
+            let logs = record.childLogs || [];
+            let payload = {};
+
+            if(isApprove) {
+                let rAmt = parseInt(document.getElementById('contract_reward_mod').value);
+                if(isNaN(rAmt) || rAmt < 0) return alert("奖金数额无效");
+                record.activeContract.status = 'active';
+                record.activeContract.reward = rAmt;
+                payload.activeContract = record.activeContract;
+                logs.unshift({ time: getFormattedTime(), action: `⚖️ 契约已生效 (定额奖金 ${rAmt})`, amount: 0 });
+            } else {
+                let wager = record.activeContract.wager;
+                let newCoins = record.coins + wager;
+                payload.activeContract = null;
+                payload.coins = Math.min(newCoins, RANK_DATA[(record.currentRank||1)-1].cap);
+                logs.unshift({ time: getFormattedTime(), action: `⚖️ 契约遭驳回 (退还质押)`, amount: wager });
+            }
+            payload.childLogs = logs.slice(0, 10);
+            
+            document.getElementById('log-status').innerText = "写入云端...";
+            await dbClient.from('gamedata').update(payload).eq('id', ROW_ID);
+            getCoins();
+        }
+
+        async function settleContract(isSuccess) {
+            let record = currentData;
+            let contract = record.activeContract;
+            let logs = record.childLogs || [];
+            let payload = { activeContract: null };
+            let newCoins = record.coins;
+
+            if (isSuccess) {
+                let winAmount = contract.wager + contract.reward;
+                newCoins += winAmount;
+                logs.unshift({ time: getFormattedTime(), action: `✅ 契约完成: ${contract.desc}`, amount: winAmount });
+                
+                // 触发契约图鉴里程碑
+                record.milestones.contract++;
+                let count = record.milestones.contract;
+                for (let tier of MILESTONES) {
+                    if (count === tier.count && !record.milestoneClaimed.contract.includes(tier.count)) {
+                        newCoins += tier.reward;
+                        record.milestoneClaimed.contract.push(tier.count);
+                        logs.unshift({ time: getFormattedTime(), action: `🏆 契约里程碑达成: ${tier.name}`, amount: tier.reward });
+                    }
+                }
+                payload.milestones = record.milestones;
+                payload.milestoneClaimed = record.milestoneClaimed;
+            } else {
+                logs.unshift({ time: getFormattedTime(), action: `❌ 契约违约 (质押被深渊吞噬)`, amount: 0 });
+            }
+            
+            payload.coins = Math.min(newCoins, RANK_DATA[(record.currentRank||1)-1].cap);
+            payload.childLogs = logs.slice(0, 10);
+            
+            document.getElementById('log-status').innerText = "结算中...";
+            await dbClient.from('gamedata').update(payload).eq('id', ROW_ID);
+            getCoins();
+        }
+
+        function bindTowerConfigUI(conf) {
+            document.getElementById('tc_free').value = conf.freePlays; document.getElementById('tc_max').value = conf.maxRewards;
+            document.getElementById('tc_n_t').value = conf.normal.ticket; document.getElementById('tc_n_r').value = conf.normal.reward;
+            document.getElementById('tc_h_t').value = conf.hard.ticket; document.getElementById('tc_h_r').value = conf.hard.reward;
+            document.getElementById('tc_s_t').value = conf.survival.ticket; document.getElementById('tc_s_r').value = conf.survival.reward;
+        }
+
+        async function saveTowerConfig() {
+            const conf = {
+                freePlays: parseInt(document.getElementById('tc_free').value), maxRewards: parseInt(document.getElementById('tc_max').value),
+                normal: { ticket: parseInt(document.getElementById('tc_n_t').value), reward: parseInt(document.getElementById('tc_n_r').value) },
+                hard: { ticket: parseInt(document.getElementById('tc_h_t').value), reward: parseInt(document.getElementById('tc_h_r').value) },
+                survival: { ticket: parseInt(document.getElementById('tc_s_t').value), reward: parseInt(document.getElementById('tc_s_r').value) }
+            };
+            const { error } = await dbClient.from('gamedata').update({ towerConfig: conf }).eq('id', ROW_ID);
+            if(!error) { alert("高塔法则覆写成功！"); getCoins(); }
+        }
+
+        function renderLogs(logs) {
+            const logContainer = document.getElementById('childLogList');
+            if(logs && logs.length > 0) {
+                logContainer.innerHTML = logs.map(log => {
+                    let amountClass = log.amount > 0 ? "log-amount" : "log-amount sub";
+                    if (log.action.includes('🏆')) amountClass = "log-amount milestone";
+                    const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
+                    return `<div class="log-item"><span class="log-time">[${log.time}]</span><span class="log-action">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`;
+                }).join('');
+            } else {
+                logContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">暂无记录</div>';
+            }
+        }
+
+        function renderShopItems(items) {
+            const container = document.getElementById('shopList');
+            if(items.length === 0) { container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">货架空空如也</div>'; return; }
+            container.innerHTML = items.map(item => `
+                <div class="shop-item">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; font-size:15px; color:#ffb700;">${item.icon} ${item.name}</div>
+                        <div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div>
+                        <div style="font-size:12px; color:#27ae60;">💰 ${item.price} 币 | ⏳ ${item.hours} 小时</div>
+                    </div>
+                    <button class="btn-danger" onclick="deleteShopItem('${item.id}')">下架</button>
+                </div>`).join('');
+        }
+
+        function renderTaskItems(items) {
+            const container = document.getElementById('adminTaskList');
+            if(!container) return;
+            if(items.length === 0) { container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">告示牌空空如也</div>'; return; }
+            container.innerHTML = items.map(item => `
+                <div class="shop-item" style="border-color: #27ae60;">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; font-size:15px; color:#2ecc71;">${item.icon} ${item.name} ${item.milestone ? `<span class="badge-milestone">${MS_NAMES[item.milestone]}</span>` : ''}</div>
+                        <div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div>
+                        <div style="font-size:12px; color:#27ae60;">🪙 +${item.price} 币 | ⏳ 冷却: ${item.hours} 小时</div>
+                    </div>
+                    <button class="btn-danger" onclick="deleteTaskItem('${item.id}')">下架</button>
+                </div>`).join('');
+        }
+
+        async function addTaskItem() {
+            const icon = document.getElementById('t_icon').value;
+            const name = document.getElementById('t_name').value.trim();
+            const desc = document.getElementById('t_desc').value.trim();
+            const milestone = document.getElementById('t_milestone').value;
+            const price = parseInt(document.getElementById('t_price').value);
+            const hours = parseFloat(document.getElementById('t_hours').value);
+
+            if(!name || !desc || !price || !hours) return alert("请完整填写任务信息！");
+
+            let items = currentData.taskItems || [];
+            items.push({ id: 'task_' + Date.now(), icon, name, desc, milestone, price, hours });
+
+            document.getElementById('log-status').innerText = "上架中...";
+            const { error } = await dbClient.from('gamedata').update({ taskItems: items }).eq('id', ROW_ID);
+            if(!error) { document.getElementById('t_name').value = ''; document.getElementById('t_desc').value = ''; getCoins(); }
+        }
+
+        async function deleteTaskItem(id) {
+            if(!confirm("确定下架此项任务挑战吗？")) return;
+            let items = currentData.taskItems.filter(i => i.id !== id);
+            await dbClient.from('gamedata').update({ taskItems: items }).eq('id', ROW_ID);
+            getCoins();
+        }
+
+        function updateBuffTimers() {
+            if (!currentData || !currentData.activeBuffs) return;
+            const container = document.getElementById('adminBuffList');
+            const now = Date.now();
+            let hasActive = false;
+            let html = '';
+
+            for (const [id, buff] of Object.entries(currentData.activeBuffs)) {
+                const remain = buff.endTime - now;
+                if (remain > 0) {
+                    hasActive = true;
+                    let days = Math.floor(remain / (24 * 3600000)), hours = Math.floor((remain % (24 * 3600000)) / 3600000), mins = Math.floor((remain % 3600000) / 60000);
+                    let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}小时 ${mins}分`;
+                    html += `<div class="buff-item"><div style="font-weight:bold; color:#fff;">${buff.icon} ${buff.name}</div><div style="color:#ffb700; font-size:14px; font-weight:bold;">${timeStr}</div></div>`;
+                }
+            }
+            container.innerHTML = hasActive ? html : '<div style="text-align:center; color:#555; padding:10px;">暂无生效状态</div>';
+        }
+
+        async function modifyCoins(amount, reason) {
+            if (amount === 0) return;
+            let maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
+            let targetCoins = currentData.coins + amount;
+            let finalCoins = Math.max(0, Math.min(targetCoins, maxCap));
+            let actualDelta = finalCoins - currentData.coins;
+
+            if (actualDelta === 0) return alert("操作无效：已达容量上限或余额已为 0！");
+
+            let logs = currentData.childLogs || [];
+            logs.unshift({ time: getFormattedTime(), action: reason || (amount > 0 ? "手动奖励" : "手动扣减"), amount: actualDelta });
+            
+            await dbClient.from('gamedata').update({ coins: finalCoins, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
+            getCoins();
+        }
+
+        function manualMod(sign) {
+            let val = parseInt(document.getElementById('manualInput').value);
+            if(val > 0) { modifyCoins(val * sign, document.getElementById('manualReason').value.trim()); document.getElementById('manualInput').value = ""; document.getElementById('manualReason').value = ""; }
+        }
+
+        async function saveDaily() {
+            let dailyConfig = { enabled: document.getElementById('dailyToggle').checked, amount: parseInt(document.getElementById('dailyAmount').value) || 0, lastDeductDate: getTodayStr() };
+            await dbClient.from('gamedata').update({ dailyConfig }).eq('id', ROW_ID); getCoins();
+        }
+
+        window.onload = () => { getCoins(); setInterval(getCoins, 5000); setInterval(updateBuffTimers, 1000); };
+    </script>
+</body>
+</html>

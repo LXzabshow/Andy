@@ -18,8 +18,11 @@
         .card { background-color: var(--card-bg, #c6c6c6); border: 5px solid var(--card-border, #000); box-shadow: inset 4px 4px rgba(255,255,255,0.4), inset -4px -4px rgba(0,0,0,0.4); padding: 15px; position: relative; transition: all 0.5s ease; }
         
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 30px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
+        
+        /* 💡 修复一：放大镜与称号样式重构 */
         .rank-badge { background: #333; color: var(--card-border, #f1c40f); padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 10px; font-size: 18px; border-radius: 4px; box-shadow: 2px 2px #000; cursor: pointer;}
         .rank-badge:active { transform: scale(0.95); }
+        .rank-badge::after { content: ' 🔍'; font-size: 14px; opacity: 0.8; }
         
         .slot { background: #8b8b8b; width: 70px; height: 70px; margin: 0; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; flex-shrink: 0;}
         .slot:active .coin-icon { transform: scale(0.8); }
@@ -40,7 +43,6 @@
         .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         
-        /* 扩展为 3x2 网格，容纳契约与图鉴 */
         .main-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
         .btn-main-action { width: 100%; padding: 12px 0; font-family: inherit; font-size: 16px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 2px 2px rgba(255,255,255,0.3), inset -2px -2px rgba(0,0,0,0.3); }
         .btn-main-action:active:not(:disabled) { transform: scale(0.95); }
@@ -81,6 +83,15 @@
 
         .fly-text { position: fixed; z-index: 1000; font-family: 'VT323', monospace; font-size: 40px; font-weight: bold; text-shadow: 2px 2px #000, -2px -2px #000; pointer-events: none; animation: floatUp 1s forwards; }
         @keyframes floatUp { 0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -20px) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -60px) scale(1); opacity: 0; } }
+
+        /* 💡 修复二：境界图鉴列表项样式回归 */
+        .rank-list-item { background: #fff; border: 2px solid #555; padding: 12px; margin-bottom: 10px; border-radius: 6px; text-align: left; font-family: -apple-system, sans-serif; display: block; }
+        .rank-list-item.unlocked { border-left-width: 6px; background: #f0f8ff; }
+        .rank-list-item.next-target { border: 3px dashed #e67e22; background: #fffdf5; box-shadow: inset 0 0 15px rgba(230,126,34,0.2); }
+        .rank-list-item.locked { background: #d5d5d5; opacity: 0.6; filter: grayscale(1); border: 2px solid #888; }
+        .r-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #000; }
+        .r-desc { font-size: 13px; color: #333; line-height: 1.4; }
+        .r-cost { font-size: 14px; font-weight: bold; color: #c0392b; margin-top: 5px; }
 
         .log-container { max-height: 250px; overflow-y: auto; text-align: left; background: #fff; border: 2px solid #555; padding: 10px; font-family: -apple-system, sans-serif; font-size: 13px; }
         .log-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; }
@@ -133,7 +144,6 @@
     <audio id="sfx-fuse"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/fuse.ogg" type="audio/ogg"></audio>
     <audio id="sfx-click"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/click.ogg" type="audio/ogg"></audio>
 
-    <!-- 防误触弹窗 -->
     <div id="confirmModal" class="modal-overlay" style="z-index: 1000;">
         <div class="challenge-card" style="max-width: 300px;">
             <div class="challenge-title" style="font-size: 24px;">📋 确认告示</div>
@@ -143,7 +153,6 @@
         </div>
     </div>
 
-    <!-- 誓言祭坛 (契约) -->
     <div id="contractModal" class="modal-overlay">
         <div class="challenge-card">
             <div class="challenge-title" style="color: #c0392b;">📜 誓言祭坛</div>
@@ -152,7 +161,6 @@
         </div>
     </div>
 
-    <!-- 进阶图鉴 (里程碑) -->
     <div id="milestoneModal" class="modal-overlay">
         <div class="challenge-card">
             <div class="challenge-title" style="color: #2980b9;">🏆 进阶图鉴</div>
@@ -161,13 +169,11 @@
         </div>
     </div>
 
-    <!-- 其他固有弹窗... -->
     <div id="rankModal" class="modal-overlay" style="z-index: 600;"><div class="challenge-card" style="max-width: 360px; max-height: 85vh;"><div class="challenge-title" style="color: #d35400;">👑 境界图鉴</div><div id="rankListContainer" style="width: 100%; overflow-y: auto; margin-top: 10px; padding-right: 5px;"></div><button class="btn-close-modal" onclick="closeRankModal()" style="margin-top: 15px;">关闭图鉴</button></div></div>
     <div id="rewardModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title">⚔️ 任务告示牌</div><div class="reward-grid" id="rewardListContainer"><div style="padding:20px; color:#555;">正在同步...</div></div><button class="btn-close-modal" onclick="closeRewardModal()">返回营地</button></div></div>
     <div id="shopModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title" style="color: #8e44ad;">🛒 神秘商店</div><div class="reward-grid" id="shopListContainer"><div style="padding:20px; color:#555;">正在同步...</div></div><button class="btn-close-modal" onclick="closeShopModal()">离开商店</button></div></div>
     <div id="logModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title">📜 探险账单</div><div id="logListContent" class="log-container"></div><button class="btn-close-modal" onclick="closeLogModal()">合上账本</button></div></div>
 
-    <!-- 🏰 试炼高塔 -->
     <div id="gameModal" class="modal-overlay" style="z-index: 600;">
         <div class="challenge-card" style="max-width: 380px; width: 95%;">
             <div class="challenge-title" style="color: #8e44ad;">👁️ 试炼高塔</div>
@@ -195,7 +201,6 @@
         </div>
     </div>
 
-    <!-- 主界面 UI -->
     <div class="ui-container" id="uiLayer">
         <div class="card" id="ui-card">
             <div class="mute-btn" onclick="toggleMute()">🔊</div>
@@ -216,7 +221,6 @@
 
             <button id="btnUpgrade" class="btn-upgrade" onclick="upgradeRank()" disabled>🆙 打造更强装备</button>
 
-            <!-- 💡 3x2 网格导航 -->
             <div class="main-btn-grid">
                 <button class="btn-main-action" onclick="openRewardModal()">⚔️ 挑战</button>
                 <button class="btn-main-action btn-shop" onclick="openShopModal()">🛒 商店</button>
@@ -327,7 +331,6 @@
                 record.activeBuffs = record.activeBuffs || {}; record.taskItems = record.taskItems || [];
                 record.schulteDaily = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
                 
-                // 里程碑数据兜底
                 record.milestones = record.milestones || { run: 0, jump: 0, contract: 0, read: 0, piano: 0 };
                 record.milestoneClaimed = record.milestoneClaimed || { run: [], jump: [], contract: [], read: [], piano: [] };
                 record.towerConfig = record.towerConfig || { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
@@ -456,7 +459,7 @@
         }
         function closeMilestoneModal() { msModal.style.display = 'none'; }
 
-        // 里程碑进度校验引擎 (核心钩子)
+        // 里程碑进度校验引擎
         function checkMilestoneProgress(type, record, logs) {
             record.milestones[type]++;
             let count = record.milestones[type];

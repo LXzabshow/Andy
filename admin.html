@@ -41,7 +41,7 @@
         
         #log-status { color: #888; font-size: 12px; text-align: center; padding: 10px; }
 
-        .shop-item { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #444;}
+        .shop-item { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #444;}
         .buff-item { background: rgba(139,0,0,0.2); border-left: 4px solid #ffb700; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         
         .config-input { width: 60px; padding: 5px; text-align: center; border-radius: 4px; border: 1px solid #555; background: #222; color: #fff;}
@@ -202,7 +202,6 @@
             { rank: 7, cap: 4000, title: "🔮 黑曜石行者" }, { rank: 8, cap: 6000, title: "🟢 绿宝石领主" }, { rank: 9, cap: 10000, title: "🔥 合金战神" }, { rank: 10, cap: Infinity, title: "🐲 末影屠龙者" }
         ];
 
-        // 终极九阶里程碑配置
         const MILESTONES = [
             { count: 5, reward: 50, name: "铁阶" },
             { count: 10, reward: 100, name: "金阶" },
@@ -232,7 +231,7 @@
             return `${month}-${day} ${hours}:${mins}`;
         }
 
-       async function getCoins() {
+        async function getCoins() {
             try {
                 const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 if (error) throw error;
@@ -248,29 +247,21 @@
                 currentData.milestones = currentData.milestones || {};
                 currentData.milestoneClaimed = currentData.milestoneClaimed || {};
                 
-                // 💡 [核心修复]: 无感数据迁移脚本 (OTA Migration)
-                // 将旧的动作标签映射到新的 RPG 六维属性上
+                // 💡 [底层基线]: 自动数据清洗与属性映射迁移
                 const MIGRATION_MAP = { 'run': 'strength', 'jump': 'agility', 'contract': 'endurance', 'read': 'intelligence', 'piano': 'spirit' };
                 let needsMigration = false;
 
-                // 1. 修复旧任务的 undefined 标签
                 currentData.taskItems.forEach(t => {
-                    if (t.milestone && MIGRATION_MAP[t.milestone]) {
-                        t.milestone = MIGRATION_MAP[t.milestone];
-                        needsMigration = true;
-                    }
+                    if (t.milestone && MIGRATION_MAP[t.milestone]) { t.milestone = MIGRATION_MAP[t.milestone]; needsMigration = true; }
                 });
 
-                // 2. 迁移旧的里程碑进度数据，避免进度清零
                 Object.keys(MIGRATION_MAP).forEach(oldKey => {
                     let newKey = MIGRATION_MAP[oldKey];
-                    // 迁移进度
                     if (currentData.milestones[oldKey] !== undefined) {
                         currentData.milestones[newKey] = currentData.milestones[oldKey];
                         delete currentData.milestones[oldKey];
                         needsMigration = true;
                     }
-                    // 迁移已领取的奖励记录
                     if (currentData.milestoneClaimed[oldKey] !== undefined) {
                         currentData.milestoneClaimed[newKey] = currentData.milestoneClaimed[oldKey];
                         delete currentData.milestoneClaimed[oldKey];
@@ -278,20 +269,14 @@
                     }
                 });
 
-                // 补充新属性兜底
                 Object.keys(MS_NAMES).forEach(k => {
                     currentData.milestones[k] = currentData.milestones[k] || 0;
                     currentData.milestoneClaimed[k] = currentData.milestoneClaimed[k] || [];
                 });
 
-                // 3. 如果发现旧数据并执行了搬运，强制保存回云端
                 if (needsMigration) {
                     document.getElementById('log-status').innerText = "⚙️ 正在执行底层数据清洗与迁移...";
-                    await dbClient.from('gamedata').update({
-                        taskItems: currentData.taskItems,
-                        milestones: currentData.milestones,
-                        milestoneClaimed: currentData.milestoneClaimed
-                    }).eq('id', ROW_ID);
+                    await dbClient.from('gamedata').update({ taskItems: currentData.taskItems, milestones: currentData.milestones, milestoneClaimed: currentData.milestoneClaimed }).eq('id', ROW_ID);
                 }
                 
                 if(!currentData.towerConfig) {
@@ -400,7 +385,6 @@
                 newCoins += winAmount;
                 logs.unshift({ time: getFormattedTime(), action: `✅ 契约完成: ${contract.desc}`, amount: winAmount });
                 
-                // 触发契约图鉴里程碑 (耐力)
                 record.milestones.endurance++;
                 let count = record.milestones.endurance;
                 for (let tier of MILESTONES) {
@@ -465,7 +449,7 @@
             const container = document.getElementById('shopList');
             if(items.length === 0) { container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">货架空空如也</div>'; return; }
             container.innerHTML = items.map(item => `
-                <div class="shop-item">
+                <div class="shop-item" style="flex-direction: row; align-items: center;">
                     <div style="flex:1;">
                         <div style="font-weight:bold; font-size:15px; color:#ffb700;">${item.icon} ${item.name}</div>
                         <div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div>
@@ -475,19 +459,52 @@
                 </div>`).join('');
         }
 
+        // 💡 优化后的悬赏任务渲染引擎：包含上下移动与边界拦截
         function renderTaskItems(items) {
             const container = document.getElementById('adminTaskList');
             if(!container) return;
             if(items.length === 0) { container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">告示牌空空如也</div>'; return; }
-            container.innerHTML = items.map(item => `
+            container.innerHTML = items.map((item, index) => `
                 <div class="shop-item" style="border-color: #27ae60;">
-                    <div style="flex:1;">
-                        <div style="font-weight:bold; font-size:15px; color:#2ecc71;">${item.icon} ${item.name} ${item.milestone ? `<span class="badge-milestone">${MS_NAMES[item.milestone]}</span>` : ''}</div>
-                        <div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div>
-                        <div style="font-size:12px; color:#27ae60;">🪙 +${item.price} 币 | ⏳ 冷却: ${item.hours} 小时</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; font-size:15px; color:#2ecc71;">${item.icon} ${item.name} ${item.milestone ? `<span class="badge-milestone">属性: ${MS_NAMES[item.milestone] || item.milestone}</span>` : ''}</div>
+                            <div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div>
+                            <div style="font-size:12px; color:#27ae60;">🪙 +${item.price} 币 | ⏳ 冷却: ${item.hours} 小时</div>
+                        </div>
                     </div>
-                    <button class="btn-danger" onclick="deleteTaskItem('${item.id}')">下架</button>
+                    <div style="display: flex; gap: 6px; justify-content: flex-end; border-top: 1px dashed #444; padding-top: 8px;">
+                        <button class="btn-primary" style="background: #2980b9; padding: 6px 12px; font-size: 13px; flex: 1; ${index === 0 ? 'opacity: 0.2; cursor: not-allowed;' : ''}" onclick="moveTaskItem(${index}, -1)" ${index === 0 ? 'disabled' : ''}>🔼 上移</button>
+                        <button class="btn-primary" style="background: #2980b9; padding: 6px 12px; font-size: 13px; flex: 1; ${index === items.length - 1 ? 'opacity: 0.2; cursor: not-allowed;' : ''}" onclick="moveTaskItem(${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>🔽 下移</button>
+                        <button class="btn-danger" style="padding: 6px 12px; font-size: 13px; flex: 1;" onclick="deleteTaskItem('${item.id}')">下架</button>
+                    </div>
                 </div>`).join('');
+        }
+
+        // 💡 任务数组索引交换机制
+        async function moveTaskItem(index, direction) {
+            let items = currentData.taskItems;
+            if (!items || items.length <= 1) return;
+            
+            let targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= items.length) return; // 物理防御越界
+            
+            // 执行数组元素交换
+            [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
+            
+            // 乐观渲染UI，提升操控手感
+            renderTaskItems(items);
+            
+            // 封装推入云端
+            document.getElementById('log-status').innerText = "⏳ 排序同步中...";
+            const { error } = await dbClient.from('gamedata').update({ taskItems: items }).eq('id', ROW_ID);
+            
+            if(error) {
+                alert("❌ 云端同步失败，请刷新重试！");
+                getCoins(); // 失败则回滚到上一次的数据状态
+            } else {
+                document.getElementById('log-status').innerText = "✅ 排序已保存";
+            }
         }
 
         async function addTaskItem() {

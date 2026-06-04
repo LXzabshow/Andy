@@ -19,7 +19,7 @@
         
         h2 { color: #404040; margin: 0 0 5px 0; font-size: 30px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
         
-        /* 💡 修复一：放大镜与称号样式重构 */
+        /* 🔍 放大镜与称号样式修复 */
         .rank-badge { background: #333; color: var(--card-border, #f1c40f); padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 10px; font-size: 18px; border-radius: 4px; box-shadow: 2px 2px #000; cursor: pointer;}
         .rank-badge:active { transform: scale(0.95); }
         .rank-badge::after { content: ' 🔍'; font-size: 14px; opacity: 0.8; }
@@ -84,7 +84,7 @@
         .fly-text { position: fixed; z-index: 1000; font-family: 'VT323', monospace; font-size: 40px; font-weight: bold; text-shadow: 2px 2px #000, -2px -2px #000; pointer-events: none; animation: floatUp 1s forwards; }
         @keyframes floatUp { 0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -20px) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -60px) scale(1); opacity: 0; } }
 
-        /* 💡 修复二：境界图鉴列表项样式回归 */
+        /* 📦 境界图鉴列表卡片样式回归 */
         .rank-list-item { background: #fff; border: 2px solid #555; padding: 12px; margin-bottom: 10px; border-radius: 6px; text-align: left; font-family: -apple-system, sans-serif; display: block; }
         .rank-list-item.unlocked { border-left-width: 6px; background: #f0f8ff; }
         .rank-list-item.next-target { border: 3px dashed #e67e22; background: #fffdf5; box-shadow: inset 0 0 15px rgba(230,126,34,0.2); }
@@ -286,12 +286,21 @@
             { rank: 1, cap: 200, cost: 150, title: "🪵 新手伐木工", color: "#8B5A2B", bg: "#d2b48c", pageBg: "#76b5fe", nightBg: "#1d3557" }, { rank: 2, cap: 350, cost: 300, title: "🪨 洞穴探索者", color: "#7D7D7D", bg: "#b0b0b0", pageBg: "#9eb2c0", nightBg: "#3a444a" }, { rank: 3, cap: 600, cost: 500, title: "🛡️ 铁甲护卫", color: "#D8D8D8", bg: "#e6e6e6", pageBg: "#b5c4ba", nightBg: "#434d46" }, { rank: 4, cap: 1000, cost: 800, title: "🥇 寻金探险家", color: "#FEE12B", bg: "#fff7a8", pageBg: "#fbe29f", nightBg: "#504323" }, { rank: 5, cap: 1500, cost: 1300, title: "⚡ 红石工程师", color: "#FF0000", bg: "#ffcccc", pageBg: "#e0b6b6", nightBg: "#3e1e1e" }, { rank: 6, cap: 2500, cost: 2200, title: "💎 钻石先锋", color: "#55FFFF", bg: "#ccffff", pageBg: "#a0dbe3", nightBg: "#1f4045" }, { rank: 7, cap: 4000, cost: 3500, title: "🔮 黑曜石行者", color: "#3B2D59", bg: "#5a4a7a", pageBg: "#7c68a6", nightBg: "#251a3d" }, { rank: 8, cap: 6000, cost: 5500, title: "🟢 绿宝石领主", color: "#55FF55", bg: "#ccffcc", pageBg: "#9edba0", nightBg: "#1b401d" }, { rank: 9, cap: 10000, cost: 9999, title: "🔥 合金战神", color: "#4A3B3C", bg: "#6b5658", pageBg: "linear-gradient(180deg, #2e0808 0%, #120202 100%)", nightBg: "" }, { rank: 10, cap: Infinity, cost: 0, title: "🐲 末影屠龙者", color: "#AA00AA", bg: "#d4a8d4", pageBg: "radial-gradient(circle, #241430 0%, #08020d 100%)", nightBg: "" }
         ];
 
-        // 💡 7级非线性图鉴配置
+        // 💡 调整后的终极九阶里程碑配置
         const MILESTONES = [
-            { count: 5, reward: 50, name: "铁阶" }, { count: 10, reward: 100, name: "金阶" }, { count: 20, reward: 250, name: "钻石" },
-            { count: 30, reward: 400, name: "绿宝石" }, { count: 50, reward: 600, name: "下界之星" }, { count: 75, reward: 900, name: "龙蛋" }, { count: 100, reward: 1500, name: "终界信标" }
+            { count: 5, reward: 50, name: "铁阶" },
+            { count: 10, reward: 100, name: "金阶" },
+            { count: 20, reward: 200, name: "钻石" },
+            { count: 30, reward: 300, name: "绿宝石" },
+            { count: 50, reward: 500, name: "下界之星" },
+            { count: 75, reward: 800, name: "龙蛋" },
+            { count: 100, reward: 1200, name: "终界信标" },
+            { count: 250, reward: 3000, name: "不死图腾" },
+            { count: 500, reward: 6000, name: "基岩之心" }
         ];
-        const MS_NAMES = { run: '跑步', jump: '跳绳', contract: '契约完成', read: '阅读', piano: '钢琴' };
+
+        // 💡 六维属性底层映射
+        const MS_NAMES = { strength: '力量', agility: '敏捷', endurance: '耐力', intelligence: '智力', spirit: '精神', stamina: '体力' };
 
         function getFormattedTime() {
             const now = new Date(); return `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -331,8 +340,13 @@
                 record.activeBuffs = record.activeBuffs || {}; record.taskItems = record.taskItems || [];
                 record.schulteDaily = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
                 
-                record.milestones = record.milestones || { run: 0, jump: 0, contract: 0, read: 0, piano: 0 };
-                record.milestoneClaimed = record.milestoneClaimed || { run: [], jump: [], contract: [], read: [], piano: [] };
+                // 💡 动态扩展数据键值：确保体力(stamina)等六维数据不会因旧版本引发空指针
+                record.milestones = record.milestones || {};
+                Object.keys(MS_NAMES).forEach(k => record.milestones[k] = record.milestones[k] || 0);
+                
+                record.milestoneClaimed = record.milestoneClaimed || {};
+                Object.keys(MS_NAMES).forEach(k => record.milestoneClaimed[k] = record.milestoneClaimed[k] || []);
+                
                 record.towerConfig = record.towerConfig || { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
                 
                 record = await checkAndApplyDailyDeduction(record);
@@ -433,11 +447,11 @@
             updateValue(newCoins); openContractModal(); playSound('fuse');
         }
 
-        // 🏆 里程碑图鉴逻辑
+        // 🏆 里程碑图鉴逻辑 (携带金额透出功能)
         function openMilestoneModal() {
             if (!currentData) return; clickCoin(); msModal.style.display = 'flex';
             const container = document.getElementById('milestoneContent');
-            let ms = currentData.milestones || { run: 0, jump: 0, contract: 0, read: 0, piano: 0 };
+            let ms = currentData.milestones || {};
             
             let html = '';
             for (let [key, name] of Object.entries(MS_NAMES)) {
@@ -450,7 +464,7 @@
                     <div class="ms-card">
                         <div class="ms-header">
                             <span>${name}</span>
-                            <span class="ms-tier">${isMax ? '已满级' : `下一阶: ${nextTier.name} (${count}/${nextTier.count})`}</span>
+                            <span class="ms-tier">${isMax ? '已满级' : `下一阶: ${nextTier.name} (${count}/${nextTier.count}) | 🎁 悬赏: ${nextTier.reward} 币`}</span>
                         </div>
                         <div class="ms-bar-bg"><div class="ms-bar-fill" style="width:${ratio}%;"></div></div>
                     </div>`;
@@ -485,7 +499,7 @@
                 <div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'>
                     <div class="cd-overlay"></div>
                     <div class="mc-item-header">
-                        <span class="mc-item-title">${task.icon || '⚔️'} ${task.name} ${task.milestone ? `<span class="badge">关联: ${MS_NAMES[task.milestone]}</span>` : ''}</span>
+                        <span class="mc-item-title">${task.icon || '⚔️'} ${task.name} ${task.milestone ? `<span class="badge">属性: ${MS_NAMES[task.milestone]}</span>` : ''}</span>
                         <span class="mc-item-reward">+${task.price} 🪙</span>
                     </div>
                     <div class="mc-item-desc">${task.desc}</div>

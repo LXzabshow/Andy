@@ -232,7 +232,7 @@
             return `${month}-${day} ${hours}:${mins}`;
         }
 
-        async function getCoins() {
+       async function getCoins() {
             try {
                 const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 if (error) throw error;
@@ -245,12 +245,54 @@
                 currentData.taskItems = currentData.taskItems || [];
                 currentData.schulteDaily = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
                 
-                // 数据字段兜底映射
                 currentData.milestones = currentData.milestones || {};
-                Object.keys(MS_NAMES).forEach(k => currentData.milestones[k] = currentData.milestones[k] || 0);
-                
                 currentData.milestoneClaimed = currentData.milestoneClaimed || {};
-                Object.keys(MS_NAMES).forEach(k => currentData.milestoneClaimed[k] = currentData.milestoneClaimed[k] || []);
+                
+                // 💡 [核心修复]: 无感数据迁移脚本 (OTA Migration)
+                // 将旧的动作标签映射到新的 RPG 六维属性上
+                const MIGRATION_MAP = { 'run': 'strength', 'jump': 'agility', 'contract': 'endurance', 'read': 'intelligence', 'piano': 'spirit' };
+                let needsMigration = false;
+
+                // 1. 修复旧任务的 undefined 标签
+                currentData.taskItems.forEach(t => {
+                    if (t.milestone && MIGRATION_MAP[t.milestone]) {
+                        t.milestone = MIGRATION_MAP[t.milestone];
+                        needsMigration = true;
+                    }
+                });
+
+                // 2. 迁移旧的里程碑进度数据，避免进度清零
+                Object.keys(MIGRATION_MAP).forEach(oldKey => {
+                    let newKey = MIGRATION_MAP[oldKey];
+                    // 迁移进度
+                    if (currentData.milestones[oldKey] !== undefined) {
+                        currentData.milestones[newKey] = currentData.milestones[oldKey];
+                        delete currentData.milestones[oldKey];
+                        needsMigration = true;
+                    }
+                    // 迁移已领取的奖励记录
+                    if (currentData.milestoneClaimed[oldKey] !== undefined) {
+                        currentData.milestoneClaimed[newKey] = currentData.milestoneClaimed[oldKey];
+                        delete currentData.milestoneClaimed[oldKey];
+                        needsMigration = true;
+                    }
+                });
+
+                // 补充新属性兜底
+                Object.keys(MS_NAMES).forEach(k => {
+                    currentData.milestones[k] = currentData.milestones[k] || 0;
+                    currentData.milestoneClaimed[k] = currentData.milestoneClaimed[k] || [];
+                });
+
+                // 3. 如果发现旧数据并执行了搬运，强制保存回云端
+                if (needsMigration) {
+                    document.getElementById('log-status').innerText = "⚙️ 正在执行底层数据清洗与迁移...";
+                    await dbClient.from('gamedata').update({
+                        taskItems: currentData.taskItems,
+                        milestones: currentData.milestones,
+                        milestoneClaimed: currentData.milestoneClaimed
+                    }).eq('id', ROW_ID);
+                }
                 
                 if(!currentData.towerConfig) {
                     currentData.towerConfig = { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };

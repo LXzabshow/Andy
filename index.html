@@ -8,18 +8,26 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { background: #76b5fe; font-family: 'VT323', monospace; text-align: center; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background 1.5s ease; }
+        body { font-family: 'VT323', monospace; text-align: center; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background 1.5s ease; image-rendering: pixelated; background-size: 64px 64px; }
         
         .ground { position: absolute; bottom: 0; width: 100%; height: 20px; background: #5D4037; border-top: 6px solid #4CAF50; z-index: 20; }
         .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 15;}
         .actor { position: absolute; bottom: 20px; transition: transform 0.1s; z-index: 30; }
         
         .ui-container { margin-top: 5vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.5s ease, transform 0.2s ease;}
-        .card { background-color: var(--card-bg, #c6c6c6); border: 5px solid var(--card-border, #000); box-shadow: inset 4px 4px rgba(255,255,255,0.4), inset -4px -4px rgba(0,0,0,0.4); padding: 15px; position: relative; transition: all 0.5s ease; }
         
-        h2 { color: #404040; margin: 0 0 5px 0; font-size: 30px; text-shadow: 2px 2px #fff; letter-spacing: 2px; }
+        /* 💡 材质同步与动态发光核心卡片样式 */
+        .card { background-color: var(--card-bg, #c6c6c6); border: 5px solid var(--card-border, #000); box-shadow: var(--card-glow, inset 4px 4px rgba(255,255,255,0.4), inset -4px -4px rgba(0,0,0,0.4)); padding: 15px; position: relative; transition: all 0.8s ease; }
         
-        .rank-badge { background: #333; color: var(--card-border, #f1c40f); padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 10px; font-size: 18px; border-radius: 4px; box-shadow: 2px 2px #000; cursor: pointer;}
+        /* 动态呼吸光效特效类 */
+        @keyframes pulse-redstone { 0% { box-shadow: 0 0 10px #ff0000, inset 0 0 10px #ff0000, inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4); } 50% { box-shadow: 0 0 30px #ff0000, inset 0 0 20px #ff0000, inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4); } 100% { box-shadow: 0 0 10px #ff0000, inset 0 0 10px #ff0000, inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4); } }
+        @keyframes pulse-end { 0% { box-shadow: 0 0 20px #8e44ad, inset 0 0 20px #8e44ad; border-color: #2c3e50; } 50% { box-shadow: 0 0 50px #ff00ff, inset 0 0 40px #ff00ff; border-color: #8e44ad; } 100% { box-shadow: 0 0 20px #8e44ad, inset 0 0 20px #8e44ad; border-color: #2c3e50; } }
+        .glow-redstone { animation: pulse-redstone 2s infinite; }
+        .glow-end { animation: pulse-end 3s infinite; }
+
+        h2 { color: #ffffff; margin: 0 0 5px 0; font-size: 30px; text-shadow: 3px 3px #000; letter-spacing: 2px; }
+        
+        .rank-badge { background: #333; color: var(--card-border, #f1c40f); padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 10px; font-size: 18px; border-radius: 4px; box-shadow: 2px 2px #000; cursor: pointer; text-shadow: none;}
         .rank-badge:active { transform: scale(0.95); }
         .rank-badge::after { content: ' 🔍'; font-size: 14px; opacity: 0.8; }
         
@@ -33,13 +41,13 @@
         @keyframes glow { from { box-shadow: 0 0 5px #ffb700; } to { box-shadow: 0 0 15px #ffb700, 0 0 5px #ffb700 inset; } }
 
         .health-bar-container { width: 100%; margin-top: 10px; padding: 0 5px; box-sizing: border-box; }
-        .health-bar-label { font-size: 15px; color: #404040; font-weight: bold; margin-bottom: 5px; text-shadow: 1px 1px #fff; display:flex; justify-content: space-between;}
+        .health-bar-label { font-size: 15px; color: #fff; font-weight: bold; margin-bottom: 5px; text-shadow: 2px 2px #000; display:flex; justify-content: space-between;}
         .health-bar-bg { width: 100%; height: 20px; background-color: #333; border: 3px solid #000; position: relative; box-shadow: inset 2px 2px #111, inset -2px -2px #555; overflow: hidden;}
         .health-bar-fill { height: 100%; background-color: #e70000; width: 0%; transition: width 0.8s; box-shadow: inset 0px 4px 0px rgba(255,255,255,0.3); }
         .health-bar-fill.safe { background-color: #2ecc71; } .health-bar-fill.warn { background-color: #f1c40f; }
 
         .btn-upgrade { width: 100%; margin-top: 10px; padding: 10px; font-family: 'VT323', monospace; font-size: 18px; font-weight: bold; color: white; background: #d35400; border: 4px solid #000; cursor: pointer; animation: pulse 2s infinite;}
-        .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); }
+        .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); border-color:#555;}
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         
         .main-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
@@ -51,10 +59,10 @@
         .btn-contract { background: #c0392b; }
         .btn-milestone { background: #2980b9; }
 
-        .status-bar { background: #000; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; margin-top: 8px; border: 2px solid #555; }
+        .status-bar { background: rgba(0,0,0,0.8); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; margin-top: 8px; border: 2px solid #555; }
         .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; } .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
-        .message { color: #004400; margin-top: 5px; font-size: 14px; height: 20px; text-shadow: 1px 1px #fff; font-weight: bold;}
-        .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #555; }
+        .message { color: #fff; margin-top: 5px; font-size: 14px; height: 20px; text-shadow: 2px 2px #000; font-weight: bold;}
+        .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #fff; text-shadow: 2px 2px #000;}
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 400; display: none; justify-content: center; align-items: center; padding: 10px;}
         .challenge-card { background: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 15px; width: 100%; max-width: 360px; text-align: center; display: flex; flex-direction: column; max-height: 90vh;}
@@ -123,12 +131,16 @@
         .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; }
         .confetti { position: fixed; top: 50%; left: 50%; z-index: 999; animation: explode-particle 1s ease-out forwards; pointer-events: none; font-size: 30px;}
         @keyframes explode-particle { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(720deg); opacity: 0; } }
-        .level-up-banner { fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); z-index: 9999; color: #ffb700; font-family: 'VT323', monospace; text-shadow: 4px 4px 0 #000, -2px -2px 0 #000; text-align: center; white-space: nowrap; pointer-events: none; animation: bannerAnim 3.5s forwards; }
+        .level-up-banner { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); z-index: 9999; color: #ffb700; font-family: 'VT323', monospace; text-shadow: 4px 4px 0 #000, -2px -2px 0 #000; text-align: center; white-space: nowrap; pointer-events: none; animation: bannerAnim 3.5s forwards; }
         @keyframes bannerAnim { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 80% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; filter: blur(5px);} }
+        
+        /* 末地专属星空动态背景 */
+        .stars-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background: #000 url('data:image/svg+xml;utf8,<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="30" r="1" fill="%23fff"/><circle cx="150" cy="80" r="1.5" fill="%23fff"/><circle cx="80" cy="160" r="1" fill="%23fff"/><circle cx="180" cy="180" r="2" fill="%23fff"/></svg>') repeat; display: none; animation: star-move 60s linear infinite;}
+        @keyframes star-move { 0% { background-position: 0 0; } 100% { background-position: 200px 200px; } }
     </style>
 </head>
 <body>
-    <div class="stars"></div>
+    <div class="stars-bg" id="end-stars"></div>
     <div id="start-overlay">
         <h1 style="font-size: 40px; margin-bottom:10px;">Andy的探险世界</h1>
         <button class="mc-btn" onclick="startGame()">开始冒险</button>
@@ -222,7 +234,6 @@
                 <button class="btn-main-action" onclick="openRewardModal()">⚔️ 挑战</button>
                 <button class="btn-main-action btn-shop" onclick="openShopModal()">🛒 商店</button>
                 <button class="btn-main-action btn-game" onclick="openGameModal()">🎮 高塔</button>
-                
                 <button class="btn-main-action btn-contract" onclick="openContractModal()">📜 契约</button>
                 <button class="btn-main-action btn-milestone" onclick="openMilestoneModal()">🏆 图鉴</button>
                 <button class="btn-main-action btn-log" onclick="openLogModal()">📝 账单</button>
@@ -279,22 +290,35 @@
         let nextTargetNum = 1, gameClockTimer = null, potionTimer = null, gameTimeRemaining = 40, gameStartTime = 0;
         let comboCount = 0, maxCombo = 0, lastHitTime = 0;
 
+        // 💡 内联 SVG 材质引擎字典
+        const SVG_TEX = {
+            oak: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23775533'/><path d='M0 4h16M0 10h16M4 0v4M12 4v6M8 10v6' stroke='%23503515' stroke-width='1'/></svg>",
+            cobble: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23666'/><path d='M0 0h6v6H0zM8 2h8v8H8zM2 8h6v8H2z' fill='%23888'/><path d='M0 6h16M6 0v8M10 8v8' stroke='%23444' stroke-width='1'/></svg>",
+            iron: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%237d7d7d'/><path d='M3 3h3v3H3zM10 10h4v4h-4zM12 2h2v2h-2z' fill='%23e6b8a2'/></svg>",
+            gold: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%237d7d7d'/><path d='M2 8h4v4H2zM10 3h4v4h-4zM6 12h3v3H6z' fill='%23ffd700'/></svg>",
+            redstone: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23550000'/><path d='M2 2h4v4H2zM10 10h4v4h-4zM12 4h2v2h-2z' fill='%23ff0000'/></svg>",
+            diamond: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%237d7d7d'/><path d='M4 4h4v4H4zM10 10h4v4h-4zM2 12h2v2H2z' fill='%2300ffff'/></svg>",
+            obsidian: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23110022'/><path d='M0 0h8v8H0z' fill='%231a0033'/><path d='M8 8h8v8H8z' fill='%23220044'/></svg>",
+            emerald: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%237d7d7d'/><path d='M6 6h4v4H6zM12 2h2v2h-2zM2 12h3v3H2z' fill='%2300ff00'/></svg>",
+            debris: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%234a3b3c'/><path d='M0 4h16v2H0zM0 10h16v2H0z' fill='%236b5658'/></svg>",
+            void: "none"
+        };
+
+        // 💡 10 级全独立视觉矩阵 (Visual Matrix)
         const RANK_DATA = [
-            { rank: 1, cap: 200, cost: 150, title: "🪵 新手伐木工", color: "#8B5A2B", bg: "#d2b48c", pageBg: "#76b5fe", nightBg: "#1d3557" }, { rank: 2, cap: 350, cost: 300, title: "🪨 洞穴探索者", color: "#7D7D7D", bg: "#b0b0b0", pageBg: "#9eb2c0", nightBg: "#3a444a" }, { rank: 3, cap: 600, cost: 500, title: "🛡️ 铁甲护卫", color: "#D8D8D8", bg: "#e6e6e6", pageBg: "#b5c4ba", nightBg: "#434d46" }, { rank: 4, cap: 1000, cost: 800, title: "🥇 寻金探险家", color: "#FEE12B", bg: "#fff7a8", pageBg: "#fbe29f", nightBg: "#504323" }, { rank: 5, cap: 1500, cost: 1300, title: "⚡ 红石工程师", color: "#FF0000", bg: "#ffcccc", pageBg: "#e0b6b6", nightBg: "#3e1e1e" }, { rank: 6, cap: 2500, cost: 2200, title: "💎 钻石先锋", color: "#55FFFF", bg: "#ccffff", pageBg: "#a0dbe3", nightBg: "#1f4045" }, { rank: 7, cap: 4000, cost: 3500, title: "🔮 黑曜石行者", color: "#3B2D59", bg: "#5a4a7a", pageBg: "#7c68a6", nightBg: "#251a3d" }, { rank: 8, cap: 6000, cost: 5500, title: "🟢 绿宝石领主", color: "#55FF55", bg: "#ccffcc", pageBg: "#9edba0", nightBg: "#1b401d" }, { rank: 9, cap: 10000, cost: 9999, title: "🔥 合金战神", color: "#4A3B3C", bg: "#6b5658", pageBg: "linear-gradient(180deg, #2e0808 0%, #120202 100%)", nightBg: "" }, { rank: 10, cap: Infinity, cost: 0, title: "🐲 末影屠龙者", color: "#AA00AA", bg: "#d4a8d4", pageBg: "radial-gradient(circle, #241430 0%, #08020d 100%)", nightBg: "" }
+            { rank: 1, cap: 200, cost: 150, title: "🪵 新手伐木工", tex: SVG_TEX.oak, cardBg: "#a06f3e", borderColor: "#5c3a21", glow: "inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4)" },
+            { rank: 2, cap: 350, cost: 300, title: "🪨 洞穴探索者", tex: SVG_TEX.cobble, cardBg: "#888888", borderColor: "#444444", glow: "inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.5)" },
+            { rank: 3, cap: 600, cost: 500, title: "🛡️ 铁甲护卫", tex: SVG_TEX.iron, cardBg: "#b5c4ba", borderColor: "#7a8a80", glow: "0 0 5px rgba(255,255,255,0.5), inset 4px 4px rgba(255,255,255,0.6)" },
+            { rank: 4, cap: 1000, cost: 800, title: "🥇 寻金探险家", tex: SVG_TEX.gold, cardBg: "#d4af37", borderColor: "#b8860b", glow: "0 0 15px #ffd700, inset 0 0 10px #ffd700, inset 4px 4px rgba(255,255,255,0.6)" },
+            { rank: 5, cap: 1500, cost: 1300, title: "⚡ 红石工程师", tex: SVG_TEX.redstone, cardBg: "#8b0000", borderColor: "#550000", glow: "pulse", animClass: "glow-redstone" },
+            { rank: 6, cap: 2500, cost: 2200, title: "💎 钻石先锋", tex: SVG_TEX.diamond, cardBg: "#00bfff", borderColor: "#008b8b", glow: "0 0 25px #00ffff, inset 0 0 15px #00ffff, inset 4px 4px rgba(255,255,255,0.8)" },
+            { rank: 7, cap: 4000, cost: 3500, title: "🔮 黑曜石行者", tex: SVG_TEX.obsidian, cardBg: "#1a0033", borderColor: "#000000", glow: "0 0 20px #4b0082, inset 0 0 20px #4b0082" },
+            { rank: 8, cap: 6000, cost: 5500, title: "🟢 绿宝石领主", tex: SVG_TEX.emerald, cardBg: "#2ecc71", borderColor: "#006400", glow: "0 0 35px #00ff00, inset 0 0 20px #00ff00, inset 4px 4px rgba(255,255,255,0.8)" },
+            { rank: 9, cap: 10000, cost: 9999, title: "🔥 合金战神", tex: SVG_TEX.debris, cardBg: "#5c4033", borderColor: "#2b1b17", glow: "0 0 30px #ff4500, inset 0 -15px 20px #ff0000" },
+            { rank: 10, cap: Infinity, cost: 0, title: "🐲 末影屠龙者", tex: SVG_TEX.void, cardBg: "#0f0f1a", borderColor: "#2c3e50", glow: "pulse", animClass: "glow-end" }
         ];
 
-        const MILESTONES = [
-            { count: 5, reward: 50, name: "铁阶" },
-            { count: 10, reward: 100, name: "金阶" },
-            { count: 20, reward: 200, name: "钻石" },
-            { count: 30, reward: 300, name: "绿宝石" },
-            { count: 50, reward: 500, name: "下界之星" },
-            { count: 75, reward: 800, name: "龙蛋" },
-            { count: 100, reward: 1200, name: "终界信标" },
-            { count: 250, reward: 3000, name: "不死图腾" },
-            { count: 500, reward: 6000, name: "基岩之心" }
-        ];
-
+        const MILESTONES = [ { count: 5, reward: 50, name: "铁阶" }, { count: 10, reward: 100, name: "金阶" }, { count: 20, reward: 200, name: "钻石" }, { count: 30, reward: 300, name: "绿宝石" }, { count: 50, reward: 500, name: "下界之星" }, { count: 75, reward: 800, name: "龙蛋" }, { count: 100, reward: 1200, name: "终界信标" }, { count: 250, reward: 3000, name: "不死图腾" }, { count: 500, reward: 6000, name: "基岩之心" } ];
         const MS_NAMES = { strength: '力量', agility: '敏捷', endurance: '耐力', intelligence: '智力', spirit: '精神', stamina: '体力' };
 
         function getFormattedTime() {
@@ -305,24 +329,15 @@
             let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; }); return `${y}-${m}-${d}`;
         }
 
-        // 💡 修复补全：BUFF 实时渲染核心逻辑
         function renderBuffs() {
             if (!currentData || !currentData.activeBuffs) return;
-            const container = document.getElementById('activeBuffsContainer');
-            if (!container) return;
-            
-            const now = Date.now();
-            let hasActive = false;
-            let html = '';
-
+            const container = document.getElementById('activeBuffsContainer'); if (!container) return;
+            const now = Date.now(); let hasActive = false; let html = '';
             for (const [id, buff] of Object.entries(currentData.activeBuffs)) {
                 const remain = buff.endTime - now;
                 if (remain > 0) {
                     hasActive = true;
-                    let days = Math.floor(remain / (24 * 3600000));
-                    let hours = Math.floor((remain % (24 * 3600000)) / 3600000);
-                    let mins = Math.floor((remain % 3600000) / 60000);
-                    let secs = Math.floor((remain % 60000) / 1000);
+                    let days = Math.floor(remain / (24 * 3600000)), hours = Math.floor((remain % (24 * 3600000)) / 3600000), mins = Math.floor((remain % 3600000) / 60000), secs = Math.floor((remain % 60000) / 1000);
                     let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}:${mins<10?'0'+mins:mins}:${secs<10?'0'+secs:secs}`;
                     html += `<div class="buff-pill"><span>${buff.icon} ${buff.name}</span><span style="color:#ffb700;">⏳ ${timeStr}</span></div>`;
                 }
@@ -333,10 +348,8 @@
         async function checkAndApplyDailyDeduction(record) {
             if (!record.dailyConfig || !record.dailyConfig.enabled) return record;
             let today = getTodayStr(); if(record.dailyConfig.lastDeductDate === today) return record;
-            
             let deductedAmount = Math.min(record.coins, record.dailyConfig.amount); 
             if(deductedAmount === 0) { await dbClient.from('gamedata').update({ dailyConfig: { ...record.dailyConfig, lastDeductDate: today } }).eq('id', ROW_ID); return record; }
-
             record.coins -= deductedAmount; record.dailyConfig.lastDeductDate = today;
             let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: "系统自动饥饿消耗", amount: -deductedAmount });
             try { await dbClient.from('gamedata').update({ coins: record.coins, dailyConfig: record.dailyConfig, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID); record._justAutoDeducted = deductedAmount; } catch (e) {} return record;
@@ -359,13 +372,8 @@
                 record.currentRank = record.currentRank || 1; record.shopItems = record.shopItems || [];
                 record.activeBuffs = record.activeBuffs || {}; record.taskItems = record.taskItems || [];
                 record.schulteDaily = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
-                
-                record.milestones = record.milestones || {};
-                Object.keys(MS_NAMES).forEach(k => record.milestones[k] = record.milestones[k] || 0);
-                
-                record.milestoneClaimed = record.milestoneClaimed || {};
-                Object.keys(MS_NAMES).forEach(k => record.milestoneClaimed[k] = record.milestoneClaimed[k] || []);
-                
+                record.milestones = record.milestones || {}; Object.keys(MS_NAMES).forEach(k => record.milestones[k] = record.milestones[k] || 0);
+                record.milestoneClaimed = record.milestoneClaimed || {}; Object.keys(MS_NAMES).forEach(k => record.milestoneClaimed[k] = record.milestoneClaimed[k] || []);
                 record.towerConfig = record.towerConfig || { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
                 
                 record = await checkAndApplyDailyDeduction(record);
@@ -391,14 +399,26 @@
             } catch (error) { if(connStatus) connStatus.innerText = "失去连接..."; }
         }
 
+        // 💡 视觉矩阵驱动器
         function updateRankUI(coins, rank) {
             const rData = RANK_DATA[rank - 1] || RANK_DATA[0];
-            if (uiCard) { uiCard.style.setProperty('--card-border', rData.color); uiCard.style.setProperty('--card-bg', rData.bg); }
+            
+            // 1. 背景材质渲染
+            if (rank === 10) { document.body.style.background = "#000"; document.getElementById('end-stars').style.display = "block"; } 
+            else { document.getElementById('end-stars').style.display = "none"; document.body.style.background = `url("${rData.tex}") repeat`; }
+
+            // 2. UI 卡片发光同步
+            if (uiCard) { 
+                uiCard.className = 'card'; // Reset classes
+                if (rData.animClass) uiCard.classList.add(rData.animClass);
+                
+                uiCard.style.setProperty('--card-bg', rData.cardBg); 
+                uiCard.style.setProperty('--card-border', rData.borderColor);
+                uiCard.style.setProperty('--card-glow', rData.glow === "pulse" ? "none" : rData.glow);
+            }
             if (rankBadge) rankBadge.innerText = rData.title;
 
-            const hour = new Date().getHours(); const isNight = (hour >= 18 || hour < 6);
-            document.body.style.background = (rank >= 9) ? rData.pageBg : (isNight ? rData.nightBg : rData.pageBg);
-
+            // 3. 进度条与按钮控制
             let maxCap = rData.cap, ratio = maxCap === Infinity ? 0 : (coins / maxCap) * 100;
             const capText = document.getElementById('capacityText'); if (capText) capText.innerText = `${coins} / ${maxCap === Infinity ? '∞' : maxCap}`;
             const fill = document.getElementById('healthBarFill');
@@ -412,9 +432,9 @@
             const container = document.getElementById('rankListContainer'); let currentLevel = currentData.currentRank || 1; let html = '';
             RANK_DATA.forEach((r, index) => {
                 let rankLevel = index + 1;
-                if (rankLevel <= currentLevel) html += `<div class="rank-list-item unlocked" style="border-left-color: ${r.color};"><div class="r-title">${r.title} <span style="font-size:12px;color:#27ae60;">(${rankLevel === currentLevel ? '👉 当前所在' : '✅ 已解锁'})</span></div><div class="r-desc">背包容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div></div>`;
-                else if (rankLevel === currentLevel + 1) html += `<div class="rank-list-item next-target"><div class="r-title" style="color:#e67e22;">🎯 突破目标: ${r.title}</div><div class="r-desc">升级后背包容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div><div class="r-cost">突破消耗: -${RANK_DATA[currentLevel - 1].cost} 🪙</div></div>`;
-                else html += `<div class="rank-list-item locked"><div class="r-title" style="color:#555;">第 ${rankLevel} 阶: ???</div><div class="r-desc" style="color:#666;">背包容量上限: ???</div><div class="r-cost" style="color:#666;">突破消耗: ???</div></div>`;
+                if (rankLevel <= currentLevel) html += `<div class="rank-list-item unlocked" style="border-left-color: ${r.borderColor}; background: #fff;"><div class="r-title">${r.title} <span style="font-size:12px;color:#27ae60;">(${rankLevel === currentLevel ? '👉 当前所在' : '✅ 已解锁'})</span></div><div class="r-desc">背包容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div></div>`;
+                else if (rankLevel === currentLevel + 1) html += `<div class="rank-list-item next-target"><div class="r-title" style="color:#e67e22;">🎯 突破目标: ${r.title}</div><div class="r-desc">升级后容量: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div><div class="r-cost">突破消耗: -${RANK_DATA[currentLevel - 1].cost} 🪙</div></div>`;
+                else html += `<div class="rank-list-item locked"><div class="r-title" style="color:#555;">第 ${rankLevel} 阶: ???</div><div class="r-desc" style="color:#666;">容量上限: ???</div><div class="r-cost" style="color:#666;">突破消耗: ???</div></div>`;
             });
             container.innerHTML = html;
         }
@@ -423,32 +443,11 @@
         // 📜 誓言祭坛逻辑
         function openContractModal() {
             if (!currentData) return; clickCoin(); ctModal.style.display = 'flex';
-            const container = document.getElementById('contractContent');
-            let contract = currentData.activeContract;
-            
+            const container = document.getElementById('contractContent'); let contract = currentData.activeContract;
             if (!contract) {
-                container.innerHTML = `
-                    <div style="font-family:-apple-system, sans-serif; font-size:14px; margin-bottom:15px; color:#333;">向深渊宣誓你的决心。若按时完成，将获得等额甚至超额的赏金；若违背誓言，质押的硬币将被直接吞噬。</div>
-                    <textarea id="contract_desc" class="mc-input" placeholder="输入誓言目标 (例如: 1小时内完成数学卷子且全对)"></textarea>
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
-                        <span style="font-weight:bold;">质押金(币):</span>
-                        <input type="number" id="contract_wager" class="mc-input" style="margin-bottom:0; flex:1;">
-                    </div>
-                    <button class="btn-main-action" style="background:#c0392b; width:100%;" onclick="submitContract()">献上质押并发起誓言</button>
-                `;
-            } else if (contract.status === 'pending') {
-                container.innerHTML = `<div style="padding:20px; color:#8e44ad; font-weight:bold; font-size:18px; text-align:center;">⏳ 誓言已刻印<br><span style="font-size:14px; color:#555;">等待神明(家长)审批裁决...</span></div>`;
-            } else if (contract.status === 'active') {
-                container.innerHTML = `
-                    <div style="background:#27ae60; color:#fff; padding:10px; border-radius:4px; font-weight:bold; margin-bottom:10px; text-align:center;">🔥 契约执行中 🔥</div>
-                    <div style="text-align:left; font-family:-apple-system,sans-serif; font-size:14px;">
-                        <div style="margin-bottom:8px;">🎯 目标: <b>${contract.desc}</b></div>
-                        <div style="margin-bottom:8px; color:#c0392b;">💰 已质押: <b>${contract.wager}</b> 币</div>
-                        <div style="margin-bottom:8px; color:#2ecc71;">🎁 成功返还+赏金: <b>${contract.wager + contract.reward}</b> 币</div>
-                        <hr style="border-color:#555;">
-                        <div style="color:#555; font-size:12px;">注: 结算由家长端进行裁决判定。请专注完成目标！</div>
-                    </div>`;
-            }
+                container.innerHTML = `<div style="font-family:-apple-system, sans-serif; font-size:14px; margin-bottom:15px; color:#333;">向深渊宣誓你的决心。若按时完成，将获得等额甚至超额的赏金；若违背誓言，质押的硬币将被直接吞噬。</div><textarea id="contract_desc" class="mc-input" placeholder="输入誓言目标 (例如: 1小时内完成数学卷子且全对)"></textarea><div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;"><span style="font-weight:bold;">质押金(币):</span><input type="number" id="contract_wager" class="mc-input" style="margin-bottom:0; flex:1;"></div><button class="btn-main-action" style="background:#c0392b; width:100%;" onclick="submitContract()">献上质押并发起誓言</button>`;
+            } else if (contract.status === 'pending') { container.innerHTML = `<div style="padding:20px; color:#8e44ad; font-weight:bold; font-size:18px; text-align:center;">⏳ 誓言已刻印<br><span style="font-size:14px; color:#555;">等待神明(家长)审批裁决...</span></div>`;
+            } else if (contract.status === 'active') { container.innerHTML = `<div style="background:#27ae60; color:#fff; padding:10px; border-radius:4px; font-weight:bold; margin-bottom:10px; text-align:center;">🔥 契约执行中 🔥</div><div style="text-align:left; font-family:-apple-system,sans-serif; font-size:14px;"><div style="margin-bottom:8px;">🎯 目标: <b>${contract.desc}</b></div><div style="margin-bottom:8px; color:#c0392b;">💰 已质押: <b>${contract.wager}</b> 币</div><div style="margin-bottom:8px; color:#2ecc71;">🎁 成功返还+赏金: <b>${contract.wager + contract.reward}</b> 币</div><hr style="border-color:#555;"><div style="color:#555; font-size:12px;">注: 结算由家长端进行裁决判定。请专注完成目标！</div></div>`; }
         }
         function closeContractModal() { ctModal.style.display = 'none'; }
         
@@ -456,311 +455,160 @@
             let desc = document.getElementById('contract_desc').value.trim(); let wager = parseInt(document.getElementById('contract_wager').value);
             if (!desc || !wager || wager <= 0) return alert("请完整填写誓言与质押金额！");
             if (currentData.coins < wager) { playSound('fuse'); return alert("🎒 背包硬币不足以支付质押金！"); }
-            
-            let newCoins = currentData.coins - wager; let logs = currentData.childLogs || [];
-            logs.unshift({ time: getFormattedTime(), action: `📜 发起契约质押`, amount: -wager });
+            let newCoins = currentData.coins - wager; let logs = currentData.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `📜 发起契约质押`, amount: -wager });
             let contract = { desc: desc, wager: wager, reward: wager, status: 'pending', time: Date.now() };
-            
             await dbClient.from('gamedata').update({ coins: newCoins, activeContract: contract, childLogs: logs.slice(0,10) }).eq('id', ROW_ID);
-            localStorage.setItem('andy_last_seen_coins', newCoins); currentData.activeContract = contract;
-            updateValue(newCoins); openContractModal(); playSound('fuse');
+            localStorage.setItem('andy_last_seen_coins', newCoins); currentData.activeContract = contract; updateValue(newCoins); openContractModal(); playSound('fuse');
         }
 
-        // 🏆 里程碑图鉴逻辑
         function openMilestoneModal() {
-            if (!currentData) return; clickCoin(); msModal.style.display = 'flex';
-            const container = document.getElementById('milestoneContent');
-            let ms = currentData.milestones || {};
-            
-            let html = '';
+            if (!currentData) return; clickCoin(); msModal.style.display = 'flex'; const container = document.getElementById('milestoneContent'); let ms = currentData.milestones || {}; let html = '';
             for (let [key, name] of Object.entries(MS_NAMES)) {
-                let count = ms[key] || 0;
-                let nextTier = MILESTONES.find(t => t.count > count) || MILESTONES[MILESTONES.length - 1];
-                let isMax = count >= MILESTONES[MILESTONES.length - 1].count;
-                let ratio = isMax ? 100 : (count / nextTier.count) * 100;
-                
-                html += `
-                    <div class="ms-card">
-                        <div class="ms-header">
-                            <span>${name}</span>
-                            <span class="ms-tier">${isMax ? '已满级' : `下一阶: ${nextTier.name} (${count}/${nextTier.count}) | 🎁 悬赏: ${nextTier.reward} 币`}</span>
-                        </div>
-                        <div class="ms-bar-bg"><div class="ms-bar-fill" style="width:${ratio}%;"></div></div>
-                    </div>`;
+                let count = ms[key] || 0; let nextTier = MILESTONES.find(t => t.count > count) || MILESTONES[MILESTONES.length - 1]; let isMax = count >= MILESTONES[MILESTONES.length - 1].count; let ratio = isMax ? 100 : (count / nextTier.count) * 100;
+                html += `<div class="ms-card"><div class="ms-header"><span>${name}</span><span class="ms-tier">${isMax ? '已满级' : `下一阶: ${nextTier.name} (${count}/${nextTier.count}) | 🎁 悬赏: ${nextTier.reward} 币`}</span></div><div class="ms-bar-bg"><div class="ms-bar-fill" style="width:${ratio}%;"></div></div></div>`;
             }
             container.innerHTML = html;
         }
         function closeMilestoneModal() { msModal.style.display = 'none'; }
 
         function checkMilestoneProgress(type, record, logs) {
-            record.milestones[type]++;
-            let count = record.milestones[type];
-            let extraCoins = 0;
+            record.milestones[type]++; let count = record.milestones[type]; let extraCoins = 0;
             for (let tier of MILESTONES) {
-                if (count === tier.count && !record.milestoneClaimed[type].includes(tier.count)) {
-                    extraCoins += tier.reward;
-                    record.milestoneClaimed[type].push(tier.count);
-                    logs.unshift({ time: getFormattedTime(), action: `🏆 达成里程碑 [${MS_NAMES[type]}]: ${tier.name}`, amount: tier.reward });
-                }
+                if (count === tier.count && !record.milestoneClaimed[type].includes(tier.count)) { extraCoins += tier.reward; record.milestoneClaimed[type].push(tier.count); logs.unshift({ time: getFormattedTime(), action: `🏆 达成里程碑 [${MS_NAMES[type]}]: ${tier.name}`, amount: tier.reward }); }
             }
             return extraCoins;
         }
 
-        // --- 悬赏与日常任务 ---
         function openRewardModal() { if(rModal) { rModal.style.display = 'flex'; renderDynamicTasks(); processCooldowns(); } }
         function closeRewardModal() { if(rModal) rModal.style.display = 'none'; }
-
         function renderDynamicTasks() {
-            const container = document.getElementById('rewardListContainer');
-            if(!currentData || !currentData.taskItems || currentData.taskItems.length === 0) { container.innerHTML = '<div style="padding:20px; color:#555; text-align:center;">告示牌空空如也</div>'; return; }
-            container.innerHTML = currentData.taskItems.map(task => `
-                <div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'>
-                    <div class="cd-overlay"></div>
-                    <div class="mc-item-header">
-                        <span class="mc-item-title">${task.icon || '⚔️'} ${task.name} ${task.milestone ? `<span class="badge">属性: ${MS_NAMES[task.milestone]}</span>` : ''}</span>
-                        <span class="mc-item-reward">+${task.price} 🪙</span>
-                    </div>
-                    <div class="mc-item-desc">${task.desc}</div>
-                    <span class="cd-timer">--:--</span>
-                </div>`).join('');
+            const container = document.getElementById('rewardListContainer'); if(!currentData || !currentData.taskItems || currentData.taskItems.length === 0) { container.innerHTML = '<div style="padding:20px; color:#555; text-align:center;">告示牌空空如也</div>'; return; }
+            container.innerHTML = currentData.taskItems.map(task => `<div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'><div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">${task.icon || '⚔️'} ${task.name} ${task.milestone ? `<span class="badge">属性: ${MS_NAMES[task.milestone]}</span>` : ''}</span><span class="mc-item-reward">+${task.price} 🪙</span></div><div class="mc-item-desc">${task.desc}</div><span class="cd-timer">--:--</span></div>`).join('');
         }
         function triggerTaskClick(taskId) { const task = currentData.taskItems.find(t => t.id === taskId); if(task) requestAction('reward', task); }
 
         function openShopModal() { 
-            if(!sModal) return; sModal.style.display = 'flex'; 
-            const container = document.getElementById('shopListContainer');
+            if(!sModal) return; sModal.style.display = 'flex'; const container = document.getElementById('shopListContainer');
             if(!currentData || !currentData.shopItems || currentData.shopItems.length === 0) { container.innerHTML = '<div style="padding:20px; color:#555;">货架空空如也</div>'; return; }
-            container.innerHTML = currentData.shopItems.map(item => `
-                <div class="mc-item-btn" onclick="triggerBuy('${item.id}')" style="border-color:#8e44ad;">
-                    <div class="mc-item-header"><span class="mc-item-title">${item.icon} ${item.name}</span><span class="mc-item-reward" style="color:#c0392b;">-${item.price} 🪙</span></div>
-                    <div class="mc-item-desc">${item.desc} <br><span style="color:#555;">(时效 ${item.hours >= 24 ? (item.hours/24 + ' 天') : (item.hours + ' 小时')})</span></div>
-                </div>`).join('');
+            container.innerHTML = currentData.shopItems.map(item => `<div class="mc-item-btn" onclick="triggerBuy('${item.id}')" style="border-color:#8e44ad;"><div class="mc-item-header"><span class="mc-item-title">${item.icon} ${item.name}</span><span class="mc-item-reward" style="color:#c0392b;">-${item.price} 🪙</span></div><div class="mc-item-desc">${item.desc} <br><span style="color:#555;">(时效 ${item.hours >= 24 ? (item.hours/24 + ' 天') : (item.hours + ' 小时')})</span></div></div>`).join('');
         }
         function closeShopModal() { if(sModal) sModal.style.display = 'none'; }
         function triggerBuy(itemId) { const item = currentData.shopItems.find(i => i.id === itemId); if(item) requestAction('buy', item); }
 
         function requestAction(actionType, data) {
             clickCoin();
-            if (actionType === 'reward') {
-                const now = Date.now(); if(currentData.cooldowns && currentData.cooldowns[data.id] > now) return; 
-                document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#27ae60; font-size:20px;">【${data.name}】</span><br>的悬赏奖励吗？`;
-            } 
-            else if (actionType === 'buy') {
-                if (currentData.coins < data.price) { playSound('fuse'); return alert("❌ 行囊硬币不足，无法兑换！"); }
-                document.getElementById('confirmText').innerHTML = `确认花费 <span style="color:#c0392b;">${data.price}币</span> 兑换<br><span style="color:#8e44ad; font-size:20px;">【${data.name}】</span> 吗？`;
-            }
+            if (actionType === 'reward') { const now = Date.now(); if(currentData.cooldowns && currentData.cooldowns[data.id] > now) return; document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#27ae60; font-size:20px;">【${data.name}】</span><br>的悬赏奖励吗？`; } 
+            else if (actionType === 'buy') { if (currentData.coins < data.price) { playSound('fuse'); return alert("❌ 行囊硬币不足，无法兑换！"); } document.getElementById('confirmText').innerHTML = `确认花费 <span style="color:#c0392b;">${data.price}币</span> 兑换<br><span style="color:#8e44ad; font-size:20px;">【${data.name}】</span> 吗？`; }
             pendingAction = { actionType, data }; cfModal.style.display = 'flex';
         }
-
         function closeConfirmModal() { if(cfModal) cfModal.style.display = 'none'; pendingAction = null; }
 
         async function executeConfirmedAction() {
-            if (!pendingAction) return;
-            const action = pendingAction; closeConfirmModal();
-            if (action.actionType === 'reward') await proceedWithReward(action.data);
-            else if (action.actionType === 'buy') await proceedWithBuy(action.data);
-            else if (action.actionType === 'schulteTicket') await executeStartGame(action.data.mode, true);
+            if (!pendingAction) return; const action = pendingAction; closeConfirmModal();
+            if (action.actionType === 'reward') await proceedWithReward(action.data); else if (action.actionType === 'buy') await proceedWithBuy(action.data); else if (action.actionType === 'schulteTicket') await executeStartGame(action.data.mode, true);
         }
 
         async function proceedWithBuy(item) {
             try {
-                let record = currentData; const newCoins = record.coins - item.price;
-                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `兑换法宝: ${item.name}`, amount: -item.price });
-                let buffs = record.activeBuffs || {}; let currentEndTime = buffs[item.id] ? buffs[item.id].endTime : 0;
-                if (currentEndTime < Date.now()) currentEndTime = Date.now();
+                let record = currentData; const newCoins = record.coins - item.price; let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `兑换法宝: ${item.name}`, amount: -item.price });
+                let buffs = record.activeBuffs || {}; let currentEndTime = buffs[item.id] ? buffs[item.id].endTime : 0; if (currentEndTime < Date.now()) currentEndTime = Date.now();
                 buffs[item.id] = { name: item.name, icon: item.icon, endTime: currentEndTime + (item.hours * 3600000) };
-
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), activeBuffs: buffs }).eq('id', ROW_ID);
-                currentData.coins = newCoins; currentData.childLogs = logs; currentData.activeBuffs = buffs;
-                localStorage.setItem('andy_last_seen_coins', newCoins); closeShopModal(); playSound('levelup');
-                createParticles(50, ['✨', item.icon, '🔮']); updateValue(newCoins); renderBuffs();
+                currentData.coins = newCoins; currentData.childLogs = logs; currentData.activeBuffs = buffs; localStorage.setItem('andy_last_seen_coins', newCoins); closeShopModal(); playSound('levelup'); createParticles(50, ['✨', item.icon, '🔮']); updateValue(newCoins); renderBuffs();
             } catch (e) { alert("兑换受阻，请重试！"); }
         }
 
         async function proceedWithReward(taskData) {
             try {
-                let record = currentData; 
-                let logs = record.childLogs || []; 
-                let baseWin = taskData.price;
-                logs.unshift({ time: getFormattedTime(), action: `完成挑战: ${taskData.name}`, amount: baseWin });
-                
-                let extraMilestoneReward = 0;
-                if (taskData.milestone) {
-                    extraMilestoneReward = checkMilestoneProgress(taskData.milestone, record, logs);
-                }
-                
-                let totalWin = baseWin + extraMilestoneReward;
-                let targetCoins = record.coins + totalWin;
-                let maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap;
-                let newCoins = Math.min(targetCoins, maxCap);
-
+                let record = currentData; let logs = record.childLogs || []; let baseWin = taskData.price; logs.unshift({ time: getFormattedTime(), action: `完成挑战: ${taskData.name}`, amount: baseWin });
+                let extraMilestoneReward = 0; if (taskData.milestone) extraMilestoneReward = checkMilestoneProgress(taskData.milestone, record, logs);
+                let totalWin = baseWin + extraMilestoneReward; let targetCoins = record.coins + totalWin; let maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; let newCoins = Math.min(targetCoins, maxCap);
                 let cds = record.cooldowns || {}; cds[taskData.id] = Date.now() + (taskData.hours * 3600000); 
-
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), cooldowns: cds, milestones: record.milestones, milestoneClaimed: record.milestoneClaimed }).eq('id', ROW_ID);
-                currentData.coins = newCoins; currentData.childLogs = logs; currentData.cooldowns = cds;
-                localStorage.setItem('andy_last_seen_coins', newCoins); closeRewardModal(); playAttackSequence(totalWin, newCoins);
+                currentData.coins = newCoins; currentData.childLogs = logs; currentData.cooldowns = cds; localStorage.setItem('andy_last_seen_coins', newCoins); closeRewardModal(); playAttackSequence(totalWin, newCoins);
             } catch (e) { alert("申报异常，请重试"); }
         }
 
-        // 🏰 试炼高塔
-        function openGameModal() {
-            if (!currentData || !currentData.towerConfig) return;
-            [sModal, rModal, lModal, cfModal, rankModal, ctModal, msModal].forEach(m => { if(m) m.style.display = 'none'; });
-            gModal.style.display = 'flex'; backToGameMenu();
-        }
+        function openGameModal() { if (!currentData || !currentData.towerConfig) return; [sModal, rModal, lModal, cfModal, rankModal, ctModal, msModal].forEach(m => { if(m) m.style.display = 'none'; }); gModal.style.display = 'flex'; backToGameMenu(); }
         function closeGameModal() { quitGameSession(); gModal.style.display = 'none'; }
         
         function backToGameMenu() {
             clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false;
             document.getElementById('gameMenu').style.display = 'block'; document.getElementById('gamePlay').style.display = 'none'; document.getElementById('gameResult').style.display = 'none';
-            
-            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
-            let today = getTodayStr(); let pCount = (schulte.lastDate === today) ? schulte.playCount : 0; let wCount = (schulte.lastDate === today) ? schulte.winCount : 0;
+            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); let pCount = (schulte.lastDate === today) ? schulte.playCount : 0; let wCount = (schulte.lastDate === today) ? schulte.winCount : 0;
             let cfg = currentData.towerConfig; let freeLeft = Math.max(0, cfg.freePlays - pCount); let rewardLeft = Math.max(0, cfg.maxRewards - wCount);
-            
             document.getElementById('gameRemainingCount').innerHTML = `<div style="margin-bottom:8px;">🎫 免费进入剩余: <span style="color:${freeLeft > 0 ? '#27ae60' : '#c0392b'};">${freeLeft}</span> / ${cfg.freePlays}</div><div>🎁 有效领奖剩余: <span style="color:${rewardLeft > 0 ? '#e67e22' : '#c0392b'};">${rewardLeft}</span> / ${cfg.maxRewards}</div>`;
         }
 
         function attemptStartGame(mode) {
-            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
-            let today = getTodayStr(); let pCount = (schulte.lastDate === today) ? schulte.playCount : 0;
-            let cfg = currentData.towerConfig; let requiredTicket = cfg[mode].ticket;
-            
-            if (pCount >= cfg.freePlays) {
-                if (currentData.coins < requiredTicket) { playSound('fuse'); alert("❌ 门票不足！"); return; }
-                document.getElementById('confirmText').innerHTML = `🎫 免费次数已用完。<br>开启本次秘境将<span style="color:#c0392b;">消耗 ${requiredTicket} 🪙</span> 门票，确定支付吗？`;
-                pendingAction = { actionType: 'schulteTicket', data: { mode: mode } }; cfModal.style.display = 'flex';
-            } else { executeStartGame(mode, false); }
+            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); let pCount = (schulte.lastDate === today) ? schulte.playCount : 0; let cfg = currentData.towerConfig; let requiredTicket = cfg[mode].ticket;
+            if (pCount >= cfg.freePlays) { if (currentData.coins < requiredTicket) { playSound('fuse'); alert("❌ 门票不足！"); return; } document.getElementById('confirmText').innerHTML = `🎫 免费次数已用完。<br>开启本次秘境将<span style="color:#c0392b;">消耗 ${requiredTicket} 🪙</span> 门票，确定支付吗？`; pendingAction = { actionType: 'schulteTicket', data: { mode: mode } }; cfModal.style.display = 'flex'; } else { executeStartGame(mode, false); }
         }
 
         async function executeStartGame(mode, isPaidLocally) {
             try {
-                let record = currentData; let today = getTodayStr();
-                let schulte = record.schulteDaily; if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
-                let cfg = record.towerConfig; let requiredTicket = cfg[mode].ticket;
-                let newCoins = record.coins; let logs = record.childLogs || [];
-                
+                let record = currentData; let today = getTodayStr(); let schulte = record.schulteDaily; if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
+                let cfg = record.towerConfig; let requiredTicket = cfg[mode].ticket; let newCoins = record.coins; let logs = record.childLogs || [];
                 let needsPayment = schulte.playCount >= cfg.freePlays;
                 if (needsPayment && !isPaidLocally) { alert("⚠️ 数据已刷新，请重新点击进入高塔！"); syncData(); return; }
                 if (needsPayment && newCoins < requiredTicket) { alert("❌ 云端校验拦截：余额不足以支付门票！"); syncData(); return; }
-                
                 if (needsPayment) { newCoins -= requiredTicket; logs.unshift({ time: getFormattedTime(), action: `支付高塔门票 (${mode})`, amount: -requiredTicket }); }
                 schulte.playCount += 1;
-                
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
-                currentData.coins = newCoins; currentData.childLogs = logs; currentData.schulteDaily = schulte;
-                localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins);
-                
-                startGameSession(mode);
+                currentData.coins = newCoins; currentData.childLogs = logs; currentData.schulteDaily = schulte; localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins); startGameSession(mode);
             } catch(e) { alert("网络异常，无法开启高塔秘境"); }
         }
 
         function startGameSession(mode) {
-            currentTowerMode = mode; currentGameSize = (mode === 'normal') ? 6 : 7;
-            nextTargetNum = 1; gameStartTime = Date.now(); comboCount = 0; maxCombo = 0; lastHitTime = gameStartTime; gameTimeRemaining = (mode === 'normal') ? 40 : 75; isGameRunning = true;
-            
-            document.getElementById('gameModal').style.display = 'flex';
-            document.getElementById('gameMenu').style.display = 'none'; document.getElementById('gameResult').style.display = 'none'; document.getElementById('gamePlay').style.display = 'flex';
-            document.getElementById('gameTargetNum').innerText = nextTargetNum; document.getElementById('gameTimerText').innerText = gameTimeRemaining;
-
-            let totalCells = currentGameSize * currentGameSize; let numberPool = [];
-            for(let i = 1; i <= totalCells; i++) numberPool.push(i);
-            for(let i = numberPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]]; }
-
+            currentTowerMode = mode; currentGameSize = (mode === 'normal') ? 6 : 7; nextTargetNum = 1; gameStartTime = Date.now(); comboCount = 0; maxCombo = 0; lastHitTime = gameStartTime; gameTimeRemaining = (mode === 'normal') ? 40 : 75; isGameRunning = true;
+            document.getElementById('gameModal').style.display = 'flex'; document.getElementById('gameMenu').style.display = 'none'; document.getElementById('gameResult').style.display = 'none'; document.getElementById('gamePlay').style.display = 'flex'; document.getElementById('gameTargetNum').innerText = nextTargetNum; document.getElementById('gameTimerText').innerText = gameTimeRemaining;
+            let totalCells = currentGameSize * currentGameSize; let numberPool = []; for(let i = 1; i <= totalCells; i++) numberPool.push(i); for(let i = numberPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]]; }
             const gridContainer = document.getElementById('schulteGrid'); gridContainer.style.gridTemplateColumns = `repeat(${currentGameSize}, 1fr)`; gridContainer.innerHTML = '';
-            numberPool.forEach(num => { 
-                const cell = document.createElement('div'); cell.className = 'schulte-cell'; cell.innerText = num; cell.style.fontSize = currentGameSize === 7 ? '20px' : '24px';
-                cell.onclick = () => handleCellClick(cell, num); gridContainer.appendChild(cell); 
-            });
-
+            numberPool.forEach(num => { const cell = document.createElement('div'); cell.className = 'schulte-cell'; cell.innerText = num; cell.style.fontSize = currentGameSize === 7 ? '20px' : '24px'; cell.onclick = () => handleCellClick(cell, num); gridContainer.appendChild(cell); });
             gridContainer.addEventListener('touchstart', function(e) { if (e.touches.length > 1) { e.preventDefault(); triggerAntiCheat(); } }, {passive: false});
             clearInterval(gameClockTimer); clearInterval(potionTimer);
-            
-            if (mode === 'survival') {
-                potionTimer = setInterval(() => {
-                    if(!isGameRunning) { clearInterval(potionTimer); return; }
-                    let cells = Array.from(document.querySelectorAll('.schulte-cell:not(.correct)'));
-                    if(cells.length > 5) {
-                        for(let i=0; i<3; i++) {
-                            let target = cells[Math.floor(Math.random() * cells.length)];
-                            if(!target.classList.contains('debuff')) { target.classList.add('debuff'); setTimeout(() => { target.classList.remove('debuff'); }, 1500); }
-                        }
-                    }
-                }, 2500);
-            }
-
+            if (mode === 'survival') { potionTimer = setInterval(() => { if(!isGameRunning) { clearInterval(potionTimer); return; } let cells = Array.from(document.querySelectorAll('.schulte-cell:not(.correct)')); if(cells.length > 5) { for(let i=0; i<3; i++) { let target = cells[Math.floor(Math.random() * cells.length)]; if(!target.classList.contains('debuff')) { target.classList.add('debuff'); setTimeout(() => { target.classList.remove('debuff'); }, 1500); } } } }, 2500); }
             gameClockTimer = setInterval(() => { gameTimeRemaining--; document.getElementById('gameTimerText').innerText = gameTimeRemaining; if(gameTimeRemaining <= 0) endGameSession(false); }, 1000);
         }
 
         function showComboText(text) { let el = document.createElement('div'); el.className = 'fly-text'; el.style.color = '#ffb700'; el.style.left = '50%'; el.style.top = '40%'; el.innerText = text; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
-
-        function triggerAntiCheat() {
-            if(!isGameRunning) return; clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false;
-            document.getElementById('gamePlay').style.display = 'none'; const resultBox = document.getElementById('gameResult'); resultBox.style.display = 'block';
-            document.getElementById('gameResultTitle').innerText = "🚨 时空坍塌！"; document.getElementById('gameResultTitle').style.color = "#c0392b";
-            document.getElementById('gameResultDesc').innerText = "检测到多指触控作弊！末影人已将高塔封锁，本次门票不予退还！"; document.getElementById('btnGameRetry').innerText = "重新接受试炼"; playSound('explode');
-        }
+        function triggerAntiCheat() { if(!isGameRunning) return; clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; document.getElementById('gamePlay').style.display = 'none'; const resultBox = document.getElementById('gameResult'); resultBox.style.display = 'block'; document.getElementById('gameResultTitle').innerText = "🚨 时空坍塌！"; document.getElementById('gameResultTitle').style.color = "#c0392b"; document.getElementById('gameResultDesc').innerText = "检测到多指触控作弊！末影人已将高塔封锁，本次门票不予退还！"; document.getElementById('btnGameRetry').innerText = "重新接受试炼"; playSound('explode'); }
 
         function handleCellClick(cell, num) {
             if(!isGameRunning || cell.classList.contains('correct')) return;
             if(num === nextTargetNum) {
-                cell.classList.add('correct'); clickCoin(); nextTargetNum++;
-                let now = Date.now();
+                cell.classList.add('correct'); clickCoin(); nextTargetNum++; let now = Date.now();
                 if (now - lastHitTime <= 1500) { comboCount++; if (comboCount > maxCombo) maxCombo = comboCount; if ([5, 10, 15, 20, 30].includes(comboCount)) showComboText("Combo x" + comboCount + "!"); } else comboCount = 1;
-                lastHitTime = now;
-                if(nextTargetNum > currentGameSize * currentGameSize) endGameSession(true); else document.getElementById('gameTargetNum').innerText = nextTargetNum;
-            } else { 
-                playSound('fuse'); comboCount = 0; cell.style.backgroundColor = '#c0392b'; cell.style.color = '#fff';
-                if(cell.wrongTimeout) clearTimeout(cell.wrongTimeout); cell.wrongTimeout = setTimeout(() => { cell.style.backgroundColor = ''; cell.style.color = ''; }, 200);
-            }
+                lastHitTime = now; if(nextTargetNum > currentGameSize * currentGameSize) endGameSession(true); else document.getElementById('gameTargetNum').innerText = nextTargetNum;
+            } else { playSound('fuse'); comboCount = 0; cell.style.backgroundColor = '#c0392b'; cell.style.color = '#fff'; if(cell.wrongTimeout) clearTimeout(cell.wrongTimeout); cell.wrongTimeout = setTimeout(() => { cell.style.backgroundColor = ''; cell.style.color = ''; }, 200); }
         }
 
         function quitGameSession() { clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; backToGameMenu(); }
 
         async function endGameSession(isWin) {
-            clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; document.getElementById('gamePlay').style.display = 'none';
-            const resultBox = document.getElementById('gameResult'); const rTitle = document.getElementById('gameResultTitle'); const rDesc = document.getElementById('gameResultDesc'); const rBtn = document.getElementById('btnGameRetry');
-            resultBox.style.display = 'block'; rBtn.onclick = () => attemptStartGame(currentTowerMode);
-
+            clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; document.getElementById('gamePlay').style.display = 'none'; const resultBox = document.getElementById('gameResult'); const rTitle = document.getElementById('gameResultTitle'); const rDesc = document.getElementById('gameResultDesc'); const rBtn = document.getElementById('btnGameRetry'); resultBox.style.display = 'block'; rBtn.onclick = () => attemptStartGame(currentTowerMode);
             if(!isWin) { playSound('explode'); rTitle.innerText = "⏳ 攀塔超时 (失败)"; rTitle.style.color = "#c0392b"; rDesc.innerHTML = "沙漏空了！你的眼睛搜寻速度慢了一步，潜能未能完全激发。"; rBtn.innerText = "重新尝试攀登"; return; }
-
             let elapsed = ((Date.now() - gameStartTime) / 1000).toFixed(1); rTitle.innerText = "🎉 挑战成功！"; rTitle.style.color = "#27ae60"; playSound('levelup');
-
-            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr();
-            if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
-
-            let cfg = currentData.towerConfig; let rewardAmt = cfg[currentTowerMode].reward;
-            let comboBadge = maxCombo >= 10 ? `<br><br>✨ <span style="color:#8e44ad; font-weight:bold;">隐藏成就：你达到了惊人的最高连击数 [Combo x${maxCombo}]！</span>` : "";
-
-            if(schulte.winCount < cfg.maxRewards) {
-                rDesc.innerHTML = `你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了高塔层！<br><br>🎁 战利品：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日领奖: ${schulte.winCount + 1}/${cfg.maxRewards}) ${comboBadge}`;
-                rBtn.innerText = "继续向上攀登"; await uploadSchulteWin(rewardAmt, currentTowerMode);
-            } else {
-                rDesc.innerHTML = `你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过高塔试炼！<br><br>⚠️ 提示：今日高塔战利品上限已满。本次攀登不再产出硬币。 ${comboBadge}`;
-                rBtn.innerText = "纯粹攀塔模式";
-            }
+            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
+            let cfg = currentData.towerConfig; let rewardAmt = cfg[currentTowerMode].reward; let comboBadge = maxCombo >= 10 ? `<br><br>✨ <span style="color:#8e44ad; font-weight:bold;">隐藏成就：你达到了惊人的最高连击数 [Combo x${maxCombo}]！</span>` : "";
+            if(schulte.winCount < cfg.maxRewards) { rDesc.innerHTML = `你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了高塔层！<br><br>🎁 战利品：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日领奖: ${schulte.winCount + 1}/${cfg.maxRewards}) ${comboBadge}`; rBtn.innerText = "继续向上攀登"; await uploadSchulteWin(rewardAmt, currentTowerMode); } else { rDesc.innerHTML = `你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过高塔试炼！<br><br>⚠️ 提示：今日高塔战利品上限已满。本次攀登不再产出硬币。 ${comboBadge}`; rBtn.innerText = "纯粹攀塔模式"; }
         }
 
         async function uploadSchulteWin(rewardAmt, mode) {
             try {
-                let record = currentData; let today = getTodayStr(); let schulte = record.schulteDaily; 
-                if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
-                schulte.winCount += 1; 
-                let newCoins = record.coins + rewardAmt; const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; if(newCoins > maxCap) newCoins = maxCap;
+                let record = currentData; let today = getTodayStr(); let schulte = record.schulteDaily; if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
+                schulte.winCount += 1; let newCoins = record.coins + rewardAmt; const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; if(newCoins > maxCap) newCoins = maxCap;
                 let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `高塔试炼通关 (${mode})`, amount: rewardAmt });
-
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
                 currentData.coins = newCoins; currentData.childLogs = logs; currentData.schulteDaily = schulte; localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins);
             } catch (e) {}
         }
 
-        // --- 杂项与工具 ---
         async function upgradeRank() {
             if (!currentData || isAnimating) return;
             const rank = currentData.currentRank || 1; const rData = RANK_DATA[rank - 1]; if (currentData.coins < rData.cost) return; 
             const nextRank = rank + 1; const nextRData = RANK_DATA[nextRank - 1]; const newCoins = currentData.coins - rData.cost;
             let logs = currentData.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `突破境界: ${nextRData.title}`, amount: -rData.cost });
-            
             try {
                 isAnimating = true; playSound('fuse'); document.body.classList.add('shake'); if(uiLayer) uiLayer.style.transform = 'scale(0.95)';
                 const dbUpdatePromise = dbClient.from('gamedata').update({ coins: newCoins, currentRank: nextRank, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
@@ -779,29 +627,8 @@
         }
 
         function openLogModal() { if(lModal) lModal.style.display = 'flex'; } function closeLogModal() { if(lModal) lModal.style.display = 'none'; }
-        function renderLogs(logs) {
-            const container = document.getElementById('logListContent'); if(!container) return;
-            if(logs && logs.length > 0) {
-                container.innerHTML = logs.map(log => {
-                    let amountClass = log.amount > 0 ? "log-v" : "log-v sub"; if (log.action.includes('🏆')) amountClass = "log-v milestone";
-                    const amountText = log.amount > 0 ? '+' + log.amount : log.amount;
-                    return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`;
-                }).join('');
-            } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>';
-        }
-
-        function processCooldowns() {
-            if(!currentData || !currentData.cooldowns || !currentData.taskItems) return; const now = Date.now();
-            currentData.taskItems.forEach(task => {
-                const btn = document.getElementById(`btn-${task.id}`); if (!btn) return;
-                const remain = (currentData.cooldowns[task.id] || 0) - now;
-                if(remain > 0) {
-                    btn.classList.add('in-cd'); const totalMs = (task.hours || 3) * 3600000; btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg');
-                    const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000);
-                    let timerEl = btn.querySelector('.cd-timer'); if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-                } else btn.classList.remove('in-cd');
-            });
-        }
+        function renderLogs(logs) { const container = document.getElementById('logListContent'); if(!container) return; if(logs && logs.length > 0) { container.innerHTML = logs.map(log => { let amountClass = log.amount > 0 ? "log-v" : "log-v sub"; if (log.action.includes('🏆')) amountClass = "log-v milestone"; const amountText = log.amount > 0 ? '+' + log.amount : log.amount; return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`; }).join(''); } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>'; }
+        function processCooldowns() { if(!currentData || !currentData.cooldowns || !currentData.taskItems) return; const now = Date.now(); currentData.taskItems.forEach(task => { const btn = document.getElementById(`btn-${task.id}`); if (!btn) return; const remain = (currentData.cooldowns[task.id] || 0) - now; if(remain > 0) { btn.classList.add('in-cd'); const totalMs = (task.hours || 3) * 3600000; btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg'); const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000); let timerEl = btn.querySelector('.cd-timer'); if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; } else btn.classList.remove('in-cd'); }); }
 
         function playAttackSequence(amount, finalCoins) {
             isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0'; 
@@ -822,27 +649,10 @@
 
         function resetStage() { if(uiLayer) uiLayer.style.opacity = '1'; if(heroSteve) heroSteve.style.display = 'none'; if(heroCreeper) { heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; } isAnimating = false; }
         function updateValue(coins) { if(totalDisplay) totalDisplay.innerText = coins; updateRankUI(coins, currentData ? (currentData.currentRank || 1) : 1); }
-        
-        function playAmbientScenario() { 
-            if (isAnimating || isGameRunning) return; let scenario; do { scenario = Math.floor(Math.random() * 2); } while (scenario === lastScenario); 
-            lastScenario = scenario; if (scenario === 0) { spawnActor('skin-villager', 'left', 12); } else { spawnActor('skin-creeper', 'right', 12); } 
-        }
-        function spawnActor(skinClass, direction, duration) { 
-            if (isAnimating || isGameRunning || !stage) return; 
-            const el = document.createElement('div'); el.className = `actor ambient-actor ${skinClass}`; el.style.bottom = (22 + Math.floor(Math.random() * 8)) + 'px'; 
-            let inner = ''; if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>'; else if(skinClass.includes('villager')) inner = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>';
-            el.innerHTML = inner; if (direction === 'left') { el.style.left = '-100px'; el.style.animation = `runLeftToRight ${duration}s linear forwards`; } else { el.style.right = '-100px'; el.style.transform = 'scaleX(-1)'; el.style.animation = `runRightToLeft ${duration}s linear forwards`; } 
-            stage.appendChild(el); setTimeout(() => el.remove(), duration * 1000); 
-        }
+        function playAmbientScenario() { if (isAnimating || isGameRunning) return; let scenario; do { scenario = Math.floor(Math.random() * 2); } while (scenario === lastScenario); lastScenario = scenario; if (scenario === 0) { spawnActor('skin-villager', 'left', 12); } else { spawnActor('skin-creeper', 'right', 12); } }
+        function spawnActor(skinClass, direction, duration) { if (isAnimating || isGameRunning || !stage) return; const el = document.createElement('div'); el.className = `actor ambient-actor ${skinClass}`; el.style.bottom = (22 + Math.floor(Math.random() * 8)) + 'px'; let inner = ''; if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>'; else if(skinClass.includes('villager')) inner = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>'; el.innerHTML = inner; if (direction === 'left') { el.style.left = '-100px'; el.style.animation = `runLeftToRight ${duration}s linear forwards`; } else { el.style.right = '-100px'; el.style.transform = 'scaleX(-1)'; el.style.animation = `runRightToLeft ${duration}s linear forwards`; } stage.appendChild(el); setTimeout(() => el.remove(), duration * 1000); }
         function clearAmbientActors() { document.querySelectorAll('.ambient-actor').forEach(el => el.remove()); }
-        function createParticles(c, chars) { 
-            const isArray = Array.isArray(chars);
-            for (let i = 0; i < c; i++) { 
-                const el = document.createElement('div'); el.classList.add('confetti'); el.innerText = isArray ? chars[Math.floor(Math.random() * chars.length)] : chars; 
-                const angle = Math.random() * 360, dist = 50 + Math.random() * 100; el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw'); el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh'); 
-                document.body.appendChild(el); setTimeout(() => el.remove(), 1000); 
-            } 
-        }
+        function createParticles(c, chars) { const isArray = Array.isArray(chars); for (let i = 0; i < c; i++) { const el = document.createElement('div'); el.classList.add('confetti'); el.innerText = isArray ? chars[Math.floor(Math.random() * chars.length)] : chars; const angle = Math.random() * 360, dist = 50 + Math.random() * 100; el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw'); el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh'); document.body.appendChild(el); setTimeout(() => el.remove(), 1000); } }
         function clickCoin() { if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); } }
         function toggleMute() { isMuted = !isMuted; bgm[isMuted ? 'pause' : 'play'](); document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊'; }
         function playSound(type) { if(isMuted) return; try { if(type === 'levelup') sfxLevelUp.play(); if(type === 'explode') sfxExplode.play(); if(type === 'hit') sfxHit.play(); if(type === 'fuse') sfxFuse.play(); } catch(e){} }

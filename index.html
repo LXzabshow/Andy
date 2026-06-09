@@ -257,7 +257,6 @@
         function getFormattedTime() { const now = new Date(); return `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; }
         function getTodayStr() { const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; }); return `${y}-${m}-${d}`; }
 
-        // 💡 极核修正：深层对象清洗协议 (防止新老数据断层引发 Undefined Crash)
         function sanitizeVitality(v) {
             if (!v || typeof v !== 'object') v = {};
             if (typeof v.current !== 'number') v.current = 10.0;
@@ -381,7 +380,6 @@
             renderVitalityBar(currentData.vitality.current);
         }
 
-        // --- 核心模块交互 ---
         function openRankModal() {
             if(!rankModal || !currentData) return; clickCoin(); rankModal.style.display = 'flex'; const container = document.getElementById('rankListContainer'); let currentLevel = currentData.currentRank || 1; let html = '';
             RANK_DATA.forEach((r, index) => { let rankLevel = index + 1;

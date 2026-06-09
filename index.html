@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Andy的冒险背包</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'VT323', monospace; text-align: center; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background 1.5s ease; image-rendering: pixelated; background-size: 64px 64px; }
@@ -44,7 +44,6 @@
         .health-bar-fill { height: 100%; background-color: #e70000; width: 0%; transition: width 0.8s; box-shadow: inset 0px 4px 0px rgba(255,255,255,0.3); }
         .health-bar-fill.safe { background-color: #2ecc71; } .health-bar-fill.warn { background-color: #f1c40f; }
 
-        /* 体能血条引擎 UI */
         .vitality-container { display:flex; width:100%; height:18px; border:3px solid #000; background:#222; padding:2px; box-sizing:border-box; box-shadow: inset 2px 2px #111, inset -2px -2px #555;}
         @keyframes flash-danger { 0% { opacity: 1; } 50% { opacity: 0.5; filter: brightness(2); } 100% { opacity: 1; } }
 
@@ -190,10 +189,44 @@
     <div class="ground"></div>
 
     <script>
+        // ==========================================
+        // ⚠️ 极核防御区：所有全局变量强制顶层声明，彻底消灭 TDZ 死机
+        // ==========================================
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
-        const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        let isMuted = false, lastCoins = null, isAnimating = false, lastScenario = -1; 
+        let ambientInterval = null, syncInterval = null, currentData = null, pendingAction = null; 
+        let isGameRunning = false; // ⬅️ 之前丢失的罪魁祸首已重新注入
+        const ROW_ID = 1;
+        let dbClient = null;
+
+        // ==========================================
+        // 🚨 探针系统：全局致命错误捕获雷达
+        // ==========================================
+        window.addEventListener('error', function(e) {
+            const status = document.getElementById('connStatus'); const msg = document.getElementById('statusMsg');
+            if(status) status.innerText = "🛑 致命语法/执行错误";
+            if(msg) { msg.innerText = e.message + ' (行:' + e.lineno + ')'; msg.style.color = '#ff0000'; }
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+            const status = document.getElementById('connStatus'); const msg = document.getElementById('statusMsg');
+            if(status) status.innerText = "🛑 致命网络/DB错误";
+            if(msg) { msg.innerText = e.reason.message || e.reason; msg.style.color = '#ff0000'; }
+        });
+
+        // 检查 CDN 是否成功加载 Supabase
+        if (typeof window.supabase === 'undefined') {
+            document.getElementById('connStatus').innerText = "CDN 加载失败";
+            document.getElementById('statusMsg').innerText = "请检查网络，Supabase 库未成功拉取。";
+            document.getElementById('statusMsg').style.color = 'red';
+        } else {
+            dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        // ==========================================
+        // UI & 引擎主逻辑
+        // ==========================================
         const uiLayer = document.getElementById('uiLayer');
         const uiCard = document.getElementById('ui-card');
         const totalDisplay = document.getElementById('totalDisplay');
@@ -220,10 +253,6 @@
         const sfxHit = document.getElementById('sfx-hit'); 
         const sfxFuse = document.getElementById('sfx-fuse'); 
         const sfxClick = document.getElementById('sfx-click');
-
-        let isMuted = false, lastCoins = null, isAnimating = false, lastScenario = -1; 
-        let ambientInterval = null, syncInterval = null, currentData = null, pendingAction = null; 
-        const ROW_ID = 1;
 
         const SVG_TEX = {
             oak: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23775533'/><path d='M0 4h16M0 10h16M4 0v4M12 4v6M8 10v6' stroke='%23503515' stroke-width='1'/></svg>",
@@ -257,7 +286,6 @@
         function getFormattedTime() { const now = new Date(); return `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; }
         function getTodayStr() { const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; }); return `${y}-${m}-${d}`; }
 
-        // 💡 极核修正：深层对象清洗协议 (防止新老数据断层引发 Undefined Crash)
         function sanitizeVitality(v) {
             if (!v || typeof v !== 'object') v = {};
             if (typeof v.current !== 'number') v.current = 10.0;
@@ -295,6 +323,7 @@
         }
 
         async function startGame() {
+            if (!dbClient) return alert("数据库尚未初始化完成，请稍后再试或检查网络。");
             document.getElementById('start-overlay').style.display='none';
             await syncData(); syncInterval = setInterval(syncData, 5000); 
             setInterval(processCooldowns, 1000); setInterval(renderBuffs, 1000); 
@@ -303,10 +332,20 @@
 
         async function syncData() {
             if(isAnimating || isGameRunning) return;
+            if(!dbClient) return; // 防御
             try {
+                // 加入明确的 DB 错误捕获
                 const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
-                if (error || !data || data.length === 0) {
-                    if(connStatus) connStatus.innerText = "数据抓取失败";
+                
+                if (error) {
+                    if(connStatus) connStatus.innerText = "DB 访问被拒";
+                    if(statusMsg) { statusMsg.innerText = error.message; statusMsg.style.color = 'red'; }
+                    return;
+                }
+                
+                if (!data || data.length === 0) {
+                    if(connStatus) connStatus.innerText = "未找到玩家数据";
+                    if(statusMsg) { statusMsg.innerText = "gamedata 表中不存在 id=1 的数据行"; statusMsg.style.color = 'red'; }
                     return;
                 }
                 
@@ -337,9 +376,11 @@
                 }
                 
                 if(connStatus) connStatus.innerText = "信号良好";
+                if(statusMsg && statusMsg.style.color === 'red') { statusMsg.innerText = ""; statusMsg.style.color = "#fff"; }
             } catch (error) { 
                 console.error("引擎崩溃保护:", error);
                 if(connStatus) connStatus.innerText = "失去连接..."; 
+                if(statusMsg) { statusMsg.innerText = error.message; statusMsg.style.color = 'red'; }
             }
         }
 

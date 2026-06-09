@@ -39,7 +39,7 @@
         @keyframes glow { from { box-shadow: 0 0 5px #ffb700; } to { box-shadow: 0 0 15px #ffb700, 0 0 5px #ffb700 inset; } }
 
         .health-bar-container { width: 100%; margin-top: 10px; padding: 0 5px; box-sizing: border-box; }
-        .health-bar-label { font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 4px; text-shadow: 2px 2px #000; display:flex; justify-content: space-between;}
+        .health-bar-label { font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 4px; text-shadow: 2px 2px #000; display:flex; justify-content: space-between; align-items: flex-end;}
         .health-bar-bg { width: 100%; height: 16px; background-color: #333; border: 3px solid #000; position: relative; box-shadow: inset 2px 2px #111, inset -2px -2px #555; overflow: hidden;}
         .health-bar-fill { height: 100%; background-color: #e70000; width: 0%; transition: width 0.8s; box-shadow: inset 0px 4px 0px rgba(255,255,255,0.3); }
         .health-bar-fill.safe { background-color: #2ecc71; } .health-bar-fill.warn { background-color: #f1c40f; }
@@ -83,6 +83,15 @@
         .cd-timer { position: absolute; bottom: 6px; right: 8px; color: #fff; font-size: 16px; font-weight: bold; text-shadow: 1px 1px #000; display: none; }
         .in-cd { cursor: not-allowed; opacity: 0.8; } .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
 
+        /* 💡 修复：图鉴独立边框与阴影隔离 */
+        .rank-list-item { background: #fff; border: 2px solid #555; padding: 12px; margin-bottom: 10px; border-radius: 6px; text-align: left; font-family: -apple-system, sans-serif; display: block; box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
+        .rank-list-item.unlocked { border-left-width: 6px; border-left-style: solid; background: #f0f8ff; }
+        .rank-list-item.next-target { border: 3px dashed #e67e22; background: #fffdf5; box-shadow: inset 0 0 15px rgba(230,126,34,0.2); }
+        .rank-list-item.locked { background: #d5d5d5; opacity: 0.6; filter: grayscale(1); border: 2px solid #888; }
+        .r-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #000; text-shadow: none;}
+        .r-desc { font-size: 13px; color: #333; line-height: 1.4; text-shadow: none;}
+        .r-cost { font-size: 14px; font-weight: bold; color: #c0392b; margin-top: 5px; text-shadow: none;}
+
         .log-container { max-height: 250px; overflow-y: auto; text-align: left; background: #fff; border: 2px solid #555; padding: 10px; font-family: -apple-system, sans-serif; font-size: 13px; }
         .log-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; }
         .log-t { color: #888; font-size: 11px; min-width: 75px;}
@@ -97,6 +106,16 @@
 
         .mc-input { width: 100%; padding: 10px; font-family: -apple-system, sans-serif; font-size: 15px; border: 2px solid #333; background: #fff; margin-bottom: 10px; box-sizing: border-box;}
         textarea.mc-input { resize: vertical; min-height: 80px; }
+        
+        /* 舒尔特高塔方格 CSS */
+        #schulteGrid { display: grid; width: 100%; aspect-ratio: 1; gap: 4px; background: #373737; padding: 5px; border: 4px solid #000; touch-action: none; }
+        .schulte-cell { background: #c6c6c6; border: 3px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; cursor: pointer; aspect-ratio: 1; transition: transform 0.05s, filter 0.3s; }
+        .schulte-cell:active { transform: scale(0.92); }
+        .schulte-cell.correct { background: #2ecc71 !important; color: #fff !important; cursor: not-allowed !important; filter: none !important;}
+        .schulte-cell.debuff { background: #111 !important; color: #444 !important; filter: blur(1px); }
+
+        .fly-text { position: fixed; z-index: 1000; font-family: 'VT323', monospace; font-size: 40px; font-weight: bold; text-shadow: 2px 2px #000, -2px -2px #000; pointer-events: none; animation: floatUp 1s forwards; }
+        @keyframes floatUp { 0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -20px) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -60px) scale(1); opacity: 0; } }
 
         .skin-steve, .skin-creeper, .skin-villager { }
         .skin-steve { width: 60px; height: 135px; } .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; } .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; } .skin-steve .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; } .skin-steve .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; } .skin-steve .sword { position: absolute; top: 35px; right: -40px; font-size: 60px; transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000); }
@@ -141,7 +160,32 @@
     <div id="shopModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title" style="color: #8e44ad;">🛒 神秘商店</div><div class="reward-grid" id="shopListContainer"><div style="padding:20px; color:#555;">正在同步...</div></div><button class="btn-close-modal" onclick="closeShopModal()">离开商店</button></div></div>
     <div id="logModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title">📜 探险账单</div><div id="logListContent" class="log-container"></div><button class="btn-close-modal" onclick="closeLogModal()">合上账本</button></div></div>
 
-    <div id="gameModal" class="modal-overlay" style="z-index: 600;"><div class="challenge-card" style="max-width: 380px; width: 95%;"><div class="challenge-title" style="color: #8e44ad;">👁️ 试炼高塔</div><div id="gameMenu"><div id="gameRemainingCount" style="color: #000; font-weight: bold; margin-bottom: 20px; font-size: 16px; text-shadow: 1px 1px #fff; background: rgba(255,255,255,0.7); padding: 8px; border: 2px solid #555;">...</div><button class="btn-main-action" onclick="alert('高塔暂在维护中 (节省篇幅保留入口)')" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 攀登高塔</button><button class="btn-close-modal" onclick="document.getElementById('gameModal').style.display='none'">离开高塔</button></div></div></div>
+    <div id="gameModal" class="modal-overlay" style="z-index: 600;">
+        <div class="challenge-card" style="max-width: 380px; width: 95%;">
+            <div class="challenge-title" style="color: #8e44ad;">👁️ 试炼高塔</div>
+            <div id="gameMenu">
+                <div id="gameRemainingCount" style="color: #000; font-weight: bold; margin-bottom: 20px; font-size: 16px; text-shadow: 1px 1px #fff; background: rgba(255,255,255,0.7); padding: 8px; border: 2px solid #555;">...</div>
+                <button class="btn-main-action" onclick="attemptStartGame('normal')" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 攀登高塔 (6x6)</button>
+                <button class="btn-main-action" onclick="attemptStartGame('hard')" style="background: #e67e22; margin-bottom: 12px; font-size:22px;">🔴 极限高塔 (7x7)</button>
+                <button class="btn-main-action" onclick="attemptStartGame('survival')" style="background: #8e44ad; margin-bottom: 20px; font-size:22px;">💀 凋零高塔 (生存)</button>
+                <button class="btn-close-modal" onclick="closeGameModal()">离开高塔</button>
+            </div>
+            <div id="gamePlay" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 22px; font-weight: bold; margin-bottom: 12px; color: #111; text-shadow:1px 1px #fff;">
+                    <span>目标: <span id="gameTargetNum" style="color: #e67e22; font-size: 26px;">1</span></span>
+                    <span>⏳ <span id="gameTimerText" style="color: #c0392b;">30</span>s</span>
+                </div>
+                <div id="schulteGrid"></div>
+                <button class="btn-close-modal" onclick="quitGameSession()" style="margin-top: 15px; background:#7f8c8d;">🏳️ 放弃攀登</button>
+            </div>
+            <div id="gameResult" style="display: none;">
+                <div id="gameResultTitle" style="font-size: 28px; font-weight: bold; margin-bottom: 12px;"></div>
+                <div id="gameResultDesc" style="font-size: 15px; margin-bottom: 20px; color: #222; font-family: -apple-system, sans-serif; line-height: 1.5; text-align: left; background:#fff; padding:10px; border:2px solid #000;"></div>
+                <button class="btn-main-action" id="btnGameRetry" style="background: #27ae60; font-size:22px;">再来一局</button>
+                <button class="btn-close-modal" onclick="backToGameMenu()" style="margin-top: 10px; width: 100%;">返回菜单</button>
+            </div>
+        </div>
+    </div>
 
     <div class="ui-container" id="uiLayer">
         <div class="card" id="ui-card">
@@ -162,7 +206,10 @@
             </div>
 
             <div class="health-bar-container" style="margin-top:12px;">
-                <div class="health-bar-label"><span>⚡ 体力值:</span><span id="vitalityText">10.0 / 10</span></div>
+                <div class="health-bar-label" style="align-items: center;">
+                    <span style="display:flex; align-items:center;">⚡ 体力值：<span id="vitalityStatusBadge" style="margin-left:5px;"></span></span>
+                    <span id="vitalityText">10 / 10</span>
+                </div>
                 <div id="vitalityBarContainer" class="vitality-container"></div>
             </div>
 
@@ -171,7 +218,7 @@
             <div class="main-btn-grid">
                 <button class="btn-main-action" onclick="openRewardModal()">⚔️ 挑战</button>
                 <button class="btn-main-action btn-shop" onclick="openShopModal()">🛒 商店</button>
-                <button class="btn-main-action btn-game" onclick="document.getElementById('gameModal').style.display='flex'">🎮 高塔</button>
+                <button class="btn-main-action btn-game" onclick="openGameModal()">🎮 高塔</button>
                 <button class="btn-main-action btn-contract" onclick="openContractModal()">📜 契约</button>
                 <button class="btn-main-action btn-milestone" onclick="openMilestoneModal()">🏆 图鉴</button>
                 <button class="btn-main-action btn-log" onclick="openLogModal()">📝 账单</button>
@@ -189,21 +236,15 @@
     <div class="ground"></div>
 
     <script>
-        // ==========================================
-        // ⚠️ 极核防御区：所有全局变量强制顶层声明，彻底消灭 TDZ 死机
-        // ==========================================
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
 
         let isMuted = false, lastCoins = null, isAnimating = false, lastScenario = -1; 
         let ambientInterval = null, syncInterval = null, currentData = null, pendingAction = null; 
-        let isGameRunning = false; // ⬅️ 之前丢失的罪魁祸首已重新注入
+        let isGameRunning = false; 
         const ROW_ID = 1;
         let dbClient = null;
 
-        // ==========================================
-        // 🚨 探针系统：全局致命错误捕获雷达
-        // ==========================================
         window.addEventListener('error', function(e) {
             const status = document.getElementById('connStatus'); const msg = document.getElementById('statusMsg');
             if(status) status.innerText = "🛑 致命语法/执行错误";
@@ -215,7 +256,6 @@
             if(msg) { msg.innerText = e.reason.message || e.reason; msg.style.color = '#ff0000'; }
         });
 
-        // 检查 CDN 是否成功加载 Supabase
         if (typeof window.supabase === 'undefined') {
             document.getElementById('connStatus').innerText = "CDN 加载失败";
             document.getElementById('statusMsg').innerText = "请检查网络，Supabase 库未成功拉取。";
@@ -224,9 +264,6 @@
             dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
 
-        // ==========================================
-        // UI & 引擎主逻辑
-        // ==========================================
         const uiLayer = document.getElementById('uiLayer');
         const uiCard = document.getElementById('ui-card');
         const totalDisplay = document.getElementById('totalDisplay');
@@ -253,6 +290,11 @@
         const sfxHit = document.getElementById('sfx-hit'); 
         const sfxFuse = document.getElementById('sfx-fuse'); 
         const sfxClick = document.getElementById('sfx-click');
+
+        // 高塔游戏变量
+        let currentTowerMode = 'normal', currentGameSize = 6;
+        let nextTargetNum = 1, gameClockTimer = null, potionTimer = null, gameTimeRemaining = 40, gameStartTime = 0;
+        let comboCount = 0, maxCombo = 0, lastHitTime = 0;
 
         const SVG_TEX = {
             oak: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23775533'/><path d='M0 4h16M0 10h16M4 0v4M12 4v6M8 10v6' stroke='%23503515' stroke-width='1'/></svg>",
@@ -298,11 +340,11 @@
         }
 
         function getVitalityMultiplier(current) {
-            if(current >= 10) return { coin: 1.1, shop: 1.0, msg: "<span style='color:#00ffff;'>巅峰 (+10%收益)</span>" };
-            if(current >= 7) return { coin: 1.0, shop: 1.0, msg: "<span style='color:#2ecc71;'>正常运转</span>" };
-            if(current >= 4) return { coin: 0.7, shop: 1.0, msg: "<span style='color:#f39c12;'>警告 (-30%收益)</span>" };
-            if(current >= 1) return { coin: 0.5, shop: 1.0, msg: "<span style='color:#e74c3c;'>危机 (-50%收益)</span>" };
-            return { coin: 0.1, shop: 1.5, msg: "<span style='color:#7f8c8d;'>宕机 (-90%收益, 涨价50%)</span>" }; 
+            if(current >= 10) return { coin: 1.1, shop: 1.0, msg: "<span style='color:#00ffff; font-size:12px;'>巅峰(+10%)</span>" };
+            if(current >= 7) return { coin: 1.0, shop: 1.0, msg: "<span style='color:#2ecc71; font-size:12px;'>正常</span>" };
+            if(current >= 4) return { coin: 0.7, shop: 1.0, msg: "<span style='color:#f39c12; font-size:12px;'>警告(-30%)</span>" };
+            if(current >= 1) return { coin: 0.5, shop: 1.0, msg: "<span style='color:#e74c3c; font-size:12px;'>危机(-50%)</span>" };
+            return { coin: 0.1, shop: 1.5, msg: "<span style='color:#7f8c8d; font-size:12px;'>宕机(-90%)</span>" }; 
         }
 
         async function checkAndApplyDailyVitality(record) {
@@ -332,9 +374,8 @@
 
         async function syncData() {
             if(isAnimating || isGameRunning) return;
-            if(!dbClient) return; // 防御
+            if(!dbClient) return;
             try {
-                // 加入明确的 DB 错误捕获
                 const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
                 
                 if (error) {
@@ -345,7 +386,6 @@
                 
                 if (!data || data.length === 0) {
                     if(connStatus) connStatus.innerText = "未找到玩家数据";
-                    if(statusMsg) { statusMsg.innerText = "gamedata 表中不存在 id=1 的数据行"; statusMsg.style.color = 'red'; }
                     return;
                 }
                 
@@ -355,7 +395,8 @@
                 record.schulteDaily = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
                 record.milestones = record.milestones || {}; Object.keys(MS_NAMES).forEach(k => record.milestones[k] = record.milestones[k] || 0);
                 record.milestoneClaimed = record.milestoneClaimed || {}; Object.keys(MS_NAMES).forEach(k => record.milestoneClaimed[k] = record.milestoneClaimed[k] || []);
-                
+                if(!record.towerConfig) record.towerConfig = { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
+
                 record = await checkAndApplyDailyVitality(record);
                 currentData = record; 
                 let cloudCoins = record.coins || 0;
@@ -378,15 +419,20 @@
                 if(connStatus) connStatus.innerText = "信号良好";
                 if(statusMsg && statusMsg.style.color === 'red') { statusMsg.innerText = ""; statusMsg.style.color = "#fff"; }
             } catch (error) { 
-                console.error("引擎崩溃保护:", error);
+                console.error("引擎保护:", error);
                 if(connStatus) connStatus.innerText = "失去连接..."; 
-                if(statusMsg) { statusMsg.innerText = error.message; statusMsg.style.color = 'red'; }
             }
         }
 
+        // 💡 修复：UI 降维去小数 & 挂载常驻状态反馈
         function renderVitalityBar(current) {
             const container = document.getElementById('vitalityBarContainer');
-            document.getElementById('vitalityText').innerText = `${current.toFixed(1)} / 10`;
+            let multi = getVitalityMultiplier(current);
+            let displayNum = Number.isInteger(current) ? current : current.toFixed(1);
+            
+            document.getElementById('vitalityText').innerText = `${displayNum} / 10`;
+            document.getElementById('vitalityStatusBadge').innerHTML = multi.msg;
+            
             let color = '#444', anim = 'none';
             if(current >= 10) { color = '#00ffff'; anim = 'glow 1s infinite alternate'; }
             else if(current >= 7) color = '#2ecc71';
@@ -402,7 +448,9 @@
             }
             container.innerHTML = html;
             
-            if(currentData.vitality && currentData.vitality.freeze) document.getElementById('vitalityText').innerHTML = `<span style="color:#00ffff;">❄️ 医疗冻结中</span>`;
+            if(currentData.vitality && currentData.vitality.freeze) {
+                document.getElementById('vitalityStatusBadge').innerHTML = `<span style="color:#00ffff; font-size:12px;">❄️冻结</span>`;
+            }
         }
 
         function updateRankUI(coins, rank) {
@@ -422,11 +470,11 @@
             renderVitalityBar(currentData.vitality.current);
         }
 
-        // --- 核心模块交互 ---
+        // 💡 修复：图鉴弹窗的独立 CSS 卡牌框还原
         function openRankModal() {
             if(!rankModal || !currentData) return; clickCoin(); rankModal.style.display = 'flex'; const container = document.getElementById('rankListContainer'); let currentLevel = currentData.currentRank || 1; let html = '';
             RANK_DATA.forEach((r, index) => { let rankLevel = index + 1;
-                if (rankLevel <= currentLevel) html += `<div class="rank-list-item unlocked" style="border-left-color: ${r.borderColor}; background: #fff;"><div class="r-title">${r.title} <span style="font-size:12px;color:#27ae60;">(${rankLevel === currentLevel ? '👉 当前所在' : '✅ 已解锁'})</span></div><div class="r-desc">背包容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div></div>`;
+                if (rankLevel <= currentLevel) html += `<div class="rank-list-item unlocked" style="border-left-color: ${r.borderColor};"><div class="r-title">${r.title} <span style="font-size:12px;color:#27ae60;">(${rankLevel === currentLevel ? '👉 当前所在' : '✅ 已解锁'})</span></div><div class="r-desc">背包容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div></div>`;
                 else if (rankLevel === currentLevel + 1) html += `<div class="rank-list-item next-target"><div class="r-title" style="color:#e67e22;">🎯 突破目标: ${r.title}</div><div class="r-desc">升级后容量: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div><div class="r-cost">突破消耗: -${RANK_DATA[currentLevel - 1].cost} 🪙</div></div>`;
                 else html += `<div class="rank-list-item locked"><div class="r-title" style="color:#555;">第 ${rankLevel} 阶: ???</div><div class="r-desc" style="color:#666;">容量上限: ???</div><div class="r-cost" style="color:#666;">突破消耗: ???</div></div>`;
             }); container.innerHTML = html;
@@ -466,7 +514,13 @@
             const container = document.getElementById('rewardListContainer'); if(!currentData || !currentData.taskItems || currentData.taskItems.length === 0) { container.innerHTML = '<div style="padding:20px; color:#555; text-align:center;">告示牌空空如也</div>'; return; }
             let multi = getVitalityMultiplier(currentData.vitality.current);
             let safeAbsorbed = (currentData.vitality.dailyAbsorbed && typeof currentData.vitality.dailyAbsorbed.amount === 'number') ? currentData.vitality.dailyAbsorbed.amount : 0;
-            document.getElementById('vitalityNotice').innerHTML = `当前体能效率：${multi.msg} (今日还可吸收 ${Math.max(0, 2.0 - safeAbsorbed).toFixed(1)} ⚡)`;
+            
+            // UI降维处理日吸入额度
+            let displayAbsorbed = Number.isInteger(safeAbsorbed) ? safeAbsorbed : safeAbsorbed.toFixed(1);
+            let spaceLeft = Math.max(0, 2.0 - safeAbsorbed);
+            let displaySpaceLeft = Number.isInteger(spaceLeft) ? spaceLeft : spaceLeft.toFixed(1);
+            
+            document.getElementById('vitalityNotice').innerHTML = `当前体能效率：${multi.msg} (今日还可吸收 ${displaySpaceLeft} ⚡)`;
             
             container.innerHTML = currentData.taskItems.map(task => {
                 let staminaUI = task.stamina_val ? `<span style="background:#2980b9; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; margin-left:5px; border:1px solid #000;">⚡ +${task.stamina_val}</span>` : '';
@@ -495,16 +549,19 @@
                 const now = Date.now(); if(currentData.cooldowns && currentData.cooldowns[data.id] > now) return; 
                 let multi = getVitalityMultiplier(currentData.vitality.current); let actualReward = Math.floor(data.price * multi.coin);
                 let extraUI = ''; if(data.stamina_val) extraUI = `<br><span style="color:#2980b9; font-size:18px;">⚡ 预计恢复: +${data.stamina_val} 体力</span>`;
-                document.getElementById('confirmText').innerHTML = `完成【${data.name}】将获得<br><span style="color:#27ae60; font-size:24px;">${actualReward} 🪙</span> (体能修正率: ${multi.coin}) ${extraUI}`;
+                document.getElementById('confirmText').innerHTML = `完成【${data.name}】将获得<br><span style="color:#27ae60; font-size:24px;">${actualReward} 🪙</span> <br><span style="font-size:13px; color:#555;">(体能修正率: ${multi.coin})</span> ${extraUI}`;
             } 
             else if (actionType === 'buy') { if (currentData.coins < data.actualPrice) { playSound('fuse'); return alert("❌ 行囊硬币不足，无法兑换！"); } document.getElementById('confirmText').innerHTML = `确认花费 <span style="color:#c0392b;">${data.actualPrice}币</span> 兑换<br><span style="color:#8e44ad; font-size:20px;">【${data.name}】</span> 吗？`; }
+            else if (actionType === 'schulteTicket') { document.getElementById('confirmText').innerHTML = `🎫 免费进入已用完。<br>开启高塔将扣除<span style="color:#c0392b;"> ${data.ticket} 🪙</span> 门票，确定支付吗？`; }
             pendingAction = { actionType, data }; cfModal.style.display = 'flex';
         }
         function closeConfirmModal() { if(cfModal) cfModal.style.display = 'none'; pendingAction = null; }
 
         async function executeConfirmedAction() {
             if (!pendingAction) return; const action = pendingAction; closeConfirmModal();
-            if (action.actionType === 'reward') await proceedWithReward(action.data); else if (action.actionType === 'buy') await proceedWithBuy(action.data);
+            if (action.actionType === 'reward') await proceedWithReward(action.data); 
+            else if (action.actionType === 'buy') await proceedWithBuy(action.data);
+            else if (action.actionType === 'schulteTicket') await executeStartGame(action.data.mode, true);
         }
 
         async function proceedWithBuy(item) {
@@ -549,6 +606,92 @@
                 currentData.coins = newCoins; currentData.childLogs = logs; currentData.cooldowns = cds; currentData.vitality = record.vitality; localStorage.setItem('andy_last_seen_coins', newCoins); closeRewardModal(); playAttackSequence(totalWin, newCoins);
             } catch (e) { alert("申报异常，请重试"); }
         }
+
+        // 💡 修复：全量回归高塔核心执行逻辑
+        function openGameModal() {
+            if (!currentData || !currentData.towerConfig) return alert('高塔参数未同步，请重试');
+            [sModal, rModal, lModal, cfModal, rankModal, ctModal, msModal].forEach(m => { if(m) m.style.display = 'none'; });
+            gModal.style.display = 'flex'; backToGameMenu();
+        }
+        function closeGameModal() { quitGameSession(); gModal.style.display = 'none'; }
+        
+        function backToGameMenu() {
+            clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false;
+            document.getElementById('gameMenu').style.display = 'block'; document.getElementById('gamePlay').style.display = 'none'; document.getElementById('gameResult').style.display = 'none';
+            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); let pCount = (schulte.lastDate === today) ? schulte.playCount : 0; let wCount = (schulte.lastDate === today) ? schulte.winCount : 0;
+            let cfg = currentData.towerConfig; let freeLeft = Math.max(0, cfg.freePlays - pCount); let rewardLeft = Math.max(0, cfg.maxRewards - wCount);
+            document.getElementById('gameRemainingCount').innerHTML = `<div style="margin-bottom:8px;">🎫 免费进入剩余: <span style="color:${freeLeft > 0 ? '#27ae60' : '#c0392b'};">${freeLeft}</span> / ${cfg.freePlays}</div><div>🎁 有效领奖剩余: <span style="color:${rewardLeft > 0 ? '#e67e22' : '#c0392b'};">${rewardLeft}</span> / ${cfg.maxRewards}</div>`;
+        }
+
+        function attemptStartGame(mode) {
+            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); let pCount = (schulte.lastDate === today) ? schulte.playCount : 0; let cfg = currentData.towerConfig; let requiredTicket = cfg[mode].ticket;
+            if (pCount >= cfg.freePlays) { if (currentData.coins < requiredTicket) { playSound('fuse'); alert("❌ 门票不足！"); return; } requestAction('schulteTicket', { mode: mode, ticket: requiredTicket }); } else { executeStartGame(mode, false); }
+        }
+
+        async function executeStartGame(mode, isPaidLocally) {
+            try {
+                let record = currentData; let today = getTodayStr(); let schulte = record.schulteDaily; if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
+                let cfg = record.towerConfig; let requiredTicket = cfg[mode].ticket; let newCoins = record.coins; let logs = record.childLogs || [];
+                let needsPayment = schulte.playCount >= cfg.freePlays;
+                if (needsPayment && !isPaidLocally) { alert("⚠️ 数据已刷新，请重试"); syncData(); return; }
+                if (needsPayment && newCoins < requiredTicket) { alert("❌ 云端校验拦截：门票不足"); syncData(); return; }
+                if (needsPayment) { newCoins -= requiredTicket; logs.unshift({ time: getFormattedTime(), action: `支付高塔门票 (${mode})`, amount: -requiredTicket }); }
+                schulte.playCount += 1;
+                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
+                currentData.coins = newCoins; currentData.childLogs = logs; currentData.schulteDaily = schulte; localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins); startGameSession(mode);
+            } catch(e) { alert("网络异常，开启秘境失败"); }
+        }
+
+        function startGameSession(mode) {
+            currentTowerMode = mode; currentGameSize = (mode === 'normal') ? 6 : 7; nextTargetNum = 1; gameStartTime = Date.now(); comboCount = 0; maxCombo = 0; lastHitTime = gameStartTime; gameTimeRemaining = (mode === 'normal') ? 40 : 75; isGameRunning = true;
+            document.getElementById('gameModal').style.display = 'flex'; document.getElementById('gameMenu').style.display = 'none'; document.getElementById('gameResult').style.display = 'none'; document.getElementById('gamePlay').style.display = 'flex'; document.getElementById('gameTargetNum').innerText = nextTargetNum; document.getElementById('gameTimerText').innerText = gameTimeRemaining;
+            let totalCells = currentGameSize * currentGameSize; let numberPool = []; for(let i = 1; i <= totalCells; i++) numberPool.push(i); for(let i = numberPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]]; }
+            const gridContainer = document.getElementById('schulteGrid'); gridContainer.style.gridTemplateColumns = `repeat(${currentGameSize}, 1fr)`; gridContainer.innerHTML = '';
+            numberPool.forEach(num => { const cell = document.createElement('div'); cell.className = 'schulte-cell'; cell.innerText = num; cell.style.fontSize = currentGameSize === 7 ? '20px' : '24px'; cell.onclick = () => handleCellClick(cell, num); gridContainer.appendChild(cell); });
+            gridContainer.addEventListener('touchstart', function(e) { if (e.touches.length > 1) { e.preventDefault(); triggerAntiCheat(); } }, {passive: false});
+            clearInterval(gameClockTimer); clearInterval(potionTimer);
+            if (mode === 'survival') { potionTimer = setInterval(() => { if(!isGameRunning) { clearInterval(potionTimer); return; } let cells = Array.from(document.querySelectorAll('.schulte-cell:not(.correct)')); if(cells.length > 5) { for(let i=0; i<3; i++) { let target = cells[Math.floor(Math.random() * cells.length)]; if(!target.classList.contains('debuff')) { target.classList.add('debuff'); setTimeout(() => { target.classList.remove('debuff'); }, 1500); } } } }, 2500); }
+            gameClockTimer = setInterval(() => { gameTimeRemaining--; document.getElementById('gameTimerText').innerText = gameTimeRemaining; if(gameTimeRemaining <= 0) endGameSession(false); }, 1000);
+        }
+
+        function showComboText(text) { let el = document.createElement('div'); el.className = 'fly-text'; el.style.color = '#ffb700'; el.style.left = '50%'; el.style.top = '40%'; el.innerText = text; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
+        function triggerAntiCheat() { if(!isGameRunning) return; clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; document.getElementById('gamePlay').style.display = 'none'; const resultBox = document.getElementById('gameResult'); resultBox.style.display = 'block'; document.getElementById('gameResultTitle').innerText = "🚨 时空坍塌！"; document.getElementById('gameResultTitle').style.color = "#c0392b"; document.getElementById('gameResultDesc').innerText = "检测到多指触控作弊！末影人已将高塔封锁，门票吞没！"; document.getElementById('btnGameRetry').innerText = "重新接受试炼"; playSound('explode'); }
+
+        function handleCellClick(cell, num) {
+            if(!isGameRunning || cell.classList.contains('correct')) return;
+            if(num === nextTargetNum) {
+                cell.classList.add('correct'); clickCoin(); nextTargetNum++; let now = Date.now();
+                if (now - lastHitTime <= 1500) { comboCount++; if (comboCount > maxCombo) maxCombo = comboCount; if ([5, 10, 15, 20, 30].includes(comboCount)) showComboText("Combo x" + comboCount + "!"); } else comboCount = 1;
+                lastHitTime = now; if(nextTargetNum > currentGameSize * currentGameSize) endGameSession(true); else document.getElementById('gameTargetNum').innerText = nextTargetNum;
+            } else { playSound('fuse'); comboCount = 0; cell.style.backgroundColor = '#c0392b'; cell.style.color = '#fff'; if(cell.wrongTimeout) clearTimeout(cell.wrongTimeout); cell.wrongTimeout = setTimeout(() => { cell.style.backgroundColor = ''; cell.style.color = ''; }, 200); }
+        }
+
+        function quitGameSession() { clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; backToGameMenu(); }
+
+        async function endGameSession(isWin) {
+            clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; document.getElementById('gamePlay').style.display = 'none'; const resultBox = document.getElementById('gameResult'); const rTitle = document.getElementById('gameResultTitle'); const rDesc = document.getElementById('gameResultDesc'); const rBtn = document.getElementById('btnGameRetry'); resultBox.style.display = 'block'; rBtn.onclick = () => attemptStartGame(currentTowerMode);
+            if(!isWin) { playSound('explode'); rTitle.innerText = "⏳ 攀塔超时 (失败)"; rTitle.style.color = "#c0392b"; rDesc.innerHTML = "沙漏空了！你的眼睛搜寻速度慢了一步，潜能未能完全激发。"; rBtn.innerText = "重新尝试攀登"; return; }
+            let elapsed = ((Date.now() - gameStartTime) / 1000).toFixed(1); rTitle.innerText = "🎉 挑战成功！"; rTitle.style.color = "#27ae60"; playSound('levelup');
+            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
+            let cfg = currentData.towerConfig; let rewardAmt = cfg[currentTowerMode].reward; let comboBadge = maxCombo >= 10 ? `<br><br>✨ <span style="color:#8e44ad; font-weight:bold;">最高连击数 [Combo x${maxCombo}]！</span>` : "";
+            
+            // 加入经济惩罚计算
+            let multi = getVitalityMultiplier(currentData.vitality.current);
+            let finalReward = Math.floor(rewardAmt * multi.coin);
+            
+            if(schulte.winCount < cfg.maxRewards) { rDesc.innerHTML = `你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 攻克了高塔！<br><br>🎁 战利品：<span style="color:#27ae60;font-weight:bold;">+${finalReward} 硬币</span> 已注入。<br>(基础 ${rewardAmt} x 体能修正 ${multi.coin})<br>(今日领奖: ${schulte.winCount + 1}/${cfg.maxRewards}) ${comboBadge}`; rBtn.innerText = "继续向上攀登"; await uploadSchulteWin(finalReward, currentTowerMode); } else { rDesc.innerHTML = `你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 通过试炼！<br><br>⚠️ 提示：今日高塔战利品上限已满。本次攀登不再产出硬币。 ${comboBadge}`; rBtn.innerText = "纯粹攀塔模式"; }
+        }
+
+        async function uploadSchulteWin(rewardAmt, mode) {
+            try {
+                let record = currentData; let today = getTodayStr(); let schulte = record.schulteDaily; if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
+                schulte.winCount += 1; let newCoins = record.coins + rewardAmt; const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; if(newCoins > maxCap) newCoins = maxCap;
+                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `高塔试炼通关 (${mode})`, amount: rewardAmt });
+                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
+                currentData.coins = newCoins; currentData.childLogs = logs; currentData.schulteDaily = schulte; localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins);
+            } catch (e) {}
+        }
+        // ==========================================
 
         async function upgradeRank() {
             if (!currentData || isAnimating) return;

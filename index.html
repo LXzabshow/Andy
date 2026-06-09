@@ -257,9 +257,20 @@
         function getFormattedTime() { const now = new Date(); return `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; }
         function getTodayStr() { const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; }); return `${y}-${m}-${d}`; }
 
-        // 💡 核心：获取体力收益惩罚系数 (5阶)
+        // 💡 极核修正：深层对象清洗协议 (防止新老数据断层引发 Undefined Crash)
+        function sanitizeVitality(v) {
+            if (!v || typeof v !== 'object') v = {};
+            if (typeof v.current !== 'number') v.current = 10.0;
+            v.freeze = !!v.freeze;
+            if (!v.lastDecayDate) v.lastDecayDate = getTodayStr();
+            if (!v.dailyAbsorbed || typeof v.dailyAbsorbed !== 'object') v.dailyAbsorbed = { date: getTodayStr(), amount: 0 };
+            if (!v.dailyAbsorbed.date) v.dailyAbsorbed.date = getTodayStr();
+            if (typeof v.dailyAbsorbed.amount !== 'number') v.dailyAbsorbed.amount = 0;
+            return v;
+        }
+
         function getVitalityMultiplier(current) {
-            if(current === 10) return { coin: 1.1, shop: 1.0, msg: "<span style='color:#00ffff;'>巅峰 (+10%收益)</span>" };
+            if(current >= 10) return { coin: 1.1, shop: 1.0, msg: "<span style='color:#00ffff;'>巅峰 (+10%收益)</span>" };
             if(current >= 7) return { coin: 1.0, shop: 1.0, msg: "<span style='color:#2ecc71;'>正常运转</span>" };
             if(current >= 4) return { coin: 0.7, shop: 1.0, msg: "<span style='color:#f39c12;'>警告 (-30%收益)</span>" };
             if(current >= 1) return { coin: 0.5, shop: 1.0, msg: "<span style='color:#e74c3c;'>危机 (-50%收益)</span>" };
@@ -267,15 +278,17 @@
         }
 
         async function checkAndApplyDailyVitality(record) {
-            record.vitality = record.vitality || { current: 10.0, freeze: false, lastDecayDate: getTodayStr(), dailyAbsorbed: { date: getTodayStr(), amount: 0 } };
+            record.vitality = sanitizeVitality(record.vitality);
             let today = getTodayStr();
+            
             if (record.vitality.lastDecayDate !== today) {
                 if (!record.vitality.freeze && record.vitality.current > 0) {
                     record.vitality.current = Math.max(0, record.vitality.current - 1.0);
                     let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: "⚡ 午夜体能自然衰减", amount: "-1 体力" });
                     record.childLogs = logs.slice(0, 10);
                 }
-                record.vitality.lastDecayDate = today; record.vitality.dailyAbsorbed = { date: today, amount: 0 };
+                record.vitality.lastDecayDate = today; 
+                record.vitality.dailyAbsorbed = { date: today, amount: 0 };
                 try { await dbClient.from('gamedata').update({ vitality: record.vitality, childLogs: record.childLogs }).eq('id', ROW_ID); } catch(e){}
             }
             return record;
@@ -291,8 +304,11 @@
         async function syncData() {
             if(isAnimating || isGameRunning) return;
             try {
-                const { data } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
-                if (!data || data.length === 0) return;
+                const { data, error } = await dbClient.from('gamedata').select('*').eq('id', ROW_ID);
+                if (error || !data || data.length === 0) {
+                    if(connStatus) connStatus.innerText = "数据抓取失败";
+                    return;
+                }
                 
                 let record = data[0];
                 record.currentRank = record.currentRank || 1; record.shopItems = record.shopItems || [];
@@ -302,29 +318,36 @@
                 record.milestoneClaimed = record.milestoneClaimed || {}; Object.keys(MS_NAMES).forEach(k => record.milestoneClaimed[k] = record.milestoneClaimed[k] || []);
                 
                 record = await checkAndApplyDailyVitality(record);
-                currentData = record; let cloudCoins = record.coins || 0;
+                currentData = record; 
+                let cloudCoins = record.coins || 0;
                 
-                renderLogs(record.childLogs); updateRankUI(cloudCoins, record.currentRank);
+                renderLogs(record.childLogs); 
+                updateRankUI(cloudCoins, record.currentRank);
 
                 let localStr = localStorage.getItem('andy_last_seen_coins');
-                if (localStr === null) { if(totalDisplay) totalDisplay.innerText = cloudCoins; localStorage.setItem('andy_last_seen_coins', cloudCoins); return; }
-                lastCoins = parseInt(localStr);
-
-                if (cloudCoins > lastCoins) playAttackSequence(cloudCoins - lastCoins, cloudCoins);
-                else if (cloudCoins < lastCoins) playExplodeSequence(lastCoins - cloudCoins, cloudCoins, `遭遇劫掠！扣减 ${lastCoins - cloudCoins}`);
-                else if(totalDisplay) totalDisplay.innerText = cloudCoins;
+                if (localStr === null) { 
+                    if(totalDisplay) totalDisplay.innerText = cloudCoins; 
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins); 
+                } else {
+                    lastCoins = parseInt(localStr);
+                    if (cloudCoins > lastCoins) playAttackSequence(cloudCoins - lastCoins, cloudCoins);
+                    else if (cloudCoins < lastCoins) playExplodeSequence(lastCoins - cloudCoins, cloudCoins, `遭遇劫掠！扣减 ${lastCoins - cloudCoins}`);
+                    else if(totalDisplay) totalDisplay.innerText = cloudCoins;
+                    localStorage.setItem('andy_last_seen_coins', cloudCoins);
+                }
                 
-                localStorage.setItem('andy_last_seen_coins', cloudCoins);
                 if(connStatus) connStatus.innerText = "信号良好";
-            } catch (error) { if(connStatus) connStatus.innerText = "失去连接..."; }
+            } catch (error) { 
+                console.error("引擎崩溃保护:", error);
+                if(connStatus) connStatus.innerText = "失去连接..."; 
+            }
         }
 
-        // 💡 渲染 10 段血条 UI
         function renderVitalityBar(current) {
             const container = document.getElementById('vitalityBarContainer');
             document.getElementById('vitalityText').innerText = `${current.toFixed(1)} / 10`;
             let color = '#444', anim = 'none';
-            if(current === 10) { color = '#00ffff'; anim = 'glow 1s infinite alternate'; }
+            if(current >= 10) { color = '#00ffff'; anim = 'glow 1s infinite alternate'; }
             else if(current >= 7) color = '#2ecc71';
             else if(current >= 4) color = '#f39c12';
             else if(current >= 1) { color = '#e74c3c'; anim = 'flash-danger 1s infinite'; }
@@ -338,8 +361,7 @@
             }
             container.innerHTML = html;
             
-            // 如果医疗冻结，覆盖文字
-            if(currentData.vitality.freeze) document.getElementById('vitalityText').innerHTML = `<span style="color:#00ffff;">❄️ 医疗冻结中</span>`;
+            if(currentData.vitality && currentData.vitality.freeze) document.getElementById('vitalityText').innerHTML = `<span style="color:#00ffff;">❄️ 医疗冻结中</span>`;
         }
 
         function updateRankUI(coins, rank) {
@@ -356,7 +378,6 @@
             if (fill) { fill.style.width = ratio + '%'; fill.className = ratio > 85 ? 'health-bar-fill warn' : (ratio < 40 ? 'health-bar-fill safe' : 'health-bar-fill'); }
             if (btnUpgrade) { btnUpgrade.innerText = rank >= RANK_DATA.length ? "已达最高境界 👑" : `🆙 突破界限 (需花费 ${rData.cost} 币)`; btnUpgrade.disabled = rank >= RANK_DATA.length || coins < rData.cost; }
 
-            // 渲染体力条
             renderVitalityBar(currentData.vitality.current);
         }
 
@@ -400,11 +421,11 @@
         function openRewardModal() { if(rModal) { rModal.style.display = 'flex'; renderDynamicTasks(); processCooldowns(); } }
         function closeRewardModal() { if(rModal) rModal.style.display = 'none'; }
         
-        // 💡 任务渲染：加入体力显示与基础扣减提示
         function renderDynamicTasks() {
             const container = document.getElementById('rewardListContainer'); if(!currentData || !currentData.taskItems || currentData.taskItems.length === 0) { container.innerHTML = '<div style="padding:20px; color:#555; text-align:center;">告示牌空空如也</div>'; return; }
             let multi = getVitalityMultiplier(currentData.vitality.current);
-            document.getElementById('vitalityNotice').innerHTML = `当前体能效率：${multi.msg} (今日还可吸收 ${Math.max(0, 2.0 - currentData.vitality.dailyAbsorbed.amount).toFixed(1)} ⚡)`;
+            let safeAbsorbed = (currentData.vitality.dailyAbsorbed && typeof currentData.vitality.dailyAbsorbed.amount === 'number') ? currentData.vitality.dailyAbsorbed.amount : 0;
+            document.getElementById('vitalityNotice').innerHTML = `当前体能效率：${multi.msg} (今日还可吸收 ${Math.max(0, 2.0 - safeAbsorbed).toFixed(1)} ⚡)`;
             
             container.innerHTML = currentData.taskItems.map(task => {
                 let staminaUI = task.stamina_val ? `<span style="background:#2980b9; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; margin-left:5px; border:1px solid #000;">⚡ +${task.stamina_val}</span>` : '';
@@ -455,7 +476,6 @@
             } catch (e) { alert("兑换受阻，请重试！"); }
         }
 
-        // 💡 核心：任务结算截断与双轨注入
         async function proceedWithReward(taskData) {
             try {
                 let record = currentData; let logs = record.childLogs || []; 
@@ -464,10 +484,9 @@
                 
                 logs.unshift({ time: getFormattedTime(), action: `完成挑战: ${taskData.name}`, amount: actualWin });
                 
-                // 体力双轨结算
                 if (taskData.stamina_val) {
                     let today = getTodayStr();
-                    let dailyObj = record.vitality.dailyAbsorbed; if(dailyObj.date !== today) dailyObj = { date: today, amount: 0 };
+                    let dailyObj = record.vitality.dailyAbsorbed; if(!dailyObj || dailyObj.date !== today) dailyObj = { date: today, amount: 0 };
                     let spaceLeft = 2.0 - dailyObj.amount;
                     if (spaceLeft > 0) {
                         let actualStaminaGained = Math.min(taskData.stamina_val, spaceLeft);

@@ -16,10 +16,8 @@
         
         .ui-container { margin-top: 5vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.5s ease, transform 0.2s ease;}
         
-        /* 💡 材质同步与动态发光核心卡片样式 */
         .card { background-color: var(--card-bg, #c6c6c6); border: 5px solid var(--card-border, #000); box-shadow: var(--card-glow, inset 4px 4px rgba(255,255,255,0.4), inset -4px -4px rgba(0,0,0,0.4)); padding: 15px; position: relative; transition: all 0.8s ease; }
         
-        /* 动态呼吸光效特效类 */
         @keyframes pulse-redstone { 0% { box-shadow: 0 0 10px #ff0000, inset 0 0 10px #ff0000, inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4); } 50% { box-shadow: 0 0 30px #ff0000, inset 0 0 20px #ff0000, inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4); } 100% { box-shadow: 0 0 10px #ff0000, inset 0 0 10px #ff0000, inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4); } }
         @keyframes pulse-end { 0% { box-shadow: 0 0 20px #8e44ad, inset 0 0 20px #8e44ad; border-color: #2c3e50; } 50% { box-shadow: 0 0 50px #ff00ff, inset 0 0 40px #ff00ff; border-color: #8e44ad; } 100% { box-shadow: 0 0 20px #8e44ad, inset 0 0 20px #8e44ad; border-color: #2c3e50; } }
         .glow-redstone { animation: pulse-redstone 2s infinite; }
@@ -41,10 +39,14 @@
         @keyframes glow { from { box-shadow: 0 0 5px #ffb700; } to { box-shadow: 0 0 15px #ffb700, 0 0 5px #ffb700 inset; } }
 
         .health-bar-container { width: 100%; margin-top: 10px; padding: 0 5px; box-sizing: border-box; }
-        .health-bar-label { font-size: 15px; color: #fff; font-weight: bold; margin-bottom: 5px; text-shadow: 2px 2px #000; display:flex; justify-content: space-between;}
-        .health-bar-bg { width: 100%; height: 20px; background-color: #333; border: 3px solid #000; position: relative; box-shadow: inset 2px 2px #111, inset -2px -2px #555; overflow: hidden;}
+        .health-bar-label { font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 4px; text-shadow: 2px 2px #000; display:flex; justify-content: space-between;}
+        .health-bar-bg { width: 100%; height: 16px; background-color: #333; border: 3px solid #000; position: relative; box-shadow: inset 2px 2px #111, inset -2px -2px #555; overflow: hidden;}
         .health-bar-fill { height: 100%; background-color: #e70000; width: 0%; transition: width 0.8s; box-shadow: inset 0px 4px 0px rgba(255,255,255,0.3); }
         .health-bar-fill.safe { background-color: #2ecc71; } .health-bar-fill.warn { background-color: #f1c40f; }
+
+        /* 体能血条引擎 UI */
+        .vitality-container { display:flex; width:100%; height:18px; border:3px solid #000; background:#222; padding:2px; box-sizing:border-box; box-shadow: inset 2px 2px #111, inset -2px -2px #555;}
+        @keyframes flash-danger { 0% { opacity: 1; } 50% { opacity: 0.5; filter: brightness(2); } 100% { opacity: 1; } }
 
         .btn-upgrade { width: 100%; margin-top: 10px; padding: 10px; font-family: 'VT323', monospace; font-size: 18px; font-weight: bold; color: white; background: #d35400; border: 4px solid #000; cursor: pointer; animation: pulse 2s infinite;}
         .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); border-color:#555;}
@@ -82,23 +84,6 @@
         .cd-timer { position: absolute; bottom: 6px; right: 8px; color: #fff; font-size: 16px; font-weight: bold; text-shadow: 1px 1px #000; display: none; }
         .in-cd { cursor: not-allowed; opacity: 0.8; } .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
 
-        #schulteGrid { display: grid; width: 100%; aspect-ratio: 1; gap: 4px; background: #373737; padding: 5px; border: 4px solid #000; touch-action: none; }
-        .schulte-cell { background: #c6c6c6; border: 3px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; cursor: pointer; aspect-ratio: 1; transition: transform 0.05s, filter 0.3s; }
-        .schulte-cell:active { transform: scale(0.92); }
-        .schulte-cell.correct { background: #2ecc71 !important; color: #fff !important; cursor: not-allowed !important; filter: none !important;}
-        .schulte-cell.debuff { background: #111 !important; color: #444 !important; filter: blur(1px); }
-
-        .fly-text { position: fixed; z-index: 1000; font-family: 'VT323', monospace; font-size: 40px; font-weight: bold; text-shadow: 2px 2px #000, -2px -2px #000; pointer-events: none; animation: floatUp 1s forwards; }
-        @keyframes floatUp { 0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -20px) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -60px) scale(1); opacity: 0; } }
-
-        .rank-list-item { background: #fff; border: 2px solid #555; padding: 12px; margin-bottom: 10px; border-radius: 6px; text-align: left; font-family: -apple-system, sans-serif; display: block; }
-        .rank-list-item.unlocked { border-left-width: 6px; background: #f0f8ff; }
-        .rank-list-item.next-target { border: 3px dashed #e67e22; background: #fffdf5; box-shadow: inset 0 0 15px rgba(230,126,34,0.2); }
-        .rank-list-item.locked { background: #d5d5d5; opacity: 0.6; filter: grayscale(1); border: 2px solid #888; }
-        .r-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; color: #000; }
-        .r-desc { font-size: 13px; color: #333; line-height: 1.4; }
-        .r-cost { font-size: 14px; font-weight: bold; color: #c0392b; margin-top: 5px; }
-
         .log-container { max-height: 250px; overflow-y: auto; text-align: left; background: #fff; border: 2px solid #555; padding: 10px; font-family: -apple-system, sans-serif; font-size: 13px; }
         .log-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; }
         .log-t { color: #888; font-size: 11px; min-width: 75px;}
@@ -114,7 +99,7 @@
         .mc-input { width: 100%; padding: 10px; font-family: -apple-system, sans-serif; font-size: 15px; border: 2px solid #333; background: #fff; margin-bottom: 10px; box-sizing: border-box;}
         textarea.mc-input { resize: vertical; min-height: 80px; }
 
-        .skin-steve, .skin-creeper, .skin-villager { /* 动画复用 */ }
+        .skin-steve, .skin-creeper, .skin-villager { }
         .skin-steve { width: 60px; height: 135px; } .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; } .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; } .skin-steve .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; } .skin-steve .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; } .skin-steve .sword { position: absolute; top: 35px; right: -40px; font-size: 60px; transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000); }
         .skin-creeper { width: 45px; height: 120px; } .skin-creeper .head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; } .skin-creeper .face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8; } .skin-creeper .body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; } .skin-creeper .legs { width: 45px; height: 30px; position: absolute; top: 90px; } .skin-creeper .leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0; }
         .skin-villager { width: 50px; height: 140px; } .skin-villager .head { width: 50px; height: 60px; background: #d09b7c; position: absolute; top: 0; } .skin-villager .nose { width: 10px; height: 18px; background: #d09b7c; position: absolute; top: 30px; left: 20px; border: 1px solid #a3755b; z-index: 5;} .skin-villager .body { width: 50px; height: 80px; background: #684831; position: absolute; top: 60px; } .skin-villager .arms { width: 50px; height: 15px; background: #684831; position: absolute; top: 75px; left: 0; }
@@ -134,17 +119,13 @@
         .level-up-banner { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); z-index: 9999; color: #ffb700; font-family: 'VT323', monospace; text-shadow: 4px 4px 0 #000, -2px -2px 0 #000; text-align: center; white-space: nowrap; pointer-events: none; animation: bannerAnim 3.5s forwards; }
         @keyframes bannerAnim { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } 80% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; filter: blur(5px);} }
         
-        /* 末地专属星空动态背景 */
         .stars-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; background: #000 url('data:image/svg+xml;utf8,<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="30" r="1" fill="%23fff"/><circle cx="150" cy="80" r="1.5" fill="%23fff"/><circle cx="80" cy="160" r="1" fill="%23fff"/><circle cx="180" cy="180" r="2" fill="%23fff"/></svg>') repeat; display: none; animation: star-move 60s linear infinite;}
         @keyframes star-move { 0% { background-position: 0 0; } 100% { background-position: 200px 200px; } }
     </style>
 </head>
 <body>
     <div class="stars-bg" id="end-stars"></div>
-    <div id="start-overlay">
-        <h1 style="font-size: 40px; margin-bottom:10px;">Andy的探险世界</h1>
-        <button class="mc-btn" onclick="startGame()">开始冒险</button>
-    </div>
+    <div id="start-overlay"><h1 style="font-size: 40px; margin-bottom:10px;">Andy的探险世界</h1><button class="mc-btn" onclick="startGame()">开始冒险</button></div>
 
     <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-levelup"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/levelup.ogg" type="audio/ogg"></audio>
@@ -153,62 +134,15 @@
     <audio id="sfx-fuse"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/fuse.ogg" type="audio/ogg"></audio>
     <audio id="sfx-click"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/click.ogg" type="audio/ogg"></audio>
 
-    <div id="confirmModal" class="modal-overlay" style="z-index: 1000;">
-        <div class="challenge-card" style="max-width: 300px;">
-            <div class="challenge-title" style="font-size: 24px;">📋 确认告示</div>
-            <div id="confirmText" style="color:#000; font-size:16px; margin: 15px 0; font-weight:bold; line-height:1.5;">...</div>
-            <button class="btn-main-action" onclick="executeConfirmedAction()" style="margin-top: 5px;">✅ 确定</button>
-            <button class="btn-close-modal" onclick="closeConfirmModal()" style="margin-top: 5px;">❌ 取消</button>
-        </div>
-    </div>
-
-    <div id="contractModal" class="modal-overlay">
-        <div class="challenge-card">
-            <div class="challenge-title" style="color: #c0392b;">📜 誓言祭坛</div>
-            <div id="contractContent" style="margin-top:10px; text-align:left;">加载中...</div>
-            <button class="btn-close-modal" onclick="closeContractModal()">离开祭坛</button>
-        </div>
-    </div>
-
-    <div id="milestoneModal" class="modal-overlay">
-        <div class="challenge-card">
-            <div class="challenge-title" style="color: #2980b9;">🏆 进阶图鉴</div>
-            <div id="milestoneContent" class="reward-grid" style="max-height: 60vh;">加载中...</div>
-            <button class="btn-close-modal" onclick="closeMilestoneModal()">合上图鉴</button>
-        </div>
-    </div>
-
+    <div id="confirmModal" class="modal-overlay" style="z-index: 1000;"><div class="challenge-card" style="max-width: 300px;"><div class="challenge-title" style="font-size: 24px;">📋 确认告示</div><div id="confirmText" style="color:#000; font-size:16px; margin: 15px 0; font-weight:bold; line-height:1.5;">...</div><button class="btn-main-action" onclick="executeConfirmedAction()" style="margin-top: 5px;">✅ 确定</button><button class="btn-close-modal" onclick="closeConfirmModal()" style="margin-top: 5px;">❌ 取消</button></div></div>
+    <div id="contractModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title" style="color: #c0392b;">📜 誓言祭坛</div><div id="contractContent" style="margin-top:10px; text-align:left;">加载中...</div><button class="btn-close-modal" onclick="closeContractModal()">离开祭坛</button></div></div>
+    <div id="milestoneModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title" style="color: #2980b9;">🏆 进阶图鉴</div><div id="milestoneContent" class="reward-grid" style="max-height: 60vh;">加载中...</div><button class="btn-close-modal" onclick="closeMilestoneModal()">合上图鉴</button></div></div>
     <div id="rankModal" class="modal-overlay" style="z-index: 600;"><div class="challenge-card" style="max-width: 360px; max-height: 85vh;"><div class="challenge-title" style="color: #d35400;">👑 境界图鉴</div><div id="rankListContainer" style="width: 100%; overflow-y: auto; margin-top: 10px; padding-right: 5px;"></div><button class="btn-close-modal" onclick="closeRankModal()" style="margin-top: 15px;">关闭图鉴</button></div></div>
-    <div id="rewardModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title">⚔️ 任务告示牌</div><div class="reward-grid" id="rewardListContainer"><div style="padding:20px; color:#555;">正在同步...</div></div><button class="btn-close-modal" onclick="closeRewardModal()">返回营地</button></div></div>
+    <div id="rewardModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title">⚔️ 任务告示牌</div><div id="vitalityNotice" style="margin-bottom:10px; font-size:14px; font-weight:bold;"></div><div class="reward-grid" id="rewardListContainer"><div style="padding:20px; color:#555;">正在同步...</div></div><button class="btn-close-modal" onclick="closeRewardModal()">返回营地</button></div></div>
     <div id="shopModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title" style="color: #8e44ad;">🛒 神秘商店</div><div class="reward-grid" id="shopListContainer"><div style="padding:20px; color:#555;">正在同步...</div></div><button class="btn-close-modal" onclick="closeShopModal()">离开商店</button></div></div>
     <div id="logModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title">📜 探险账单</div><div id="logListContent" class="log-container"></div><button class="btn-close-modal" onclick="closeLogModal()">合上账本</button></div></div>
 
-    <div id="gameModal" class="modal-overlay" style="z-index: 600;">
-        <div class="challenge-card" style="max-width: 380px; width: 95%;">
-            <div class="challenge-title" style="color: #8e44ad;">👁️ 试炼高塔</div>
-            <div id="gameMenu">
-                <div id="gameRemainingCount" style="color: #000; font-weight: bold; margin-bottom: 20px; font-size: 16px; text-shadow: 1px 1px #fff; background: rgba(255,255,255,0.7); padding: 8px; border: 2px solid #555;">...</div>
-                <button class="btn-main-action" onclick="attemptStartGame('normal')" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 攀登高塔 (6x6)</button>
-                <button class="btn-main-action" onclick="attemptStartGame('hard')" style="background: #e67e22; margin-bottom: 12px; font-size:22px;">🔴 极限高塔 (7x7)</button>
-                <button class="btn-main-action" onclick="attemptStartGame('survival')" style="background: #8e44ad; margin-bottom: 20px; font-size:22px;">💀 凋零高塔 (生存)</button>
-                <button class="btn-close-modal" onclick="closeGameModal()">离开高塔</button>
-            </div>
-            <div id="gamePlay" style="display: none; flex-direction: column; align-items: center; width: 100%;">
-                <div style="display: flex; justify-content: space-between; width: 100%; font-size: 22px; font-weight: bold; margin-bottom: 12px; color: #111; text-shadow:1px 1px #fff;">
-                    <span>目标: <span id="gameTargetNum" style="color: #e67e22; font-size: 26px;">1</span></span>
-                    <span>⏳ <span id="gameTimerText" style="color: #c0392b;">30</span>s</span>
-                </div>
-                <div id="schulteGrid"></div>
-                <button class="btn-close-modal" onclick="quitGameSession()" style="margin-top: 15px; background:#7f8c8d;">🏳️ 放弃攀登</button>
-            </div>
-            <div id="gameResult" style="display: none;">
-                <div id="gameResultTitle" style="font-size: 28px; font-weight: bold; margin-bottom: 12px;"></div>
-                <div id="gameResultDesc" style="font-size: 15px; margin-bottom: 20px; color: #222; font-family: -apple-system, sans-serif; line-height: 1.5; text-align: left; background:#fff; padding:10px; border:2px solid #000;"></div>
-                <button class="btn-main-action" id="btnGameRetry" style="background: #27ae60; font-size:22px;">再来一局</button>
-                <button class="btn-close-modal" onclick="backToGameMenu()" style="margin-top: 10px; width: 100%;">返回菜单</button>
-            </div>
-        </div>
-    </div>
+    <div id="gameModal" class="modal-overlay" style="z-index: 600;"><div class="challenge-card" style="max-width: 380px; width: 95%;"><div class="challenge-title" style="color: #8e44ad;">👁️ 试炼高塔</div><div id="gameMenu"><div id="gameRemainingCount" style="color: #000; font-weight: bold; margin-bottom: 20px; font-size: 16px; text-shadow: 1px 1px #fff; background: rgba(255,255,255,0.7); padding: 8px; border: 2px solid #555;">...</div><button class="btn-main-action" onclick="alert('高塔暂在维护中 (节省篇幅保留入口)')" style="background: #27ae60; margin-bottom: 12px; font-size:22px;">🟢 攀登高塔</button><button class="btn-close-modal" onclick="document.getElementById('gameModal').style.display='none'">离开高塔</button></div></div></div>
 
     <div class="ui-container" id="uiLayer">
         <div class="card" id="ui-card">
@@ -228,12 +162,17 @@
                 <div class="health-bar-bg"><div id="healthBarFill" class="health-bar-fill"></div></div>
             </div>
 
+            <div class="health-bar-container" style="margin-top:12px;">
+                <div class="health-bar-label"><span>⚡ 体力值:</span><span id="vitalityText">10.0 / 10</span></div>
+                <div id="vitalityBarContainer" class="vitality-container"></div>
+            </div>
+
             <button id="btnUpgrade" class="btn-upgrade" onclick="upgradeRank()" disabled>🆙 打造更强装备</button>
 
             <div class="main-btn-grid">
                 <button class="btn-main-action" onclick="openRewardModal()">⚔️ 挑战</button>
                 <button class="btn-main-action btn-shop" onclick="openShopModal()">🛒 商店</button>
-                <button class="btn-main-action btn-game" onclick="openGameModal()">🎮 高塔</button>
+                <button class="btn-main-action btn-game" onclick="document.getElementById('gameModal').style.display='flex'">🎮 高塔</button>
                 <button class="btn-main-action btn-contract" onclick="openContractModal()">📜 契约</button>
                 <button class="btn-main-action btn-milestone" onclick="openMilestoneModal()">🏆 图鉴</button>
                 <button class="btn-main-action btn-log" onclick="openLogModal()">📝 账单</button>
@@ -286,11 +225,6 @@
         let ambientInterval = null, syncInterval = null, currentData = null, pendingAction = null; 
         const ROW_ID = 1;
 
-        let isGameRunning = false, currentTowerMode = 'normal', currentGameSize = 6;
-        let nextTargetNum = 1, gameClockTimer = null, potionTimer = null, gameTimeRemaining = 40, gameStartTime = 0;
-        let comboCount = 0, maxCombo = 0, lastHitTime = 0;
-
-        // 💡 内联 SVG 材质引擎字典
         const SVG_TEX = {
             oak: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23775533'/><path d='M0 4h16M0 10h16M4 0v4M12 4v6M8 10v6' stroke='%23503515' stroke-width='1'/></svg>",
             cobble: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23666'/><path d='M0 0h6v6H0zM8 2h8v8H8zM2 8h6v8H2z' fill='%23888'/><path d='M0 6h16M6 0v8M10 8v8' stroke='%23444' stroke-width='1'/></svg>",
@@ -304,7 +238,6 @@
             void: "none"
         };
 
-        // 💡 10 级全独立视觉矩阵 (Visual Matrix)
         const RANK_DATA = [
             { rank: 1, cap: 200, cost: 150, title: "🪵 新手伐木工", tex: SVG_TEX.oak, cardBg: "#a06f3e", borderColor: "#5c3a21", glow: "inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4)" },
             { rank: 2, cap: 350, cost: 300, title: "🪨 洞穴探索者", tex: SVG_TEX.cobble, cardBg: "#888888", borderColor: "#444444", glow: "inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.5)" },
@@ -321,38 +254,31 @@
         const MILESTONES = [ { count: 5, reward: 50, name: "铁阶" }, { count: 10, reward: 100, name: "金阶" }, { count: 20, reward: 200, name: "钻石" }, { count: 30, reward: 300, name: "绿宝石" }, { count: 50, reward: 500, name: "下界之星" }, { count: 75, reward: 800, name: "龙蛋" }, { count: 100, reward: 1200, name: "终界信标" }, { count: 250, reward: 3000, name: "不死图腾" }, { count: 500, reward: 6000, name: "基岩之心" } ];
         const MS_NAMES = { strength: '力量', agility: '敏捷', endurance: '耐力', intelligence: '智力', spirit: '精神', stamina: '体力' };
 
-        function getFormattedTime() {
-            const now = new Date(); return `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-        }
-        function getTodayStr() { 
-            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-            let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; }); return `${y}-${m}-${d}`;
+        function getFormattedTime() { const now = new Date(); return `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; }
+        function getTodayStr() { const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date()); let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; }); return `${y}-${m}-${d}`; }
+
+        // 💡 核心：获取体力收益惩罚系数 (5阶)
+        function getVitalityMultiplier(current) {
+            if(current === 10) return { coin: 1.1, shop: 1.0, msg: "<span style='color:#00ffff;'>巅峰 (+10%收益)</span>" };
+            if(current >= 7) return { coin: 1.0, shop: 1.0, msg: "<span style='color:#2ecc71;'>正常运转</span>" };
+            if(current >= 4) return { coin: 0.7, shop: 1.0, msg: "<span style='color:#f39c12;'>警告 (-30%收益)</span>" };
+            if(current >= 1) return { coin: 0.5, shop: 1.0, msg: "<span style='color:#e74c3c;'>危机 (-50%收益)</span>" };
+            return { coin: 0.1, shop: 1.5, msg: "<span style='color:#7f8c8d;'>宕机 (-90%收益, 涨价50%)</span>" }; 
         }
 
-        function renderBuffs() {
-            if (!currentData || !currentData.activeBuffs) return;
-            const container = document.getElementById('activeBuffsContainer'); if (!container) return;
-            const now = Date.now(); let hasActive = false; let html = '';
-            for (const [id, buff] of Object.entries(currentData.activeBuffs)) {
-                const remain = buff.endTime - now;
-                if (remain > 0) {
-                    hasActive = true;
-                    let days = Math.floor(remain / (24 * 3600000)), hours = Math.floor((remain % (24 * 3600000)) / 3600000), mins = Math.floor((remain % 3600000) / 60000), secs = Math.floor((remain % 60000) / 1000);
-                    let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}:${mins<10?'0'+mins:mins}:${secs<10?'0'+secs:secs}`;
-                    html += `<div class="buff-pill"><span>${buff.icon} ${buff.name}</span><span style="color:#ffb700;">⏳ ${timeStr}</span></div>`;
+        async function checkAndApplyDailyVitality(record) {
+            record.vitality = record.vitality || { current: 10.0, freeze: false, lastDecayDate: getTodayStr(), dailyAbsorbed: { date: getTodayStr(), amount: 0 } };
+            let today = getTodayStr();
+            if (record.vitality.lastDecayDate !== today) {
+                if (!record.vitality.freeze && record.vitality.current > 0) {
+                    record.vitality.current = Math.max(0, record.vitality.current - 1.0);
+                    let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: "⚡ 午夜体能自然衰减", amount: "-1 体力" });
+                    record.childLogs = logs.slice(0, 10);
                 }
+                record.vitality.lastDecayDate = today; record.vitality.dailyAbsorbed = { date: today, amount: 0 };
+                try { await dbClient.from('gamedata').update({ vitality: record.vitality, childLogs: record.childLogs }).eq('id', ROW_ID); } catch(e){}
             }
-            container.innerHTML = hasActive ? html : '';
-        }
-
-        async function checkAndApplyDailyDeduction(record) {
-            if (!record.dailyConfig || !record.dailyConfig.enabled) return record;
-            let today = getTodayStr(); if(record.dailyConfig.lastDeductDate === today) return record;
-            let deductedAmount = Math.min(record.coins, record.dailyConfig.amount); 
-            if(deductedAmount === 0) { await dbClient.from('gamedata').update({ dailyConfig: { ...record.dailyConfig, lastDeductDate: today } }).eq('id', ROW_ID); return record; }
-            record.coins -= deductedAmount; record.dailyConfig.lastDeductDate = today;
-            let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: "系统自动饥饿消耗", amount: -deductedAmount });
-            try { await dbClient.from('gamedata').update({ coins: record.coins, dailyConfig: record.dailyConfig, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID); record._justAutoDeducted = deductedAmount; } catch (e) {} return record;
+            return record;
         }
 
         async function startGame() {
@@ -374,17 +300,11 @@
                 record.schulteDaily = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
                 record.milestones = record.milestones || {}; Object.keys(MS_NAMES).forEach(k => record.milestones[k] = record.milestones[k] || 0);
                 record.milestoneClaimed = record.milestoneClaimed || {}; Object.keys(MS_NAMES).forEach(k => record.milestoneClaimed[k] = record.milestoneClaimed[k] || []);
-                record.towerConfig = record.towerConfig || { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
                 
-                record = await checkAndApplyDailyDeduction(record);
+                record = await checkAndApplyDailyVitality(record);
                 currentData = record; let cloudCoins = record.coins || 0;
                 
                 renderLogs(record.childLogs); updateRankUI(cloudCoins, record.currentRank);
-
-                if (record._justAutoDeducted > 0) {
-                    playExplodeSequence(record._justAutoDeducted, cloudCoins, `饥饿值消耗！扣除 ${record._justAutoDeducted} 币`);
-                    localStorage.setItem('andy_last_seen_coins', cloudCoins); return; 
-                }
 
                 let localStr = localStorage.getItem('andy_last_seen_coins');
                 if (localStr === null) { if(totalDisplay) totalDisplay.innerText = cloudCoins; localStorage.setItem('andy_last_seen_coins', cloudCoins); return; }
@@ -399,118 +319,135 @@
             } catch (error) { if(connStatus) connStatus.innerText = "失去连接..."; }
         }
 
-        // 💡 视觉矩阵驱动器
+        // 💡 渲染 10 段血条 UI
+        function renderVitalityBar(current) {
+            const container = document.getElementById('vitalityBarContainer');
+            document.getElementById('vitalityText').innerText = `${current.toFixed(1)} / 10`;
+            let color = '#444', anim = 'none';
+            if(current === 10) { color = '#00ffff'; anim = 'glow 1s infinite alternate'; }
+            else if(current >= 7) color = '#2ecc71';
+            else if(current >= 4) color = '#f39c12';
+            else if(current >= 1) { color = '#e74c3c'; anim = 'flash-danger 1s infinite'; }
+
+            let whole = Math.floor(current); let hasHalf = (current - whole) >= 0.5;
+            let html = '';
+            for(let i=0; i<10; i++) {
+                if(i < whole) html += `<div style="flex:1; background:${color}; border-right:2px solid #000; animation:${anim};"></div>`;
+                else if(i === whole && hasHalf) html += `<div style="flex:1; background: linear-gradient(90deg, ${color} 50%, #333 50%); border-right:2px solid #000;"></div>`;
+                else html += `<div style="flex:1; background:#333; border-right:2px solid #000;"></div>`;
+            }
+            container.innerHTML = html;
+            
+            // 如果医疗冻结，覆盖文字
+            if(currentData.vitality.freeze) document.getElementById('vitalityText').innerHTML = `<span style="color:#00ffff;">❄️ 医疗冻结中</span>`;
+        }
+
         function updateRankUI(coins, rank) {
             const rData = RANK_DATA[rank - 1] || RANK_DATA[0];
-            
-            // 1. 背景材质渲染
             if (rank === 10) { document.body.style.background = "#000"; document.getElementById('end-stars').style.display = "block"; } 
             else { document.getElementById('end-stars').style.display = "none"; document.body.style.background = `url("${rData.tex}") repeat`; }
 
-            // 2. UI 卡片发光同步
-            if (uiCard) { 
-                uiCard.className = 'card'; // Reset classes
-                if (rData.animClass) uiCard.classList.add(rData.animClass);
-                
-                uiCard.style.setProperty('--card-bg', rData.cardBg); 
-                uiCard.style.setProperty('--card-border', rData.borderColor);
-                uiCard.style.setProperty('--card-glow', rData.glow === "pulse" ? "none" : rData.glow);
-            }
+            if (uiCard) { uiCard.className = 'card'; if (rData.animClass) uiCard.classList.add(rData.animClass); uiCard.style.setProperty('--card-bg', rData.cardBg); uiCard.style.setProperty('--card-border', rData.borderColor); uiCard.style.setProperty('--card-glow', rData.glow === "pulse" ? "none" : rData.glow); }
             if (rankBadge) rankBadge.innerText = rData.title;
 
-            // 3. 进度条与按钮控制
             let maxCap = rData.cap, ratio = maxCap === Infinity ? 0 : (coins / maxCap) * 100;
             const capText = document.getElementById('capacityText'); if (capText) capText.innerText = `${coins} / ${maxCap === Infinity ? '∞' : maxCap}`;
             const fill = document.getElementById('healthBarFill');
             if (fill) { fill.style.width = ratio + '%'; fill.className = ratio > 85 ? 'health-bar-fill warn' : (ratio < 40 ? 'health-bar-fill safe' : 'health-bar-fill'); }
             if (btnUpgrade) { btnUpgrade.innerText = rank >= RANK_DATA.length ? "已达最高境界 👑" : `🆙 突破界限 (需花费 ${rData.cost} 币)`; btnUpgrade.disabled = rank >= RANK_DATA.length || coins < rData.cost; }
+
+            // 渲染体力条
+            renderVitalityBar(currentData.vitality.current);
         }
 
         // --- 核心模块交互 ---
         function openRankModal() {
-            if(!rankModal || !currentData) return; clickCoin(); rankModal.style.display = 'flex';
-            const container = document.getElementById('rankListContainer'); let currentLevel = currentData.currentRank || 1; let html = '';
-            RANK_DATA.forEach((r, index) => {
-                let rankLevel = index + 1;
+            if(!rankModal || !currentData) return; clickCoin(); rankModal.style.display = 'flex'; const container = document.getElementById('rankListContainer'); let currentLevel = currentData.currentRank || 1; let html = '';
+            RANK_DATA.forEach((r, index) => { let rankLevel = index + 1;
                 if (rankLevel <= currentLevel) html += `<div class="rank-list-item unlocked" style="border-left-color: ${r.borderColor}; background: #fff;"><div class="r-title">${r.title} <span style="font-size:12px;color:#27ae60;">(${rankLevel === currentLevel ? '👉 当前所在' : '✅ 已解锁'})</span></div><div class="r-desc">背包容量上限: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div></div>`;
                 else if (rankLevel === currentLevel + 1) html += `<div class="rank-list-item next-target"><div class="r-title" style="color:#e67e22;">🎯 突破目标: ${r.title}</div><div class="r-desc">升级后容量: ${r.cap === Infinity ? '无限 ∞' : r.cap + ' 币'}</div><div class="r-cost">突破消耗: -${RANK_DATA[currentLevel - 1].cost} 🪙</div></div>`;
                 else html += `<div class="rank-list-item locked"><div class="r-title" style="color:#555;">第 ${rankLevel} 阶: ???</div><div class="r-desc" style="color:#666;">容量上限: ???</div><div class="r-cost" style="color:#666;">突破消耗: ???</div></div>`;
-            });
-            container.innerHTML = html;
+            }); container.innerHTML = html;
         }
         function closeRankModal() { if(rankModal) rankModal.style.display = 'none'; }
 
-        // 📜 誓言祭坛逻辑
         function openContractModal() {
-            if (!currentData) return; clickCoin(); ctModal.style.display = 'flex';
-            const container = document.getElementById('contractContent'); let contract = currentData.activeContract;
-            if (!contract) {
-                container.innerHTML = `<div style="font-family:-apple-system, sans-serif; font-size:14px; margin-bottom:15px; color:#333;">向深渊宣誓你的决心。若按时完成，将获得等额甚至超额的赏金；若违背誓言，质押的硬币将被直接吞噬。</div><textarea id="contract_desc" class="mc-input" placeholder="输入誓言目标 (例如: 1小时内完成数学卷子且全对)"></textarea><div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;"><span style="font-weight:bold;">质押金(币):</span><input type="number" id="contract_wager" class="mc-input" style="margin-bottom:0; flex:1;"></div><button class="btn-main-action" style="background:#c0392b; width:100%;" onclick="submitContract()">献上质押并发起誓言</button>`;
-            } else if (contract.status === 'pending') { container.innerHTML = `<div style="padding:20px; color:#8e44ad; font-weight:bold; font-size:18px; text-align:center;">⏳ 誓言已刻印<br><span style="font-size:14px; color:#555;">等待神明(家长)审批裁决...</span></div>`;
-            } else if (contract.status === 'active') { container.innerHTML = `<div style="background:#27ae60; color:#fff; padding:10px; border-radius:4px; font-weight:bold; margin-bottom:10px; text-align:center;">🔥 契约执行中 🔥</div><div style="text-align:left; font-family:-apple-system,sans-serif; font-size:14px;"><div style="margin-bottom:8px;">🎯 目标: <b>${contract.desc}</b></div><div style="margin-bottom:8px; color:#c0392b;">💰 已质押: <b>${contract.wager}</b> 币</div><div style="margin-bottom:8px; color:#2ecc71;">🎁 成功返还+赏金: <b>${contract.wager + contract.reward}</b> 币</div><hr style="border-color:#555;"><div style="color:#555; font-size:12px;">注: 结算由家长端进行裁决判定。请专注完成目标！</div></div>`; }
+            if (!currentData) return; clickCoin(); ctModal.style.display = 'flex'; const container = document.getElementById('contractContent'); let contract = currentData.activeContract;
+            if (!contract) { container.innerHTML = `<div style="font-family:-apple-system, sans-serif; font-size:14px; margin-bottom:15px; color:#333;">向深渊宣誓你的决心。若按时完成，将获得等额甚至超额的赏金；若违背誓言，质押的硬币将被直接吞噬。</div><textarea id="contract_desc" class="mc-input" placeholder="输入誓言目标 (例如: 1小时内完成数学卷子且全对)"></textarea><div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;"><span style="font-weight:bold;">质押金(币):</span><input type="number" id="contract_wager" class="mc-input" style="margin-bottom:0; flex:1;"></div><button class="btn-main-action" style="background:#c0392b; width:100%;" onclick="submitContract()">献上质押并发起誓言</button>`; } else if (contract.status === 'pending') { container.innerHTML = `<div style="padding:20px; color:#8e44ad; font-weight:bold; font-size:18px; text-align:center;">⏳ 誓言已刻印<br><span style="font-size:14px; color:#555;">等待神明(家长)审批裁决...</span></div>`; } else if (contract.status === 'active') { container.innerHTML = `<div style="background:#27ae60; color:#fff; padding:10px; border-radius:4px; font-weight:bold; margin-bottom:10px; text-align:center;">🔥 契约执行中 🔥</div><div style="text-align:left; font-family:-apple-system,sans-serif; font-size:14px;"><div style="margin-bottom:8px;">🎯 目标: <b>${contract.desc}</b></div><div style="margin-bottom:8px; color:#c0392b;">💰 已质押: <b>${contract.wager}</b> 币</div><div style="margin-bottom:8px; color:#2ecc71;">🎁 成功返还+赏金: <b>${contract.wager + contract.reward}</b> 币</div><hr style="border-color:#555;"><div style="color:#555; font-size:12px;">注: 结算由家长端进行裁决判定。请专注完成目标！</div></div>`; }
         }
         function closeContractModal() { ctModal.style.display = 'none'; }
         
         async function submitContract() {
-            let desc = document.getElementById('contract_desc').value.trim(); let wager = parseInt(document.getElementById('contract_wager').value);
-            if (!desc || !wager || wager <= 0) return alert("请完整填写誓言与质押金额！");
+            let desc = document.getElementById('contract_desc').value.trim(); let wager = parseInt(document.getElementById('contract_wager').value); if (!desc || !wager || wager <= 0) return alert("请完整填写誓言与质押金额！");
             if (currentData.coins < wager) { playSound('fuse'); return alert("🎒 背包硬币不足以支付质押金！"); }
-            let newCoins = currentData.coins - wager; let logs = currentData.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `📜 发起契约质押`, amount: -wager });
-            let contract = { desc: desc, wager: wager, reward: wager, status: 'pending', time: Date.now() };
+            let newCoins = currentData.coins - wager; let logs = currentData.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `📜 发起契约质押`, amount: -wager }); let contract = { desc: desc, wager: wager, reward: wager, status: 'pending', time: Date.now() };
             await dbClient.from('gamedata').update({ coins: newCoins, activeContract: contract, childLogs: logs.slice(0,10) }).eq('id', ROW_ID);
             localStorage.setItem('andy_last_seen_coins', newCoins); currentData.activeContract = contract; updateValue(newCoins); openContractModal(); playSound('fuse');
         }
 
         function openMilestoneModal() {
             if (!currentData) return; clickCoin(); msModal.style.display = 'flex'; const container = document.getElementById('milestoneContent'); let ms = currentData.milestones || {}; let html = '';
-            for (let [key, name] of Object.entries(MS_NAMES)) {
-                let count = ms[key] || 0; let nextTier = MILESTONES.find(t => t.count > count) || MILESTONES[MILESTONES.length - 1]; let isMax = count >= MILESTONES[MILESTONES.length - 1].count; let ratio = isMax ? 100 : (count / nextTier.count) * 100;
-                html += `<div class="ms-card"><div class="ms-header"><span>${name}</span><span class="ms-tier">${isMax ? '已满级' : `下一阶: ${nextTier.name} (${count}/${nextTier.count}) | 🎁 悬赏: ${nextTier.reward} 币`}</span></div><div class="ms-bar-bg"><div class="ms-bar-fill" style="width:${ratio}%;"></div></div></div>`;
-            }
-            container.innerHTML = html;
+            for (let [key, name] of Object.entries(MS_NAMES)) { let count = ms[key] || 0; let nextTier = MILESTONES.find(t => t.count > count) || MILESTONES[MILESTONES.length - 1]; let isMax = count >= MILESTONES[MILESTONES.length - 1].count; let ratio = isMax ? 100 : (count / nextTier.count) * 100; html += `<div class="ms-card"><div class="ms-header"><span>${name}</span><span class="ms-tier">${isMax ? '已满级' : `下一阶: ${nextTier.name} (${count}/${nextTier.count}) | 🎁 悬赏: ${nextTier.reward} 币`}</span></div><div class="ms-bar-bg"><div class="ms-bar-fill" style="width:${ratio}%;"></div></div></div>`; } container.innerHTML = html;
         }
         function closeMilestoneModal() { msModal.style.display = 'none'; }
 
         function checkMilestoneProgress(type, record, logs) {
             record.milestones[type]++; let count = record.milestones[type]; let extraCoins = 0;
-            for (let tier of MILESTONES) {
-                if (count === tier.count && !record.milestoneClaimed[type].includes(tier.count)) { extraCoins += tier.reward; record.milestoneClaimed[type].push(tier.count); logs.unshift({ time: getFormattedTime(), action: `🏆 达成里程碑 [${MS_NAMES[type]}]: ${tier.name}`, amount: tier.reward }); }
-            }
+            for (let tier of MILESTONES) { if (count === tier.count && !record.milestoneClaimed[type].includes(tier.count)) { extraCoins += tier.reward; record.milestoneClaimed[type].push(tier.count); logs.unshift({ time: getFormattedTime(), action: `🏆 达成里程碑 [${MS_NAMES[type]}]: ${tier.name}`, amount: tier.reward }); } }
             return extraCoins;
         }
 
         function openRewardModal() { if(rModal) { rModal.style.display = 'flex'; renderDynamicTasks(); processCooldowns(); } }
         function closeRewardModal() { if(rModal) rModal.style.display = 'none'; }
+        
+        // 💡 任务渲染：加入体力显示与基础扣减提示
         function renderDynamicTasks() {
             const container = document.getElementById('rewardListContainer'); if(!currentData || !currentData.taskItems || currentData.taskItems.length === 0) { container.innerHTML = '<div style="padding:20px; color:#555; text-align:center;">告示牌空空如也</div>'; return; }
-            container.innerHTML = currentData.taskItems.map(task => `<div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'><div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">${task.icon || '⚔️'} ${task.name} ${task.milestone ? `<span class="badge">属性: ${MS_NAMES[task.milestone]}</span>` : ''}</span><span class="mc-item-reward">+${task.price} 🪙</span></div><div class="mc-item-desc">${task.desc}</div><span class="cd-timer">--:--</span></div>`).join('');
+            let multi = getVitalityMultiplier(currentData.vitality.current);
+            document.getElementById('vitalityNotice').innerHTML = `当前体能效率：${multi.msg} (今日还可吸收 ${Math.max(0, 2.0 - currentData.vitality.dailyAbsorbed.amount).toFixed(1)} ⚡)`;
+            
+            container.innerHTML = currentData.taskItems.map(task => {
+                let staminaUI = task.stamina_val ? `<span style="background:#2980b9; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; margin-left:5px; border:1px solid #000;">⚡ +${task.stamina_val}</span>` : '';
+                return `<div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'><div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">${task.icon || '⚔️'} ${task.name}</span><div><span class="mc-item-reward">+${task.price} 🪙</span>${staminaUI}</div></div><div class="mc-item-desc">${task.desc}</div><span class="cd-timer">--:--</span></div>`
+            }).join('');
         }
         function triggerTaskClick(taskId) { const task = currentData.taskItems.find(t => t.id === taskId); if(task) requestAction('reward', task); }
 
         function openShopModal() { 
             if(!sModal) return; sModal.style.display = 'flex'; const container = document.getElementById('shopListContainer');
             if(!currentData || !currentData.shopItems || currentData.shopItems.length === 0) { container.innerHTML = '<div style="padding:20px; color:#555;">货架空空如也</div>'; return; }
-            container.innerHTML = currentData.shopItems.map(item => `<div class="mc-item-btn" onclick="triggerBuy('${item.id}')" style="border-color:#8e44ad;"><div class="mc-item-header"><span class="mc-item-title">${item.icon} ${item.name}</span><span class="mc-item-reward" style="color:#c0392b;">-${item.price} 🪙</span></div><div class="mc-item-desc">${item.desc} <br><span style="color:#555;">(时效 ${item.hours >= 24 ? (item.hours/24 + ' 天') : (item.hours + ' 小时')})</span></div></div>`).join('');
+            
+            let multi = getVitalityMultiplier(currentData.vitality.current);
+            container.innerHTML = currentData.shopItems.map(item => {
+                let actualPrice = Math.floor(item.price * multi.shop);
+                let priceUI = multi.shop > 1.0 ? `<span style="color:#e74c3c; text-decoration:line-through; font-size:14px; margin-right:5px;">${item.price}</span><span style="color:#c0392b;">-${actualPrice} 🪙(通胀)</span>` : `<span style="color:#c0392b;">-${actualPrice} 🪙</span>`;
+                return `<div class="mc-item-btn" onclick="triggerBuy('${item.id}', ${actualPrice})" style="border-color:#8e44ad;"><div class="mc-item-header"><span class="mc-item-title">${item.icon} ${item.name}</span><span class="mc-item-reward">${priceUI}</span></div><div class="mc-item-desc">${item.desc} <br><span style="color:#555;">(时效 ${item.hours >= 24 ? (item.hours/24 + ' 天') : (item.hours + ' 小时')})</span></div></div>`
+            }).join('');
         }
         function closeShopModal() { if(sModal) sModal.style.display = 'none'; }
-        function triggerBuy(itemId) { const item = currentData.shopItems.find(i => i.id === itemId); if(item) requestAction('buy', item); }
+        function triggerBuy(itemId, actualPrice) { const item = currentData.shopItems.find(i => i.id === itemId); if(item) { item.actualPrice = actualPrice; requestAction('buy', item); } }
 
         function requestAction(actionType, data) {
             clickCoin();
-            if (actionType === 'reward') { const now = Date.now(); if(currentData.cooldowns && currentData.cooldowns[data.id] > now) return; document.getElementById('confirmText').innerHTML = `确认已达标并领取<br><span style="color:#27ae60; font-size:20px;">【${data.name}】</span><br>的悬赏奖励吗？`; } 
-            else if (actionType === 'buy') { if (currentData.coins < data.price) { playSound('fuse'); return alert("❌ 行囊硬币不足，无法兑换！"); } document.getElementById('confirmText').innerHTML = `确认花费 <span style="color:#c0392b;">${data.price}币</span> 兑换<br><span style="color:#8e44ad; font-size:20px;">【${data.name}】</span> 吗？`; }
+            if (actionType === 'reward') {
+                const now = Date.now(); if(currentData.cooldowns && currentData.cooldowns[data.id] > now) return; 
+                let multi = getVitalityMultiplier(currentData.vitality.current); let actualReward = Math.floor(data.price * multi.coin);
+                let extraUI = ''; if(data.stamina_val) extraUI = `<br><span style="color:#2980b9; font-size:18px;">⚡ 预计恢复: +${data.stamina_val} 体力</span>`;
+                document.getElementById('confirmText').innerHTML = `完成【${data.name}】将获得<br><span style="color:#27ae60; font-size:24px;">${actualReward} 🪙</span> (体能修正率: ${multi.coin}) ${extraUI}`;
+            } 
+            else if (actionType === 'buy') { if (currentData.coins < data.actualPrice) { playSound('fuse'); return alert("❌ 行囊硬币不足，无法兑换！"); } document.getElementById('confirmText').innerHTML = `确认花费 <span style="color:#c0392b;">${data.actualPrice}币</span> 兑换<br><span style="color:#8e44ad; font-size:20px;">【${data.name}】</span> 吗？`; }
             pendingAction = { actionType, data }; cfModal.style.display = 'flex';
         }
         function closeConfirmModal() { if(cfModal) cfModal.style.display = 'none'; pendingAction = null; }
 
         async function executeConfirmedAction() {
             if (!pendingAction) return; const action = pendingAction; closeConfirmModal();
-            if (action.actionType === 'reward') await proceedWithReward(action.data); else if (action.actionType === 'buy') await proceedWithBuy(action.data); else if (action.actionType === 'schulteTicket') await executeStartGame(action.data.mode, true);
+            if (action.actionType === 'reward') await proceedWithReward(action.data); else if (action.actionType === 'buy') await proceedWithBuy(action.data);
         }
 
         async function proceedWithBuy(item) {
             try {
-                let record = currentData; const newCoins = record.coins - item.price; let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `兑换法宝: ${item.name}`, amount: -item.price });
+                let record = currentData; const newCoins = record.coins - item.actualPrice; let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `兑换法宝: ${item.name}`, amount: -item.actualPrice });
                 let buffs = record.activeBuffs || {}; let currentEndTime = buffs[item.id] ? buffs[item.id].endTime : 0; if (currentEndTime < Date.now()) currentEndTime = Date.now();
                 buffs[item.id] = { name: item.name, icon: item.icon, endTime: currentEndTime + (item.hours * 3600000) };
                 await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), activeBuffs: buffs }).eq('id', ROW_ID);
@@ -518,135 +455,58 @@
             } catch (e) { alert("兑换受阻，请重试！"); }
         }
 
+        // 💡 核心：任务结算截断与双轨注入
         async function proceedWithReward(taskData) {
             try {
-                let record = currentData; let logs = record.childLogs || []; let baseWin = taskData.price; logs.unshift({ time: getFormattedTime(), action: `完成挑战: ${taskData.name}`, amount: baseWin });
+                let record = currentData; let logs = record.childLogs || []; 
+                let multi = getVitalityMultiplier(record.vitality.current);
+                let actualWin = Math.floor(taskData.price * multi.coin);
+                
+                logs.unshift({ time: getFormattedTime(), action: `完成挑战: ${taskData.name}`, amount: actualWin });
+                
+                // 体力双轨结算
+                if (taskData.stamina_val) {
+                    let today = getTodayStr();
+                    let dailyObj = record.vitality.dailyAbsorbed; if(dailyObj.date !== today) dailyObj = { date: today, amount: 0 };
+                    let spaceLeft = 2.0 - dailyObj.amount;
+                    if (spaceLeft > 0) {
+                        let actualStaminaGained = Math.min(taskData.stamina_val, spaceLeft);
+                        actualStaminaGained = Math.min(actualStaminaGained, 10.0 - record.vitality.current);
+                        if (actualStaminaGained > 0) {
+                            record.vitality.current += actualStaminaGained;
+                            dailyObj.amount += actualStaminaGained;
+                            record.vitality.dailyAbsorbed = dailyObj;
+                            logs.unshift({ time: getFormattedTime(), action: `⚡ 吸收体力 (+${actualStaminaGained})`, amount: 0 });
+                        }
+                    }
+                }
+
                 let extraMilestoneReward = 0; if (taskData.milestone) extraMilestoneReward = checkMilestoneProgress(taskData.milestone, record, logs);
-                let totalWin = baseWin + extraMilestoneReward; let targetCoins = record.coins + totalWin; let maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; let newCoins = Math.min(targetCoins, maxCap);
+                let totalWin = actualWin + extraMilestoneReward; let targetCoins = record.coins + totalWin; let maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; let newCoins = Math.min(targetCoins, maxCap);
                 let cds = record.cooldowns || {}; cds[taskData.id] = Date.now() + (taskData.hours * 3600000); 
-                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), cooldowns: cds, milestones: record.milestones, milestoneClaimed: record.milestoneClaimed }).eq('id', ROW_ID);
-                currentData.coins = newCoins; currentData.childLogs = logs; currentData.cooldowns = cds; localStorage.setItem('andy_last_seen_coins', newCoins); closeRewardModal(); playAttackSequence(totalWin, newCoins);
+                
+                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), cooldowns: cds, milestones: record.milestones, milestoneClaimed: record.milestoneClaimed, vitality: record.vitality }).eq('id', ROW_ID);
+                currentData.coins = newCoins; currentData.childLogs = logs; currentData.cooldowns = cds; currentData.vitality = record.vitality; localStorage.setItem('andy_last_seen_coins', newCoins); closeRewardModal(); playAttackSequence(totalWin, newCoins);
             } catch (e) { alert("申报异常，请重试"); }
-        }
-
-        function openGameModal() { if (!currentData || !currentData.towerConfig) return; [sModal, rModal, lModal, cfModal, rankModal, ctModal, msModal].forEach(m => { if(m) m.style.display = 'none'; }); gModal.style.display = 'flex'; backToGameMenu(); }
-        function closeGameModal() { quitGameSession(); gModal.style.display = 'none'; }
-        
-        function backToGameMenu() {
-            clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false;
-            document.getElementById('gameMenu').style.display = 'block'; document.getElementById('gamePlay').style.display = 'none'; document.getElementById('gameResult').style.display = 'none';
-            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); let pCount = (schulte.lastDate === today) ? schulte.playCount : 0; let wCount = (schulte.lastDate === today) ? schulte.winCount : 0;
-            let cfg = currentData.towerConfig; let freeLeft = Math.max(0, cfg.freePlays - pCount); let rewardLeft = Math.max(0, cfg.maxRewards - wCount);
-            document.getElementById('gameRemainingCount').innerHTML = `<div style="margin-bottom:8px;">🎫 免费进入剩余: <span style="color:${freeLeft > 0 ? '#27ae60' : '#c0392b'};">${freeLeft}</span> / ${cfg.freePlays}</div><div>🎁 有效领奖剩余: <span style="color:${rewardLeft > 0 ? '#e67e22' : '#c0392b'};">${rewardLeft}</span> / ${cfg.maxRewards}</div>`;
-        }
-
-        function attemptStartGame(mode) {
-            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); let pCount = (schulte.lastDate === today) ? schulte.playCount : 0; let cfg = currentData.towerConfig; let requiredTicket = cfg[mode].ticket;
-            if (pCount >= cfg.freePlays) { if (currentData.coins < requiredTicket) { playSound('fuse'); alert("❌ 门票不足！"); return; } document.getElementById('confirmText').innerHTML = `🎫 免费次数已用完。<br>开启本次秘境将<span style="color:#c0392b;">消耗 ${requiredTicket} 🪙</span> 门票，确定支付吗？`; pendingAction = { actionType: 'schulteTicket', data: { mode: mode } }; cfModal.style.display = 'flex'; } else { executeStartGame(mode, false); }
-        }
-
-        async function executeStartGame(mode, isPaidLocally) {
-            try {
-                let record = currentData; let today = getTodayStr(); let schulte = record.schulteDaily; if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
-                let cfg = record.towerConfig; let requiredTicket = cfg[mode].ticket; let newCoins = record.coins; let logs = record.childLogs || [];
-                let needsPayment = schulte.playCount >= cfg.freePlays;
-                if (needsPayment && !isPaidLocally) { alert("⚠️ 数据已刷新，请重新点击进入高塔！"); syncData(); return; }
-                if (needsPayment && newCoins < requiredTicket) { alert("❌ 云端校验拦截：余额不足以支付门票！"); syncData(); return; }
-                if (needsPayment) { newCoins -= requiredTicket; logs.unshift({ time: getFormattedTime(), action: `支付高塔门票 (${mode})`, amount: -requiredTicket }); }
-                schulte.playCount += 1;
-                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
-                currentData.coins = newCoins; currentData.childLogs = logs; currentData.schulteDaily = schulte; localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins); startGameSession(mode);
-            } catch(e) { alert("网络异常，无法开启高塔秘境"); }
-        }
-
-        function startGameSession(mode) {
-            currentTowerMode = mode; currentGameSize = (mode === 'normal') ? 6 : 7; nextTargetNum = 1; gameStartTime = Date.now(); comboCount = 0; maxCombo = 0; lastHitTime = gameStartTime; gameTimeRemaining = (mode === 'normal') ? 40 : 75; isGameRunning = true;
-            document.getElementById('gameModal').style.display = 'flex'; document.getElementById('gameMenu').style.display = 'none'; document.getElementById('gameResult').style.display = 'none'; document.getElementById('gamePlay').style.display = 'flex'; document.getElementById('gameTargetNum').innerText = nextTargetNum; document.getElementById('gameTimerText').innerText = gameTimeRemaining;
-            let totalCells = currentGameSize * currentGameSize; let numberPool = []; for(let i = 1; i <= totalCells; i++) numberPool.push(i); for(let i = numberPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]]; }
-            const gridContainer = document.getElementById('schulteGrid'); gridContainer.style.gridTemplateColumns = `repeat(${currentGameSize}, 1fr)`; gridContainer.innerHTML = '';
-            numberPool.forEach(num => { const cell = document.createElement('div'); cell.className = 'schulte-cell'; cell.innerText = num; cell.style.fontSize = currentGameSize === 7 ? '20px' : '24px'; cell.onclick = () => handleCellClick(cell, num); gridContainer.appendChild(cell); });
-            gridContainer.addEventListener('touchstart', function(e) { if (e.touches.length > 1) { e.preventDefault(); triggerAntiCheat(); } }, {passive: false});
-            clearInterval(gameClockTimer); clearInterval(potionTimer);
-            if (mode === 'survival') { potionTimer = setInterval(() => { if(!isGameRunning) { clearInterval(potionTimer); return; } let cells = Array.from(document.querySelectorAll('.schulte-cell:not(.correct)')); if(cells.length > 5) { for(let i=0; i<3; i++) { let target = cells[Math.floor(Math.random() * cells.length)]; if(!target.classList.contains('debuff')) { target.classList.add('debuff'); setTimeout(() => { target.classList.remove('debuff'); }, 1500); } } } }, 2500); }
-            gameClockTimer = setInterval(() => { gameTimeRemaining--; document.getElementById('gameTimerText').innerText = gameTimeRemaining; if(gameTimeRemaining <= 0) endGameSession(false); }, 1000);
-        }
-
-        function showComboText(text) { let el = document.createElement('div'); el.className = 'fly-text'; el.style.color = '#ffb700'; el.style.left = '50%'; el.style.top = '40%'; el.innerText = text; document.body.appendChild(el); setTimeout(() => el.remove(), 1000); }
-        function triggerAntiCheat() { if(!isGameRunning) return; clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; document.getElementById('gamePlay').style.display = 'none'; const resultBox = document.getElementById('gameResult'); resultBox.style.display = 'block'; document.getElementById('gameResultTitle').innerText = "🚨 时空坍塌！"; document.getElementById('gameResultTitle').style.color = "#c0392b"; document.getElementById('gameResultDesc').innerText = "检测到多指触控作弊！末影人已将高塔封锁，本次门票不予退还！"; document.getElementById('btnGameRetry').innerText = "重新接受试炼"; playSound('explode'); }
-
-        function handleCellClick(cell, num) {
-            if(!isGameRunning || cell.classList.contains('correct')) return;
-            if(num === nextTargetNum) {
-                cell.classList.add('correct'); clickCoin(); nextTargetNum++; let now = Date.now();
-                if (now - lastHitTime <= 1500) { comboCount++; if (comboCount > maxCombo) maxCombo = comboCount; if ([5, 10, 15, 20, 30].includes(comboCount)) showComboText("Combo x" + comboCount + "!"); } else comboCount = 1;
-                lastHitTime = now; if(nextTargetNum > currentGameSize * currentGameSize) endGameSession(true); else document.getElementById('gameTargetNum').innerText = nextTargetNum;
-            } else { playSound('fuse'); comboCount = 0; cell.style.backgroundColor = '#c0392b'; cell.style.color = '#fff'; if(cell.wrongTimeout) clearTimeout(cell.wrongTimeout); cell.wrongTimeout = setTimeout(() => { cell.style.backgroundColor = ''; cell.style.color = ''; }, 200); }
-        }
-
-        function quitGameSession() { clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; backToGameMenu(); }
-
-        async function endGameSession(isWin) {
-            clearInterval(gameClockTimer); clearInterval(potionTimer); isGameRunning = false; document.getElementById('gamePlay').style.display = 'none'; const resultBox = document.getElementById('gameResult'); const rTitle = document.getElementById('gameResultTitle'); const rDesc = document.getElementById('gameResultDesc'); const rBtn = document.getElementById('btnGameRetry'); resultBox.style.display = 'block'; rBtn.onclick = () => attemptStartGame(currentTowerMode);
-            if(!isWin) { playSound('explode'); rTitle.innerText = "⏳ 攀塔超时 (失败)"; rTitle.style.color = "#c0392b"; rDesc.innerHTML = "沙漏空了！你的眼睛搜寻速度慢了一步，潜能未能完全激发。"; rBtn.innerText = "重新尝试攀登"; return; }
-            let elapsed = ((Date.now() - gameStartTime) / 1000).toFixed(1); rTitle.innerText = "🎉 挑战成功！"; rTitle.style.color = "#27ae60"; playSound('levelup');
-            let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
-            let cfg = currentData.towerConfig; let rewardAmt = cfg[currentTowerMode].reward; let comboBadge = maxCombo >= 10 ? `<br><br>✨ <span style="color:#8e44ad; font-weight:bold;">隐藏成就：你达到了惊人的最高连击数 [Combo x${maxCombo}]！</span>` : "";
-            if(schulte.winCount < cfg.maxRewards) { rDesc.innerHTML = `你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 彻底攻克了高塔层！<br><br>🎁 战利品：<span style="color:#27ae60;font-weight:bold;">+${rewardAmt} 硬币</span> 已注入背包。<br>(今日领奖: ${schulte.winCount + 1}/${cfg.maxRewards}) ${comboBadge}`; rBtn.innerText = "继续向上攀登"; await uploadSchulteWin(rewardAmt, currentTowerMode); } else { rDesc.innerHTML = `你用时 <span style="color:#e67e22;font-weight:bold;">${elapsed}秒</span> 顺利通过高塔试炼！<br><br>⚠️ 提示：今日高塔战利品上限已满。本次攀登不再产出硬币。 ${comboBadge}`; rBtn.innerText = "纯粹攀塔模式"; }
-        }
-
-        async function uploadSchulteWin(rewardAmt, mode) {
-            try {
-                let record = currentData; let today = getTodayStr(); let schulte = record.schulteDaily; if (schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
-                schulte.winCount += 1; let newCoins = record.coins + rewardAmt; const maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; if(newCoins > maxCap) newCoins = maxCap;
-                let logs = record.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `高塔试炼通关 (${mode})`, amount: rewardAmt });
-                await dbClient.from('gamedata').update({ coins: newCoins, childLogs: logs.slice(0, 10), schulteDaily: schulte }).eq('id', ROW_ID);
-                currentData.coins = newCoins; currentData.childLogs = logs; currentData.schulteDaily = schulte; localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins);
-            } catch (e) {}
         }
 
         async function upgradeRank() {
             if (!currentData || isAnimating) return;
             const rank = currentData.currentRank || 1; const rData = RANK_DATA[rank - 1]; if (currentData.coins < rData.cost) return; 
-            const nextRank = rank + 1; const nextRData = RANK_DATA[nextRank - 1]; const newCoins = currentData.coins - rData.cost;
-            let logs = currentData.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `突破境界: ${nextRData.title}`, amount: -rData.cost });
+            const nextRank = rank + 1; const nextRData = RANK_DATA[nextRank - 1]; const newCoins = currentData.coins - rData.cost; let logs = currentData.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `突破境界: ${nextRData.title}`, amount: -rData.cost });
             try {
                 isAnimating = true; playSound('fuse'); document.body.classList.add('shake'); if(uiLayer) uiLayer.style.transform = 'scale(0.95)';
                 const dbUpdatePromise = dbClient.from('gamedata').update({ coins: newCoins, currentRank: nextRank, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
-                setTimeout(async () => {
-                    document.body.classList.remove('shake'); playSound('explode'); setTimeout(() => playSound('levelup'), 400); 
-                    let flash = document.createElement('div'); flash.className = 'flash-overlay'; document.body.appendChild(flash); setTimeout(() => flash.remove(), 1200);
-                    createParticles(80, ['✨', '💎', '💠', '🔥', '⚡', '❇️']); if(uiLayer) { uiLayer.style.opacity = '0'; uiLayer.style.transform = 'scale(1)'; }
-                    await dbUpdatePromise; 
-                    setTimeout(() => {
-                        localStorage.setItem('andy_last_seen_coins', newCoins); currentData.coins = newCoins; currentData.currentRank = nextRank; updateValue(newCoins);
-                        let banner = document.createElement('div'); banner.className = 'level-up-banner'; banner.innerHTML = `<div style="font-size:40px; color:#fff;">境界突破</div><div style="font-size:75px; color:${nextRData.color};">${nextRData.title}</div>`; document.body.appendChild(banner); setTimeout(() => banner.remove(), 3500);
-                        if(uiLayer) uiLayer.style.opacity = '1'; isAnimating = false;
-                    }, 500); 
-                }, 1000); 
+                setTimeout(async () => { document.body.classList.remove('shake'); playSound('explode'); setTimeout(() => playSound('levelup'), 400); let flash = document.createElement('div'); flash.className = 'flash-overlay'; document.body.appendChild(flash); setTimeout(() => flash.remove(), 1200); createParticles(80, ['✨', '💎', '💠', '🔥', '⚡', '❇️']); if(uiLayer) { uiLayer.style.opacity = '0'; uiLayer.style.transform = 'scale(1)'; } await dbUpdatePromise; setTimeout(() => { localStorage.setItem('andy_last_seen_coins', newCoins); currentData.coins = newCoins; currentData.currentRank = nextRank; updateValue(newCoins); let banner = document.createElement('div'); banner.className = 'level-up-banner'; banner.innerHTML = `<div style="font-size:40px; color:#fff;">境界突破</div><div style="font-size:75px; color:${nextRData.color};">${nextRData.title}</div>`; document.body.appendChild(banner); setTimeout(() => banner.remove(), 3500); if(uiLayer) uiLayer.style.opacity = '1'; isAnimating = false; }, 500); }, 1000); 
             } catch (e) { alert("突破受阻！"); isAnimating = false; if(uiLayer) { uiLayer.style.opacity = '1'; uiLayer.style.transform = 'scale(1)'; } document.body.classList.remove('shake'); }
         }
 
         function openLogModal() { if(lModal) lModal.style.display = 'flex'; } function closeLogModal() { if(lModal) lModal.style.display = 'none'; }
-        function renderLogs(logs) { const container = document.getElementById('logListContent'); if(!container) return; if(logs && logs.length > 0) { container.innerHTML = logs.map(log => { let amountClass = log.amount > 0 ? "log-v" : "log-v sub"; if (log.action.includes('🏆')) amountClass = "log-v milestone"; const amountText = log.amount > 0 ? '+' + log.amount : log.amount; return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${amountText}</span></div>`; }).join(''); } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>'; }
+        function renderLogs(logs) { const container = document.getElementById('logListContent'); if(!container) return; if(logs && logs.length > 0) { container.innerHTML = logs.map(log => { let amountClass = log.amount > 0 ? "log-v" : "log-v sub"; if (log.action.includes('🏆')) amountClass = "log-v milestone"; let txt = typeof log.amount === 'string' ? log.amount : (log.amount > 0 ? '+' + log.amount : log.amount); return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${txt}</span></div>`; }).join(''); } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>'; }
+        function renderBuffs() { if (!currentData || !currentData.activeBuffs) return; const container = document.getElementById('activeBuffsContainer'); if (!container) return; const now = Date.now(); let hasActive = false; let html = ''; for (const [id, buff] of Object.entries(currentData.activeBuffs)) { const remain = buff.endTime - now; if (remain > 0) { hasActive = true; let days = Math.floor(remain / (24 * 3600000)), hours = Math.floor((remain % (24 * 3600000)) / 3600000), mins = Math.floor((remain % 3600000) / 60000), secs = Math.floor((remain % 60000) / 1000); let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}:${mins<10?'0'+mins:mins}:${secs<10?'0'+secs:secs}`; html += `<div class="buff-pill"><span>${buff.icon} ${buff.name}</span><span style="color:#ffb700;">⏳ ${timeStr}</span></div>`; } } container.innerHTML = hasActive ? html : ''; }
         function processCooldowns() { if(!currentData || !currentData.cooldowns || !currentData.taskItems) return; const now = Date.now(); currentData.taskItems.forEach(task => { const btn = document.getElementById(`btn-${task.id}`); if (!btn) return; const remain = (currentData.cooldowns[task.id] || 0) - now; if(remain > 0) { btn.classList.add('in-cd'); const totalMs = (task.hours || 3) * 3600000; btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg'); const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000); let timerEl = btn.querySelector('.cd-timer'); if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; } else btn.classList.remove('in-cd'); }); }
-
-        function playAttackSequence(amount, finalCoins) {
-            isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0'; 
-            if(heroSteve) { heroSteve.style.display = 'block'; heroSteve.style.left = "35%"; } if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "35%"; }
-            let sword = document.querySelector('.skin-steve .sword'); if(sword) sword.style.display = 'block'; 
-            setTimeout(() => { if(sword) sword.classList.add('anim-attack'); playSound('hit'); setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); }, 500);
-            setTimeout(() => { if(heroCreeper) heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; } }, 1200);
-            setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000);
-        }
-
-        function playExplodeSequence(amount, finalCoins, customMsg) {
-            isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0';
-            if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "45%"; }
-            setTimeout(() => { playSound('fuse'); if(heroCreeper) heroCreeper.classList.add('anim-swell'); }, 500);
-            setTimeout(() => { if(heroCreeper) heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); createParticles(40, '🟥'); playSound('explode'); if(statusMsg) { statusMsg.innerText = customMsg; statusMsg.style.color = "#8b0000"; } }, 2500);
-            setTimeout(() => { document.body.classList.remove('shake'); updateValue(finalCoins); resetStage(); }, 4000);
-        }
-
+        function playAttackSequence(amount, finalCoins) { isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0'; if(heroSteve) { heroSteve.style.display = 'block'; heroSteve.style.left = "35%"; } if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "35%"; } let sword = document.querySelector('.skin-steve .sword'); if(sword) sword.style.display = 'block'; setTimeout(() => { if(sword) sword.classList.add('anim-attack'); playSound('hit'); setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); }, 500); setTimeout(() => { if(heroCreeper) heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; } }, 1200); setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000); }
+        function playExplodeSequence(amount, finalCoins, customMsg) { isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0'; if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "45%"; } setTimeout(() => { playSound('fuse'); if(heroCreeper) heroCreeper.classList.add('anim-swell'); }, 500); setTimeout(() => { if(heroCreeper) heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); createParticles(40, '🟥'); playSound('explode'); if(statusMsg) { statusMsg.innerText = customMsg; statusMsg.style.color = "#8b0000"; } }, 2500); setTimeout(() => { document.body.classList.remove('shake'); updateValue(finalCoins); resetStage(); }, 4000); }
         function resetStage() { if(uiLayer) uiLayer.style.opacity = '1'; if(heroSteve) heroSteve.style.display = 'none'; if(heroCreeper) { heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; } isAnimating = false; }
         function updateValue(coins) { if(totalDisplay) totalDisplay.innerText = coins; updateRankUI(coins, currentData ? (currentData.currentRank || 1) : 1); }
         function playAmbientScenario() { if (isAnimating || isGameRunning) return; let scenario; do { scenario = Math.floor(Math.random() * 2); } while (scenario === lastScenario); lastScenario = scenario; if (scenario === 0) { spawnActor('skin-villager', 'left', 12); } else { spawnActor('skin-creeper', 'right', 12); } }

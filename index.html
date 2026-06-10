@@ -368,6 +368,7 @@
             await syncData(); syncInterval = setInterval(syncData, 5000); 
             setInterval(processCooldowns, 1000); setInterval(renderBuffs, 1000); 
             playAmbientScenario(); ambientInterval = setInterval(playAmbientScenario, 12000);
+            if (!isMuted) bgm.play().catch(e=>{});
         }
 
         async function syncData() {

@@ -6,14 +6,26 @@
     <title>家长控制面板</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px 10px; background: #121212; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 15px; }
-        .card { background: #1e1e1e; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #333; }
-        .card-header h3 { margin: 0; color: #888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center;}
-        .rank-info { font-size: 12px; color: #ffb700; background: #333; padding: 3px 8px; border-radius: 4px;}
+        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 40px;}
+        
+        /* 卡片折叠引擎样式 */
+        .card { background: #1e1e1e; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #333; overflow: hidden; transition: all 0.3s ease; }
+        .card-header { padding: 15px 20px; background: #252525; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border-bottom: 1px solid transparent; transition: background 0.2s; }
+        .card-header:active { background: #2a2a2a; }
+        .card-header h3 { margin: 0; color: #888; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
+        .toggle-icon { font-size: 12px; color: #666; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-content { padding: 20px; transition: opacity 0.3s ease; }
+        
+        /* 折叠状态 */
+        .card.collapsed .toggle-icon { transform: rotate(-90deg); }
+        .card.collapsed .card-content { display: none; }
+        .card:not(.collapsed) .card-header { border-bottom-color: #333; }
+
+        .rank-info { font-size: 12px; color: #ffb700; background: #333; padding: 3px 8px; border-radius: 4px; font-weight: normal; text-transform: none; letter-spacing: 0;}
         .big-num { font-size: 60px; font-weight: bold; margin: 10px 0 20px 0; color: #ffb700; text-align: center; font-family: 'Courier New', monospace;}
         .cap-text { font-size: 12px; color: #888; text-align: center; margin-top: -15px; margin-bottom: 15px; }
         
-        .log-item { background: #252525; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; border-left: 4px solid #007aff; display: flex; justify-content: space-between; }
+        .log-item { background: #2a2a2a; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; border-left: 4px solid #007aff; display: flex; justify-content: space-between; align-items: center;}
         .log-time { color: #888; font-family: monospace; font-size: 11px; margin-right: 8px; min-width: 80px;}
         .log-action { color: #ddd; font-weight: bold; flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .log-amount { color: #27ae60; font-weight: bold; min-width: 30px; text-align: right; }
@@ -38,44 +50,47 @@
         input:checked + .slider { background-color: #34c759; }
         input:checked + .slider:before { transform: translateX(20px); }
         
-        #log-status { color: #888; font-size: 12px; text-align: center; padding: 10px; }
+        #log-status { color: #888; font-size: 12px; text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; background: rgba(18,18,18,0.9); backdrop-filter: blur(5px); z-index: 1000;}
 
-        .shop-item { background: #252525; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #444;}
-        .buff-item { background: rgba(139,0,0,0.2); border-left: 4px solid #ffb700; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .shop-item { background: #2a2a2a; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #444;}
         
         .config-input { width: 60px; padding: 5px; text-align: center; border-radius: 4px; border: 1px solid #555; background: #222; color: #fff;}
-        .badge-milestone { background: #8e44ad; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+        .badge-milestone { background: #8e44ad; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; border: 1px solid #9b59b6;}
         .badge-stamina { background: #2980b9; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; border: 1px solid #3498db;}
 
-        .contract-box { background: #2c3e50; border: 2px dashed #e67e22; border-radius: 8px; padding: 15px; margin-top: 10px; }
+        .contract-box { background: #2c3e50; border: 2px dashed #e67e22; border-radius: 8px; padding: 15px; margin-top: 5px; }
     </style>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <div class="card-header">
-                <h3>💰 资产余额</h3>
-                <span id="rankBadge" class="rank-info">读取中...</span>
+        <div class="card" id="card-assets">
+            <div class="card-header" onclick="toggleCard('card-assets')">
+                <h3>💰 资产余额 <span id="rankBadge" class="rank-info">读取中...</span></h3>
+                <span class="toggle-icon">▼</span>
             </div>
-            <div id="currentCoins" class="big-num">...</div>
-            <div id="capText" class="cap-text">背包容量上限: ---</div>
-            
-            <div style="margin-top: 5px;">
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <input type="number" id="manualInput" class="input-box" style="flex:1;" placeholder="数额">
-                    <input type="text" id="manualReason" class="input-box" style="flex:2;" placeholder="输入增减理由 (选填)">
-                </div>
-                <div class="grid">
-                    <button class="btn-add" onclick="manualMod(1)">奖励 (+)</button>
-                    <button class="btn-sub" onclick="manualMod(-1)">扣减 (-)</button>
+            <div class="card-content">
+                <div id="currentCoins" class="big-num">...</div>
+                <div id="capText" class="cap-text">背包容量上限: ---</div>
+                <div>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <input type="number" id="manualInput" class="input-box" style="flex:1;" placeholder="数额">
+                        <input type="text" id="manualReason" class="input-box" style="flex:2;" placeholder="输入增减理由 (选填)">
+                    </div>
+                    <div class="grid">
+                        <button class="btn-add" onclick="manualMod(1)">奖励 (+)</button>
+                        <button class="btn-sub" onclick="manualMod(-1)">扣减 (-)</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header"><h3 style="color:#3498db;">⚡ 体能引擎控制台</h3></div>
-            <div style="margin-top:15px;">
+        <div class="card" id="card-vitality">
+            <div class="card-header" onclick="toggleCard('card-vitality')">
+                <h3 style="color:#3498db;">⚡ 体能引擎控制台</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="card-content">
                 <div class="flex-row">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span>🚑 医疗伤病冻结</span>
@@ -86,80 +101,99 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-                <div id="vitalityStatusText" style="margin-top:12px; font-size:13px; color:#aaa; text-align:center;">当前体力值: 同步中...</div>
+                <div id="vitalityStatusText" style="margin-top:12px; font-size:13px; color:#aaa; text-align:center; background: #2a2a2a; padding: 10px; border-radius: 6px;">当前体力值: 同步中...</div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header"><h3 style="color:#e67e22;">📜 对赌契约中心</h3></div>
-            <div id="adminContractArea"></div>
+        <div class="card" id="card-contract">
+            <div class="card-header" onclick="toggleCard('card-contract')">
+                <h3 style="color:#e67e22;">📜 对赌契约审批</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="card-content" id="adminContractArea"></div>
         </div>
 
-        <div class="card">
-            <div class="card-header"><h3 style="color:#d35400;">🏰 高塔法则配置</h3></div>
-            <div style="display:flex; flex-direction:column; gap:12px; margin-top:15px; font-size: 14px;">
-                <div class="flex-row"><span style="color:#aaa;">免费次数:</span><input type="number" id="tc_free" class="config-input"></div>
-                <div class="flex-row"><span style="color:#aaa;">领奖上限:</span><input type="number" id="tc_max" class="config-input"></div>
+        <div class="card" id="card-tasks">
+            <div class="card-header" onclick="toggleCard('card-tasks')">
+                <h3 style="color:#2ecc71;">⚔️ 任务告示牌管理</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="card-content">
+                <div style="display:flex; flex-direction: column; gap: 10px; background: #2a2a2a; padding: 15px; border-radius: 10px; border: 1px solid #444;">
+                    <div style="display:flex; gap:10px;">
+                        <select id="t_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
+                            <option value="🏃">🏃</option><option value="🧪">🧪</option><option value="📝">📝</option><option value="🌋">🌋</option><option value="⚡">⚡</option><option value="🪶">🪶</option><option value="📖">📖</option><option value="📚">📚</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="⛏️">⛏️</option><option value="🧹">🧹</option><option value="🧠">🧠</option><option value="🎹">🎹</option>
+                        </select>
+                        <input type="text" id="t_name" class="input-box" style="flex:3;" placeholder="任务名称">
+                    </div>
+                    <input type="text" id="t_desc" class="input-box" placeholder="任务规则描述">
+                    
+                    <select id="t_milestone" class="input-box" style="color: #ffb700; border-color: #8e44ad; background: #1a1a1a;">
+                        <option value="">(无进阶属性绑定)</option>
+                        <option value="strength">⚔️ 挂载属性: 力量</option>
+                        <option value="agility">🪶 挂载属性: 敏捷</option>
+                        <option value="endurance">🛡️ 挂载属性: 耐力</option>
+                        <option value="intelligence">🧠 挂载属性: 智力</option>
+                        <option value="spirit">✨ 挂载属性: 精神</option>
+                        <option value="stamina">🌋 挂载属性: 体力</option>
+                    </select>
+
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="t_price" class="input-box" style="flex:1;" placeholder="硬币(+)">
+                        <input type="number" id="t_stamina" class="input-box" style="flex:1; border-color:#3498db; background: #1a1a1a;" placeholder="体力(+)" step="0.5">
+                        <input type="number" id="t_hours" class="input-box" style="flex:1;" placeholder="冷却(时)">
+                    </div>
+                    <button id="btn_add_task" class="btn-primary" onclick="addTaskItem()" style="background:#27ae60;">➕ 上架新任务</button>
+                </div>
+                <div id="adminTaskList" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+
+        <div class="card collapsed" id="card-shop">
+            <div class="card-header" onclick="toggleCard('card-shop')">
+                <h3 style="color:#9b59b6;">🛒 神秘商店管理</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="card-content">
+                <div style="display:flex; flex-direction: column; gap: 10px; background: #2a2a2a; padding: 15px; border-radius: 10px; border: 1px solid #444;">
+                    <div style="display:flex; gap:10px;">
+                        <select id="s_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
+                            <option value="🎫">🎫</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="💎">💎</option><option value="🥇">🥇</option><option value="🔮">🔮</option><option value="⚡">⚡</option><option value="✨">✨</option><option value="📜">📜</option><option value="🍎">🍎</option><option value="🍖">🍖</option><option value="👑">👑</option>
+                        </select>
+                        <input type="text" id="s_name" class="input-box" style="flex:3;" placeholder="商品名称">
+                    </div>
+                    <input type="text" id="s_desc" class="input-box" placeholder="兑换权益描述">
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="s_price" class="input-box" style="flex:1;" placeholder="售价(币)">
+                        <input type="number" id="s_hours" class="input-box" style="flex:1;" placeholder="时效(小时)">
+                    </div>
+                    <button class="btn-primary" onclick="addShopItem()">➕ 部署商品</button>
+                </div>
+                <div id="shopList" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+
+        <div class="card collapsed" id="card-tower">
+            <div class="card-header" onclick="toggleCard('card-tower')">
+                <h3 style="color:#d35400;">🏰 高塔法则配置</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="card-content" style="display:flex; flex-direction:column; gap:12px; font-size: 14px;">
+                <div class="flex-row"><span style="color:#aaa;">每日免费次数:</span><input type="number" id="tc_free" class="config-input"></div>
+                <div class="flex-row"><span style="color:#aaa;">每日领奖上限:</span><input type="number" id="tc_max" class="config-input"></div>
                 <button class="btn-primary" onclick="saveTowerConfig()" style="background:#d35400; margin-top:5px;">💾 覆写高塔法则</button>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header"><h3>⚔️ 任务告示牌管理</h3></div>
-            <div style="margin-top: 15px; display:flex; flex-direction: column; gap: 10px;">
-                <div style="display:flex; gap:10px;">
-                    <select id="t_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
-                        <option value="🏃">🏃</option><option value="🧪">🧪</option><option value="📝">📝</option><option value="🌋">🌋</option><option value="⚡">⚡</option><option value="🪶">🪶</option><option value="📖">📖</option><option value="📚">📚</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="⛏️">⛏️</option><option value="🧹">🧹</option><option value="🧠">🧠</option><option value="🎹">🎹</option>
-                    </select>
-                    <input type="text" id="t_name" class="input-box" style="flex:3;" placeholder="任务名称">
-                </div>
-                <input type="text" id="t_desc" class="input-box" placeholder="任务规则描述">
-                
-                <select id="t_milestone" class="input-box" style="color: #ffb700; border-color: #8e44ad;">
-                    <option value="">(无进阶属性绑定)</option>
-                    <option value="strength">⚔️ 挂载属性: 力量</option>
-                    <option value="agility">🪶 挂载属性: 敏捷</option>
-                    <option value="endurance">🛡️ 挂载属性: 耐力</option>
-                    <option value="intelligence">🧠 挂载属性: 智力</option>
-                    <option value="spirit">✨ 挂载属性: 精神</option>
-                    <option value="stamina">🌋 挂载属性: 体力</option>
-                </select>
-
-                <div style="display:flex; gap:10px;">
-                    <input type="number" id="t_price" class="input-box" style="flex:1;" placeholder="奖励(币)">
-                    <input type="number" id="t_hours" class="input-box" style="flex:1;" placeholder="冷却(小时)">
-                    <input type="number" id="t_stamina" class="input-box" style="flex:1; border-color:#3498db;" placeholder="体力恢复(+)" step="0.5">
-                </div>
-                <button id="btn_add_task" class="btn-primary" onclick="addTaskItem()" style="background:#27ae60;">➕ 上架新任务</button>
+        <div class="card collapsed" id="card-logs">
+            <div class="card-header" onclick="toggleCard('card-logs')">
+                <h3>🕒 全局增减记录</h3>
+                <span class="toggle-icon">▼</span>
             </div>
-            <div id="adminTaskList" style="margin-top: 15px;"></div>
+            <div class="card-content" id="childLogList" style="max-height: 400px; overflow-y: auto;"></div>
         </div>
-
-        <div class="card">
-            <div class="card-header"><h3>🛒 神秘商店管理</h3></div>
-            <div style="margin-top: 15px; display:flex; flex-direction: column; gap: 10px;">
-                <div style="display:flex; gap:10px;">
-                    <select id="s_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
-                        <option value="🎫">🎫</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="💎">💎</option><option value="🥇">🥇</option><option value="🔮">🔮</option><option value="⚡">⚡</option><option value="✨">✨</option><option value="📜">📜</option><option value="🍎">🍎</option><option value="🍖">🍖</option><option value="👑">👑</option>
-                    </select>
-                    <input type="text" id="s_name" class="input-box" style="flex:3;" placeholder="商品名称">
-                </div>
-                <input type="text" id="s_desc" class="input-box" placeholder="兑换权益描述">
-                <div style="display:flex; gap:10px;">
-                    <input type="number" id="s_price" class="input-box" style="flex:1;" placeholder="售价(币)">
-                    <input type="number" id="s_hours" class="input-box" style="flex:1;" placeholder="时效(小时)">
-                </div>
-                <button class="btn-primary" onclick="addShopItem()">➕ 部署上架</button>
-            </div>
-            <div id="shopList" style="margin-top: 15px;"></div>
-        </div>
-
-        <div class="card">
-            <div class="card-header"><h3>🕒 增减记录</h3></div>
-            <div id="childLogList" style="margin-top:10px;"></div>
-        </div>
-        <div id="log-status">数据建立握手...</div>
     </div>
+    <div id="log-status">数据建立握手...</div>
 
     <script>
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
@@ -167,6 +201,23 @@
         const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let currentData = null; let editingTaskId = null; const ROW_ID = 1; 
+
+        // 💡 面板本地记忆初始化
+        const CARD_IDS = ['card-assets', 'card-vitality', 'card-contract', 'card-tasks', 'card-shop', 'card-tower', 'card-logs'];
+        function initCardStates() {
+            CARD_IDS.forEach(id => {
+                const card = document.getElementById(id);
+                const isCollapsed = localStorage.getItem('admin_collapse_' + id);
+                if (isCollapsed === 'true') card.classList.add('collapsed');
+                else if (isCollapsed === 'false') card.classList.remove('collapsed');
+            });
+        }
+        function toggleCard(cardId) {
+            const card = document.getElementById(cardId);
+            card.classList.toggle('collapsed');
+            localStorage.setItem('admin_collapse_' + cardId, card.classList.contains('collapsed'));
+        }
+        initCardStates(); // 立即执行防闪烁
 
         const RANK_DATA = [
             { rank: 1, cap: 200, title: "🪵 新手伐木工" }, { rank: 2, cap: 350, title: "🪨 洞穴探索者" }, { rank: 3, cap: 600, title: "🛡️ 铁甲护卫" },
@@ -198,9 +249,9 @@
                 document.getElementById('rankBadge').innerText = `${rData.title} (Lv.${currentData.currentRank})`;
                 document.getElementById('capText').innerText = `当前背包容量上限: ${rData.cap === Infinity ? '无限' : rData.cap}`;
                 
-                // 体能引擎 UI
                 document.getElementById('freezeToggle').checked = currentData.vitality.freeze;
-                document.getElementById('vitalityStatusText').innerText = `当前体力值: ${currentData.vitality.current.toFixed(1)} / 10.0`;
+                let displayVit = Number.isInteger(currentData.vitality.current) ? currentData.vitality.current : currentData.vitality.current.toFixed(1);
+                document.getElementById('vitalityStatusText').innerText = currentData.vitality.freeze ? `❄️ 医疗冻结中 (体力维持 ${displayVit})` : `当前体力值: ${displayVit} / 10`;
 
                 renderLogs(currentData.childLogs); renderShopItems(currentData.shopItems); renderTaskItems(currentData.taskItems); renderContract(currentData.activeContract);
                 document.getElementById('log-status').innerText = "✅ 数据同步良好 - " + new Date().toLocaleTimeString();
@@ -293,7 +344,7 @@
                         <div style="flex:1;">
                             <div style="font-weight:bold; font-size:15px; color:#2ecc71;">${item.icon} ${item.name} 
                                 ${item.milestone ? `<span class="badge-milestone">属性: ${MS_NAMES[item.milestone]}</span>` : ''}
-                                ${item.stamina_val ? `<span class="badge-stamina">⚡ +${item.stamina_val} 体力</span>` : ''}
+                                ${item.stamina_val ? `<span class="badge-stamina">⚡ +${item.stamina_val}</span>` : ''}
                             </div>
                             <div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div>
                             <div style="font-size:12px; color:#27ae60;">🪙 +${item.price} 币 | ⏳ 冷却: ${item.hours} 小时</div>

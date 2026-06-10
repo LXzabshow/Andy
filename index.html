@@ -73,17 +73,16 @@
         .reward-grid { display: grid; grid-template-columns: 1fr; gap: 10px; width: 100%; overflow-y: auto; padding-right: 5px;}
         .mc-item-btn { position: relative; background: #8b8b8b; border: 3px solid #000; border-right-color: #fff; border-bottom-color: #fff; padding: 10px; cursor: pointer; text-align: left; }
         .mc-item-btn:active:not(.in-cd) { transform: scale(0.98); }
-        .mc-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .mc-item-title { font-size: 16px; color: #000; font-weight: bold; text-shadow: 1px 1px #fff; }
-        .mc-item-reward { color: #004400; font-weight: bold; font-size: 20px; text-shadow: 1px 1px #fff;}
+        .mc-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; gap: 5px;}
+        .mc-item-title { font-size: 16px; color: #000; font-weight: bold; text-shadow: 1px 1px #fff; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; line-height: 1.2;}
+        .mc-item-reward { color: #004400; font-weight: bold; font-size: 20px; text-shadow: 1px 1px #fff; white-space: nowrap;}
         .mc-item-desc { font-family: -apple-system, sans-serif; font-size: 13px; color: #222; line-height: 1.3; }
-        .badge { background: #8e44ad; color: #fff; font-size: 10px; padding: 2px 4px; border-radius: 4px; margin-left: 5px; font-family: -apple-system, sans-serif;}
+        .badge { background: #8e44ad; color: #fff; font-size: 10px; padding: 2px 4px; border-radius: 4px; font-family: -apple-system, sans-serif;}
         
         .cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; background: conic-gradient(rgba(0,0,0,0.7) var(--progress), transparent 0deg); }
         .cd-timer { position: absolute; bottom: 6px; right: 8px; color: #fff; font-size: 16px; font-weight: bold; text-shadow: 1px 1px #000; display: none; }
         .in-cd { cursor: not-allowed; opacity: 0.8; } .in-cd .cd-overlay, .in-cd .cd-timer { display: block; }
 
-        /* 💡 修复：图鉴独立边框与阴影隔离 */
         .rank-list-item { background: #fff; border: 2px solid #555; padding: 12px; margin-bottom: 10px; border-radius: 6px; text-align: left; font-family: -apple-system, sans-serif; display: block; box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
         .rank-list-item.unlocked { border-left-width: 6px; border-left-style: solid; background: #f0f8ff; }
         .rank-list-item.next-target { border: 3px dashed #e67e22; background: #fffdf5; box-shadow: inset 0 0 15px rgba(230,126,34,0.2); }
@@ -107,7 +106,6 @@
         .mc-input { width: 100%; padding: 10px; font-family: -apple-system, sans-serif; font-size: 15px; border: 2px solid #333; background: #fff; margin-bottom: 10px; box-sizing: border-box;}
         textarea.mc-input { resize: vertical; min-height: 80px; }
         
-        /* 舒尔特高塔方格 CSS */
         #schulteGrid { display: grid; width: 100%; aspect-ratio: 1; gap: 4px; background: #373737; padding: 5px; border: 4px solid #000; touch-action: none; }
         .schulte-cell { background: #c6c6c6; border: 3px solid #000; box-shadow: inset 2px 2px #fff, inset -2px -2px #555; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; cursor: pointer; aspect-ratio: 1; transition: transform 0.05s, filter 0.3s; }
         .schulte-cell:active { transform: scale(0.92); }
@@ -424,7 +422,6 @@
             }
         }
 
-        // 💡 修复：UI 降维去小数 & 挂载常驻状态反馈
         function renderVitalityBar(current) {
             const container = document.getElementById('vitalityBarContainer');
             let multi = getVitalityMultiplier(current);
@@ -470,7 +467,6 @@
             renderVitalityBar(currentData.vitality.current);
         }
 
-        // 💡 修复：图鉴弹窗的独立 CSS 卡牌框还原
         function openRankModal() {
             if(!rankModal || !currentData) return; clickCoin(); rankModal.style.display = 'flex'; const container = document.getElementById('rankListContainer'); let currentLevel = currentData.currentRank || 1; let html = '';
             RANK_DATA.forEach((r, index) => { let rankLevel = index + 1;
@@ -515,16 +511,28 @@
             let multi = getVitalityMultiplier(currentData.vitality.current);
             let safeAbsorbed = (currentData.vitality.dailyAbsorbed && typeof currentData.vitality.dailyAbsorbed.amount === 'number') ? currentData.vitality.dailyAbsorbed.amount : 0;
             
-            // UI降维处理日吸入额度
-            let displayAbsorbed = Number.isInteger(safeAbsorbed) ? safeAbsorbed : safeAbsorbed.toFixed(1);
             let spaceLeft = Math.max(0, 2.0 - safeAbsorbed);
             let displaySpaceLeft = Number.isInteger(spaceLeft) ? spaceLeft : spaceLeft.toFixed(1);
             
             document.getElementById('vitalityNotice').innerHTML = `当前体能效率：${multi.msg} (今日还可吸收 ${displaySpaceLeft} ⚡)`;
             
             container.innerHTML = currentData.taskItems.map(task => {
-                let staminaUI = task.stamina_val ? `<span style="background:#2980b9; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; margin-left:5px; border:1px solid #000;">⚡ +${task.stamina_val}</span>` : '';
-                return `<div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'><div class="cd-overlay"></div><div class="mc-item-header"><span class="mc-item-title">${task.icon || '⚔️'} ${task.name}</span><div><span class="mc-item-reward">+${task.price} 🪙</span>${staminaUI}</div></div><div class="mc-item-desc">${task.desc}</div><span class="cd-timer">--:--</span></div>`
+                // 💡 修复：渲染体力图标与图鉴图标双轨挂载
+                let staminaUI = task.stamina_val ? `<span style="background:#2980b9; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">⚡ +${task.stamina_val}</span>` : '';
+                let milestoneUI = task.milestone ? `<span class="badge" style="background:#8e44ad; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">属性: ${MS_NAMES[task.milestone]}</span>` : '';
+                
+                return `<div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'>
+                            <div class="cd-overlay"></div>
+                            <div class="mc-item-header">
+                                <span class="mc-item-title" style="flex:1;">
+                                    ${task.icon || '⚔️'} ${task.name} 
+                                    <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">${milestoneUI}${staminaUI}</div>
+                                </span>
+                                <div><span class="mc-item-reward">+${task.price} 🪙</span></div>
+                            </div>
+                            <div class="mc-item-desc" style="margin-top:4px;">${task.desc}</div>
+                            <span class="cd-timer">--:--</span>
+                        </div>`
             }).join('');
         }
         function triggerTaskClick(taskId) { const task = currentData.taskItems.find(t => t.id === taskId); if(task) requestAction('reward', task); }
@@ -607,7 +615,6 @@
             } catch (e) { alert("申报异常，请重试"); }
         }
 
-        // 💡 修复：全量回归高塔核心执行逻辑
         function openGameModal() {
             if (!currentData || !currentData.towerConfig) return alert('高塔参数未同步，请重试');
             [sModal, rModal, lModal, cfModal, rankModal, ctModal, msModal].forEach(m => { if(m) m.style.display = 'none'; });
@@ -675,7 +682,6 @@
             let schulte = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 }; let today = getTodayStr(); if(schulte.lastDate !== today) { schulte.lastDate = today; schulte.playCount = 0; schulte.winCount = 0; }
             let cfg = currentData.towerConfig; let rewardAmt = cfg[currentTowerMode].reward; let comboBadge = maxCombo >= 10 ? `<br><br>✨ <span style="color:#8e44ad; font-weight:bold;">最高连击数 [Combo x${maxCombo}]！</span>` : "";
             
-            // 加入经济惩罚计算
             let multi = getVitalityMultiplier(currentData.vitality.current);
             let finalReward = Math.floor(rewardAmt * multi.coin);
             
@@ -691,7 +697,6 @@
                 currentData.coins = newCoins; currentData.childLogs = logs; currentData.schulteDaily = schulte; localStorage.setItem('andy_last_seen_coins', newCoins); updateValue(newCoins);
             } catch (e) {}
         }
-        // ==========================================
 
         async function upgradeRank() {
             if (!currentData || isAnimating) return;

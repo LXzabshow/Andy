@@ -477,7 +477,6 @@
             }
         }
 
-        // 💡 新增：深渊侵蚀监控弹窗
         function openDecayModal() {
             if(!currentData) return;
             clickCoin();
@@ -487,7 +486,6 @@
             
             let matrix = currentData.vitalityConfig || [0.2, 0.5, 1.0, 1.5, 2.0, 2.3, 2.5];
             let inactiveDays = (currentData.vitality && currentData.vitality.inactiveDays) || 0;
-            // 锁定下一次即将扣减的天数 (不超过第7天)
             let nextDay = Math.min(inactiveDays + 1, 7);
             
             let html = '';
@@ -551,15 +549,33 @@
             localStorage.setItem('andy_last_seen_coins', newCoins); currentData.activeContract = contract; updateValue(newCoins); openContractModal(); playSound('fuse');
         }
 
+        // 💡 修复：图鉴跨越逻辑升级，全面适配浮点数进度
         function openMilestoneModal() {
             if (!currentData) return; clickCoin(); msModal.style.display = 'flex'; const container = document.getElementById('milestoneContent'); let ms = currentData.milestones || {}; let html = '';
-            for (let [key, name] of Object.entries(MS_NAMES)) { let count = ms[key] || 0; let nextTier = MILESTONES.find(t => t.count > count) || MILESTONES[MILESTONES.length - 1]; let isMax = count >= MILESTONES[MILESTONES.length - 1].count; let ratio = isMax ? 100 : (count / nextTier.count) * 100; html += `<div class="ms-card"><div class="ms-header"><span>${name}</span><span class="ms-tier">${isMax ? '已满级' : `下一阶: ${nextTier.name} (${count}/${nextTier.count}) | 🎁 悬赏: ${nextTier.reward} 币`}</span></div><div class="ms-bar-bg"><div class="ms-bar-fill" style="width:${ratio}%;"></div></div></div>`; } container.innerHTML = html;
+            for (let [key, name] of Object.entries(MS_NAMES)) { 
+                let count = ms[key] || 0; 
+                let displayCount = Number.isInteger(count) ? count : count.toFixed(1);
+                let nextTier = MILESTONES.find(t => t.count > count) || MILESTONES[MILESTONES.length - 1]; 
+                let isMax = count >= MILESTONES[MILESTONES.length - 1].count; 
+                let ratio = isMax ? 100 : (count / nextTier.count) * 100; 
+                html += `<div class="ms-card"><div class="ms-header"><span>${name}</span><span class="ms-tier">${isMax ? '已满级' : `下一阶: ${nextTier.name} (${displayCount}/${nextTier.count}) | 🎁 悬赏: ${nextTier.reward} 币`}</span></div><div class="ms-bar-bg"><div class="ms-bar-fill" style="width:${ratio}%;"></div></div></div>`; 
+            } 
+            container.innerHTML = html;
         }
         function closeMilestoneModal() { msModal.style.display = 'none'; }
 
-        function checkMilestoneProgress(type, record, logs) {
-            record.milestones[type]++; let count = record.milestones[type]; let extraCoins = 0;
-            for (let tier of MILESTONES) { if (count === tier.count && !record.milestoneClaimed[type].includes(tier.count)) { extraCoins += tier.reward; record.milestoneClaimed[type].push(tier.count); logs.unshift({ time: getFormattedTime(), action: `🏆 达成里程碑 [${MS_NAMES[type]}]: ${tier.name}`, amount: tier.reward }); } }
+        function checkMilestoneProgress(type, record, logs, addVal) {
+            record.milestones[type] = (record.milestones[type] || 0) + addVal; 
+            let count = record.milestones[type]; 
+            let extraCoins = 0;
+            // 💡 修复：采用 >= 阈值跨越发奖，绝对防御浮点数吞奖Bug
+            for (let tier of MILESTONES) { 
+                if (count >= tier.count && !record.milestoneClaimed[type].includes(tier.count)) { 
+                    extraCoins += tier.reward; 
+                    record.milestoneClaimed[type].push(tier.count); 
+                    logs.unshift({ time: getFormattedTime(), action: `🏆 达成里程碑 [${MS_NAMES[type]}]: ${tier.name}`, amount: tier.reward }); 
+                } 
+            }
             return extraCoins;
         }
 
@@ -576,7 +592,11 @@
             
             container.innerHTML = currentData.taskItems.map(task => {
                 let staminaUI = task.stamina_val ? `<span style="background:#2980b9; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">⚡ +${task.stamina_val}</span>` : '';
-                let milestoneUI = task.milestone ? `<span class="badge" style="background:#8e44ad; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">属性: ${MS_NAMES[task.milestone]}</span>` : '';
+                
+                // 💡 动态渲染图鉴进度数值
+                let msVal = task.milestone_val || 1.0;
+                let msDisplay = Number.isInteger(msVal) ? msVal : msVal.toFixed(1);
+                let milestoneUI = task.milestone ? `<span class="badge" style="background:#8e44ad; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">属性: ${MS_NAMES[task.milestone]} +${msDisplay}</span>` : '';
                 
                 return `<div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'>
                             <div class="cd-overlay"></div>
@@ -659,9 +679,7 @@
                             record.vitality.current += actualStaminaGained;
                             dailyObj.amount += actualStaminaGained;
                             
-                            if (dailyObj.amount >= 1.0) {
-                                record.vitality.inactiveDays = 0;
-                            }
+                            if (dailyObj.amount >= 1.0) { record.vitality.inactiveDays = 0; }
 
                             record.vitality.dailyAbsorbed = dailyObj;
                             logs.unshift({ time: getFormattedTime(), action: `⚡ 吸收体力 (+${actualStaminaGained.toFixed(1)})`, amount: 0 });
@@ -669,7 +687,12 @@
                     }
                 }
 
-                let extraMilestoneReward = 0; if (taskData.milestone) extraMilestoneReward = checkMilestoneProgress(taskData.milestone, record, logs);
+                let extraMilestoneReward = 0; 
+                if (taskData.milestone) {
+                    // 💡 注入自定义的图鉴进度值
+                    extraMilestoneReward = checkMilestoneProgress(taskData.milestone, record, logs, taskData.milestone_val || 1.0);
+                }
+
                 let totalWin = actualWin + extraMilestoneReward; let targetCoins = record.coins + totalWin; let maxCap = RANK_DATA[(record.currentRank || 1) - 1].cap; let newCoins = Math.min(targetCoins, maxCap);
                 let cds = record.cooldowns || {}; cds[taskData.id] = Date.now() + (taskData.hours * 3600000); 
                 

@@ -47,6 +47,9 @@
         .vitality-container { display:flex; width:100%; height:18px; border:3px solid #000; background:#222; padding:2px; box-sizing:border-box; box-shadow: inset 2px 2px #111, inset -2px -2px #555;}
         @keyframes flash-danger { 0% { opacity: 1; } 50% { opacity: 0.5; filter: brightness(2); } 100% { opacity: 1; } }
 
+        .vitality-clickable { cursor: pointer; transition: transform 0.1s; }
+        .vitality-clickable:active { transform: scale(0.98); }
+
         .btn-upgrade { width: 100%; margin-top: 10px; padding: 10px; font-family: 'VT323', monospace; font-size: 18px; font-weight: bold; color: white; background: #d35400; border: 4px solid #000; cursor: pointer; animation: pulse 2s infinite;}
         .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); border-color:#555;}
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
@@ -158,6 +161,15 @@
     <div id="shopModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title" style="color: #8e44ad;">🛒 神秘商店</div><div class="reward-grid" id="shopListContainer"><div style="padding:20px; color:#555;">正在同步...</div></div><button class="btn-close-modal" onclick="closeShopModal()">离开商店</button></div></div>
     <div id="logModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title">📜 探险账单</div><div id="logListContent" class="log-container"></div><button class="btn-close-modal" onclick="closeLogModal()">合上账本</button></div></div>
 
+    <div id="decayModal" class="modal-overlay" style="z-index: 600;">
+        <div class="challenge-card" style="max-width: 320px;">
+            <div class="challenge-title" style="color: #c0392b;">📉 深渊侵蚀法则</div>
+            <div style="font-size:13px; color:#555; margin-bottom:10px; text-align:left; font-family:-apple-system,sans-serif;">单日有效训练(吸收<span style="color:#2980b9;font-weight:bold;">≥1.0</span>体力)可中断侵蚀。连续停训将触发指数级惩罚：</div>
+            <div id="decayListContainer" style="display:flex; flex-direction:column; gap:5px; margin-bottom:15px; width:100%;"></div>
+            <button class="btn-close-modal" onclick="closeDecayModal()">我已知晓风险</button>
+        </div>
+    </div>
+
     <div id="gameModal" class="modal-overlay" style="z-index: 600;">
         <div class="challenge-card" style="max-width: 380px; width: 95%;">
             <div class="challenge-title" style="color: #8e44ad;">👁️ 试炼高塔</div>
@@ -203,7 +215,7 @@
                 <div class="health-bar-bg"><div id="healthBarFill" class="health-bar-fill"></div></div>
             </div>
 
-            <div class="health-bar-container" style="margin-top:12px;">
+            <div class="health-bar-container vitality-clickable" style="margin-top:12px;" onclick="openDecayModal()">
                 <div class="health-bar-label" style="align-items: center;">
                     <span style="display:flex; align-items:center;">⚡ 体力值：<span id="vitalityStatusBadge" style="margin-left:5px;"></span></span>
                     <span id="vitalityText">10.0 / 10.0</span>
@@ -345,7 +357,6 @@
             return { coin: 0.1, shop: 1.5, msg: "<span style='color:#7f8c8d; font-size:12px;'>宕机(-90%)</span>" }; 
         }
 
-        // 💡 核心防御：多日穿越补偿与 7天非线性衰减矩阵计算
         async function checkAndApplyDailyVitality(record) {
             record.vitality = sanitizeVitality(record.vitality);
             let iterDate = record.vitality.lastDecayDate;
@@ -384,7 +395,7 @@
         async function startGame() {
             if (!dbClient) return alert("数据库尚未初始化完成，请稍后再试或检查网络。");
             document.getElementById('start-overlay').style.display='none';
-            if (!isMuted) { bgm.play().catch(e=>{}); } // 修复首发BGM启动
+            if (!isMuted) { bgm.play().catch(e=>{}); } 
             await syncData(); syncInterval = setInterval(syncData, 5000); 
             setInterval(processCooldowns, 1000); setInterval(renderBuffs, 1000); 
             playAmbientScenario(); ambientInterval = setInterval(playAmbientScenario, 12000);
@@ -466,6 +477,39 @@
             }
         }
 
+        // 💡 新增：深渊侵蚀监控弹窗
+        function openDecayModal() {
+            if(!currentData) return;
+            clickCoin();
+            const modal = document.getElementById('decayModal');
+            const container = document.getElementById('decayListContainer');
+            modal.style.display = 'flex';
+            
+            let matrix = currentData.vitalityConfig || [0.2, 0.5, 1.0, 1.5, 2.0, 2.3, 2.5];
+            let inactiveDays = (currentData.vitality && currentData.vitality.inactiveDays) || 0;
+            // 锁定下一次即将扣减的天数 (不超过第7天)
+            let nextDay = Math.min(inactiveDays + 1, 7);
+            
+            let html = '';
+            for(let i = 0; i < 7; i++) {
+                let dayNum = i + 1;
+                let val = matrix[i];
+                let isTarget = (dayNum === nextDay);
+                let bg = isTarget ? '#ffeaa7' : '#fff';
+                let border = isTarget ? '2px solid #e67e22' : '1px solid #ccc';
+                let textColor = isTarget ? '#c0392b' : '#333';
+                let extra = isTarget ? `<span style="font-size:12px; color:#e67e22; font-weight:bold;">👉 今晚午夜触发</span>` : '';
+                
+                html += `<div style="background:${bg}; border:${border}; color:${textColor}; padding:8px 10px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-family:-apple-system,sans-serif;">
+                            <span style="font-weight:bold;">停训第 ${dayNum} 天</span>
+                            <span style="font-weight:bold;">-${val.toFixed(1)} ⚡</span>
+                            ${extra}
+                         </div>`;
+            }
+            container.innerHTML = html;
+        }
+        function closeDecayModal() { document.getElementById('decayModal').style.display = 'none'; }
+
         function updateRankUI(coins, rank) {
             const rData = RANK_DATA[rank - 1] || RANK_DATA[0];
             if (rank === 10) { document.body.style.background = "#000"; document.getElementById('end-stars').style.display = "block"; } 
@@ -527,7 +571,6 @@
             let multi = getVitalityMultiplier(currentData.vitality.current);
             let safeAbsorbed = (currentData.vitality.dailyAbsorbed && typeof currentData.vitality.dailyAbsorbed.amount === 'number') ? currentData.vitality.dailyAbsorbed.amount : 0;
             
-            // 💡 新额度极值：5.0
             let spaceLeft = Math.max(0, 5.0 - safeAbsorbed);
             document.getElementById('vitalityNotice').innerHTML = `当前体能效率：${multi.msg} (今日还可吸收 ${spaceLeft.toFixed(1)} ⚡)`;
             
@@ -608,7 +651,7 @@
                     let today = getTodayStr();
                     let dailyObj = record.vitality.dailyAbsorbed; if(!dailyObj || dailyObj.date !== today) dailyObj = { date: today, amount: 0 };
                     
-                    let spaceLeft = 5.0 - dailyObj.amount; // 5.0 上限生效
+                    let spaceLeft = 5.0 - dailyObj.amount;
                     if (spaceLeft > 0) {
                         let actualStaminaGained = Math.min(taskData.stamina_val, spaceLeft);
                         actualStaminaGained = Math.min(actualStaminaGained, 10.0 - record.vitality.current);
@@ -616,7 +659,6 @@
                             record.vitality.current += actualStaminaGained;
                             dailyObj.amount += actualStaminaGained;
                             
-                            // 💡 核心防作弊：单日累计达到1.0方可重置惩罚天数
                             if (dailyObj.amount >= 1.0) {
                                 record.vitality.inactiveDays = 0;
                             }
@@ -731,7 +773,7 @@
         }
 
         function openLogModal() { if(lModal) lModal.style.display = 'flex'; } function closeLogModal() { if(lModal) lModal.style.display = 'none'; }
-        function renderLogs(logs) { const container = document.getElementById('logListContent'); if(!container) return; if(logs && logs.length > 0) { container.innerHTML = logs.map(log => { let amountClass = log.amount > 0 ? "log-v" : "log-v sub"; if (log.action.includes('🏆')) amountClass = "log-v milestone"; let txt = typeof log.amount === 'string' ? log.amount : (log.amount > 0 ? '+' + log.amount : log.amount); return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${txt === '0' ? '' : txt}</span></div>`; }).join(''); } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>'; }
+        function renderLogs(logs) { const container = document.getElementById('logListContent'); if(!container) return; if(logs && logs.length > 0) { container.innerHTML = logs.map(log => { let amountClass = log.amount > 0 ? "log-v" : "log-v sub"; if (log.action.includes('🏆')) amountClass = "log-v milestone"; let txt = typeof log.amount === 'string' ? log.amount : (log.amount > 0 ? '+' + log.amount : log.amount); return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${txt}</span></div>`; }).join(''); } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>'; }
         function renderBuffs() { if (!currentData || !currentData.activeBuffs) return; const container = document.getElementById('activeBuffsContainer'); if (!container) return; const now = Date.now(); let hasActive = false; let html = ''; for (const [id, buff] of Object.entries(currentData.activeBuffs)) { const remain = buff.endTime - now; if (remain > 0) { hasActive = true; let days = Math.floor(remain / (24 * 3600000)), hours = Math.floor((remain % (24 * 3600000)) / 3600000), mins = Math.floor((remain % 3600000) / 60000), secs = Math.floor((remain % 60000) / 1000); let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}:${mins<10?'0'+mins:mins}:${secs<10?'0'+secs:secs}`; html += `<div class="buff-pill"><span>${buff.icon} ${buff.name}</span><span style="color:#ffb700;">⏳ ${timeStr}</span></div>`; } } container.innerHTML = hasActive ? html : ''; }
         function processCooldowns() { if(!currentData || !currentData.cooldowns || !currentData.taskItems) return; const now = Date.now(); currentData.taskItems.forEach(task => { const btn = document.getElementById(`btn-${task.id}`); if (!btn) return; const remain = (currentData.cooldowns[task.id] || 0) - now; if(remain > 0) { btn.classList.add('in-cd'); const totalMs = (task.hours || 3) * 3600000; btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg'); const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000); let timerEl = btn.querySelector('.cd-timer'); if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; } else btn.classList.remove('in-cd'); }); }
         function playAttackSequence(amount, finalCoins) { isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0'; if(heroSteve) { heroSteve.style.display = 'block'; heroSteve.style.left = "35%"; } if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "35%"; } let sword = document.querySelector('.skin-steve .sword'); if(sword) sword.style.display = 'block'; setTimeout(() => { if(sword) sword.classList.add('anim-attack'); playSound('hit'); setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); }, 500); setTimeout(() => { if(heroCreeper) heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; } }, 1200); setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000); }

@@ -63,6 +63,7 @@
 </head>
 <body>
     <div class="container">
+        <!-- 资产操作区 -->
         <div class="card" id="card-assets">
             <div class="card-header" onclick="toggleCard('card-assets')">
                 <h3>💰 资产余额 <span id="rankBadge" class="rank-info">读取中...</span></h3>
@@ -84,6 +85,7 @@
             </div>
         </div>
 
+        <!-- ⚡ 体能引擎控制台 -->
         <div class="card" id="card-vitality">
             <div class="card-header" onclick="toggleCard('card-vitality')">
                 <h3 style="color:#3498db;">⚡ 体能引擎控制台</h3>
@@ -106,8 +108,8 @@
 
                 <div class="flex-row">
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span>🚑 医疗伤病冻结</span>
-                        <span style="font-size:11px; color:#888;">(开启后无视自然衰减)</span>
+                        <span>🕊️ 激活和平模式</span>
+                        <span style="font-size:11px; color:#888;">(锁定饱食度，无视自然衰减)</span>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="freezeToggle" onchange="saveVitalityConfig()">
@@ -124,6 +126,7 @@
             </div>
         </div>
 
+        <!-- 契约审批中心 -->
         <div class="card" id="card-contract">
             <div class="card-header" onclick="toggleCard('card-contract')">
                 <h3 style="color:#e67e22;">📜 对赌契约审批</h3>
@@ -132,6 +135,7 @@
             <div class="card-content" id="adminContractArea"></div>
         </div>
 
+        <!-- 动态悬赏任务管理 -->
         <div class="card" id="card-tasks">
             <div class="card-header" onclick="toggleCard('card-tasks')">
                 <h3 style="color:#2ecc71;">⚔️ 任务告示牌管理</h3>
@@ -168,6 +172,7 @@
             </div>
         </div>
 
+        <!-- 神秘商店货架管理 -->
         <div class="card collapsed" id="card-shop">
             <div class="card-header" onclick="toggleCard('card-shop')">
                 <h3 style="color:#9b59b6;">🛒 神秘商店管理</h3>
@@ -192,6 +197,7 @@
             </div>
         </div>
 
+        <!-- 高塔经济学配置面板 -->
         <div class="card collapsed" id="card-tower">
             <div class="card-header" onclick="toggleCard('card-tower')">
                 <h3 style="color:#d35400;">🏰 高塔法则配置</h3>
@@ -273,7 +279,7 @@
                 document.getElementById('capText').innerText = `当前背包容量上限: ${rData.cap === Infinity ? '无限' : rData.cap}`;
                 
                 document.getElementById('freezeToggle').checked = currentData.vitality.freeze;
-                document.getElementById('vitalityStatusText').innerText = currentData.vitality.freeze ? `❄️ 医疗冻结中 (体力维持 ${currentData.vitality.current.toFixed(1)})` : `当前体力值: ${currentData.vitality.current.toFixed(1)} / 10.0`;
+                document.getElementById('vitalityStatusText').innerText = currentData.vitality.freeze ? `🕊️ 和平模式生效中 (体力锁定 ${currentData.vitality.current.toFixed(1)})` : `当前体力值: ${currentData.vitality.current.toFixed(1)} / 10.0`;
 
                 renderLogs(currentData.childLogs); renderShopItems(currentData.shopItems); renderTaskItems(currentData.taskItems); renderContract(currentData.activeContract);
                 document.getElementById('log-status').innerText = "✅ 数据同步良好 - " + new Date().toLocaleTimeString();
@@ -288,24 +294,22 @@
                 let v = parseFloat(document.getElementById('mat_'+i).value);
                 mat.push(isNaN(v) ? 0 : v);
             }
-    
-        document.getElementById('log-status').innerText = "⏳ 正在写入底层法则...";
-    
-    // 增加严格的 error 捕获机制
-        const { error } = await dbClient.from('gamedata').update({ 
-            vitality: currentData.vitality, 
-            vitalityConfig: mat 
-        }).eq('id', ROW_ID);
-    
-        if (error) {
-            alert("🚨 写入失败！数据库报错: " + error.message + "\n请检查 Supabase 是否已添加 vitalityConfig 列(jsonb类型)");
-            document.getElementById('log-status').innerText = "❌ 保存失败";
-        // 如果保存失败，强行把按钮掰回真实状态，防止视觉欺骗
-            document.getElementById('freezeToggle').checked = !document.getElementById('freezeToggle').checked;
-        } else {
-            document.getElementById('log-status').innerText = "✅ 体能配置与矩阵已覆盖保存";
+            
+            document.getElementById('log-status').innerText = "⏳ 正在写入底层法则...";
+            
+            const { error } = await dbClient.from('gamedata').update({ 
+                vitality: currentData.vitality, 
+                vitalityConfig: mat 
+            }).eq('id', ROW_ID);
+            
+            if (error) {
+                alert("🚨 写入失败！数据库报错: " + error.message + "\n请检查 Supabase 是否已添加 vitalityConfig 列(jsonb类型)");
+                document.getElementById('log-status').innerText = "❌ 保存失败";
+                document.getElementById('freezeToggle').checked = !document.getElementById('freezeToggle').checked;
+            } else {
+                document.getElementById('log-status').innerText = "✅ 体能法则与矩阵已覆盖保存";
+            }
         }
-    }
 
         async function manualVitalityMod(sign) {
             let val = parseFloat(document.getElementById('mVitalityInput').value);
@@ -391,7 +395,7 @@
             if(logs && logs.length > 0) {
                 container.innerHTML = logs.map(log => {
                     let amountClass = log.amount > 0 ? "log-amount" : "log-amount sub"; if (log.action.includes('🏆')) amountClass = "log-amount milestone";
-                    if (log.action.includes('⚡')) amountClass = "log-amount"; // 体力干预显示绿色
+                    if (log.action.includes('⚡')) amountClass = "log-amount"; 
                     let txt = typeof log.amount === 'string' ? log.amount : (log.amount > 0 ? '+' + log.amount : log.amount);
                     return `<div class="log-item"><span class="log-time">[${log.time}]</span><span class="log-action">${log.action}</span><span class="${amountClass}">${txt === '0' ? '' : txt}</span></div>`;
                 }).join('');

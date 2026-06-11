@@ -288,9 +288,24 @@
                 let v = parseFloat(document.getElementById('mat_'+i).value);
                 mat.push(isNaN(v) ? 0 : v);
             }
-            await dbClient.from('gamedata').update({ vitality: currentData.vitality, vitalityConfig: mat }).eq('id', ROW_ID);
+    
+        document.getElementById('log-status').innerText = "⏳ 正在写入底层法则...";
+    
+    // 增加严格的 error 捕获机制
+        const { error } = await dbClient.from('gamedata').update({ 
+            vitality: currentData.vitality, 
+            vitalityConfig: mat 
+        }).eq('id', ROW_ID);
+    
+        if (error) {
+            alert("🚨 写入失败！数据库报错: " + error.message + "\n请检查 Supabase 是否已添加 vitalityConfig 列(jsonb类型)");
+            document.getElementById('log-status').innerText = "❌ 保存失败";
+        // 如果保存失败，强行把按钮掰回真实状态，防止视觉欺骗
+            document.getElementById('freezeToggle').checked = !document.getElementById('freezeToggle').checked;
+        } else {
             document.getElementById('log-status').innerText = "✅ 体能配置与矩阵已覆盖保存";
         }
+    }
 
         async function manualVitalityMod(sign) {
             let val = parseFloat(document.getElementById('mVitalityInput').value);

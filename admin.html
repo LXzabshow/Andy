@@ -8,7 +8,6 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px 10px; background: #121212; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 40px;}
         
-        /* 卡片折叠引擎样式 */
         .card { background: #1e1e1e; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #333; overflow: hidden; transition: all 0.3s ease; }
         .card-header { padding: 15px 20px; background: #252525; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border-bottom: 1px solid transparent; transition: background 0.2s; }
         .card-header:active { background: #2a2a2a; }
@@ -16,7 +15,6 @@
         .toggle-icon { font-size: 12px; color: #666; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-content { padding: 20px; transition: opacity 0.3s ease; }
         
-        /* 💡 修复核心：增加 !important 绝对镇压内联样式 */
         .card.collapsed .toggle-icon { transform: rotate(-90deg); }
         .card.collapsed .card-content { display: none !important; } 
         .card:not(.collapsed) .card-header { border-bottom-color: #333; }
@@ -42,7 +40,7 @@
         .btn-edit { background: #f39c12; color: white; padding: 8px; font-size: 12px; }
         .input-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #121212; color: white; font-size: 15px; box-sizing: border-box; }
         
-        .flex-row { display: flex; justify-content: space-between; align-items: center; }
+        .flex-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;}
         .switch { position: relative; width: 44px; height: 24px; display: inline-block; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 34px; }
@@ -55,6 +53,7 @@
         .shop-item { background: #2a2a2a; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #444;}
         
         .config-input { width: 60px; padding: 5px; text-align: center; border-radius: 4px; border: 1px solid #555; background: #222; color: #fff;}
+        .matrix-input { width: 40px; padding: 4px; text-align: center; border-radius: 4px; border: 1px solid #3498db; background: #111; color: #fff; font-size: 12px;}
         .badge-milestone { background: #8e44ad; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; border: 1px solid #9b59b6;}
         .badge-stamina { background: #2980b9; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; border: 1px solid #3498db;}
 
@@ -91,17 +90,37 @@
                 <span class="toggle-icon">▼</span>
             </div>
             <div class="card-content">
+                <div id="vitalityStatusText" style="margin-bottom:12px; font-size:16px; font-weight:bold; color:#3498db; text-align:center; background: #2a2a2a; padding: 10px; border-radius: 6px;">当前体力值: 同步中...</div>
+                
+                <div style="background: rgba(52,152,219,0.1); padding: 10px; border-radius: 8px; border: 1px dashed #3498db; margin-bottom: 15px;">
+                    <div style="font-size: 13px; color: #fff; margin-bottom: 8px; font-weight: bold;">[GM 神明干预] 不受单日恢复极值限制</div>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <input type="number" id="mVitalityInput" class="input-box" style="flex:1;" placeholder="体力值" step="0.1">
+                        <input type="text" id="mVitalityReason" class="input-box" style="flex:2;" placeholder="输入干预理由">
+                    </div>
+                    <div class="grid" style="margin-top:0;">
+                        <button class="btn-add" style="background:#2980b9;" onclick="manualVitalityMod(1)">注入 (+)</button>
+                        <button class="btn-sub" style="background:#c0392b;" onclick="manualVitalityMod(-1)">榨取 (-)</button>
+                    </div>
+                </div>
+
                 <div class="flex-row">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span>🚑 医疗伤病冻结</span>
-                        <span style="font-size:11px; color:#888;">(开启后每日不扣体力)</span>
+                        <span style="font-size:11px; color:#888;">(开启后无视自然衰减)</span>
                     </div>
                     <label class="switch">
                         <input type="checkbox" id="freezeToggle" onchange="saveVitalityConfig()">
                         <span class="slider"></span>
                     </label>
                 </div>
-                <div id="vitalityStatusText" style="margin-top:12px; font-size:13px; color:#aaa; text-align:center; background: #2a2a2a; padding: 10px; border-radius: 6px;">当前体力值: 同步中...</div>
+                
+                <hr style="border-color:#333; margin:15px 0;">
+                <div style="font-size: 13px; color: #ccc; margin-bottom: 10px;">📉 连续未锻炼 1~7 天扣减矩阵设定：</div>
+                <div style="display: flex; gap: 5px; justify-content: space-between; margin-bottom: 15px;">
+                    <input type="number" id="mat_1" class="matrix-input" step="0.1"><input type="number" id="mat_2" class="matrix-input" step="0.1"><input type="number" id="mat_3" class="matrix-input" step="0.1"><input type="number" id="mat_4" class="matrix-input" step="0.1"><input type="number" id="mat_5" class="matrix-input" step="0.1"><input type="number" id="mat_6" class="matrix-input" step="0.1"><input type="number" id="mat_7" class="matrix-input" step="0.1">
+                </div>
+                <button class="btn-primary" onclick="saveVitalityConfig()" style="background:#8e44ad; font-size:14px; padding:10px;">💾 保存体能法则与矩阵</button>
             </div>
         </div>
 
@@ -122,7 +141,7 @@
                 <div style="display:flex; flex-direction: column; gap: 10px; background: #2a2a2a; padding: 15px; border-radius: 10px; border: 1px solid #444;">
                     <div style="display:flex; gap:10px;">
                         <select id="t_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
-                            <option value="🏃">🏃</option><option value="🧪">🧪</option><option value="📝">📝</option><option value="🌋">🌋</option><option value="⚡">⚡</option><option value="🪶">🪶</option><option value="📖">📖</option><option value="📚">📚</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="⛏️">⛏️</option><option value="🧹">🧹</option><option value="🧠">🧠</option><option value="🎹">🎹</option>
+                            <option value="🏃">🏃</option><option value="🚴">🚴</option><option value="🏊">🏊</option><option value="🏋️">🏋️</option><option value="⛹️">⛹️</option><option value="🧘">🧘</option><option value="🧪">🧪</option><option value="📝">📝</option><option value="🌋">🌋</option><option value="⚡">⚡</option><option value="🪶">🪶</option><option value="📖">📖</option><option value="📚">📚</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="⛏️">⛏️</option><option value="🧹">🧹</option><option value="🧠">🧠</option><option value="🎹">🎹</option><option value="🎯">🎯</option>
                         </select>
                         <input type="text" id="t_name" class="input-box" style="flex:3;" placeholder="任务名称">
                     </div>
@@ -140,7 +159,7 @@
 
                     <div style="display:flex; gap:10px;">
                         <input type="number" id="t_price" class="input-box" style="flex:1;" placeholder="硬币(+)">
-                        <input type="number" id="t_stamina" class="input-box" style="flex:1; border-color:#3498db; background: #1a1a1a;" placeholder="体力(+)" step="0.5">
+                        <input type="number" id="t_stamina" class="input-box" style="flex:1; border-color:#3498db; background: #1a1a1a;" placeholder="体力(+)" step="0.1">
                         <input type="number" id="t_hours" class="input-box" style="flex:1;" placeholder="冷却(时)">
                     </div>
                     <button id="btn_add_task" class="btn-primary" onclick="addTaskItem()" style="background:#27ae60;">➕ 上架新任务</button>
@@ -204,7 +223,6 @@
         
         let currentData = null; let editingTaskId = null; const ROW_ID = 1; 
 
-        // 💡 面板本地记忆初始化
         const CARD_IDS = ['card-assets', 'card-vitality', 'card-contract', 'card-tasks', 'card-shop', 'card-tower', 'card-logs'];
         function initCardStates() {
             CARD_IDS.forEach(id => {
@@ -219,7 +237,7 @@
             card.classList.toggle('collapsed');
             localStorage.setItem('admin_collapse_' + cardId, card.classList.contains('collapsed'));
         }
-        initCardStates(); // 立即执行防闪烁
+        initCardStates(); 
 
         const RANK_DATA = [
             { rank: 1, cap: 200, title: "🪵 新手伐木工" }, { rank: 2, cap: 350, title: "🪨 洞穴探索者" }, { rank: 3, cap: 600, title: "🛡️ 铁甲护卫" },
@@ -241,6 +259,9 @@
                 currentData.shopItems = currentData.shopItems || [];
                 currentData.taskItems = currentData.taskItems || [];
                 currentData.vitality = currentData.vitality || { current: 10.0, freeze: false };
+                let matrix = currentData.vitalityConfig || [0.2, 0.5, 1.0, 1.5, 2.0, 2.3, 2.5];
+                for(let i=1; i<=7; i++) document.getElementById('mat_'+i).value = matrix[i-1];
+                
                 if(!currentData.towerConfig) currentData.towerConfig = { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
                 
                 document.getElementById('tc_free').value = currentData.towerConfig.freePlays; 
@@ -252,8 +273,7 @@
                 document.getElementById('capText').innerText = `当前背包容量上限: ${rData.cap === Infinity ? '无限' : rData.cap}`;
                 
                 document.getElementById('freezeToggle').checked = currentData.vitality.freeze;
-                let displayVit = Number.isInteger(currentData.vitality.current) ? currentData.vitality.current : currentData.vitality.current.toFixed(1);
-                document.getElementById('vitalityStatusText').innerText = currentData.vitality.freeze ? `❄️ 医疗冻结中 (体力维持 ${displayVit})` : `当前体力值: ${displayVit} / 10`;
+                document.getElementById('vitalityStatusText').innerText = currentData.vitality.freeze ? `❄️ 医疗冻结中 (体力维持 ${currentData.vitality.current.toFixed(1)})` : `当前体力值: ${currentData.vitality.current.toFixed(1)} / 10.0`;
 
                 renderLogs(currentData.childLogs); renderShopItems(currentData.shopItems); renderTaskItems(currentData.taskItems); renderContract(currentData.activeContract);
                 document.getElementById('log-status').innerText = "✅ 数据同步良好 - " + new Date().toLocaleTimeString();
@@ -263,8 +283,33 @@
         async function saveVitalityConfig() {
             if(!currentData) return;
             currentData.vitality.freeze = document.getElementById('freezeToggle').checked;
-            await dbClient.from('gamedata').update({ vitality: currentData.vitality }).eq('id', ROW_ID);
-            document.getElementById('log-status').innerText = "✅ 医疗冻结状态已保存";
+            let mat = [];
+            for(let i=1; i<=7; i++) {
+                let v = parseFloat(document.getElementById('mat_'+i).value);
+                mat.push(isNaN(v) ? 0 : v);
+            }
+            await dbClient.from('gamedata').update({ vitality: currentData.vitality, vitalityConfig: mat }).eq('id', ROW_ID);
+            document.getElementById('log-status').innerText = "✅ 体能配置与矩阵已覆盖保存";
+        }
+
+        async function manualVitalityMod(sign) {
+            let val = parseFloat(document.getElementById('mVitalityInput').value);
+            let reason = document.getElementById('mVitalityReason').value.trim() || '神明干预';
+            if (!val || val <= 0) return;
+            let target = currentData.vitality.current + (val * sign);
+            let finalVal = Math.max(0.0, Math.min(10.0, target));
+            let delta = finalVal - currentData.vitality.current;
+            if (Math.abs(delta) < 0.01) return;
+            
+            currentData.vitality.current = finalVal;
+            let logs = currentData.childLogs || [];
+            logs.unshift({ time: getFormattedTime(), action: `⚡ ${reason}`, amount: `${delta > 0 ? '+' : ''}${delta.toFixed(1)} 体力` });
+            
+            document.getElementById('log-status').innerText = "操纵命运中...";
+            await dbClient.from('gamedata').update({ vitality: currentData.vitality, childLogs: logs.slice(0,10) }).eq('id', ROW_ID);
+            getCoins();
+            document.getElementById('mVitalityInput').value = '';
+            document.getElementById('mVitalityReason').value = '';
         }
 
         function renderContract(contract) {
@@ -331,8 +376,9 @@
             if(logs && logs.length > 0) {
                 container.innerHTML = logs.map(log => {
                     let amountClass = log.amount > 0 ? "log-amount" : "log-amount sub"; if (log.action.includes('🏆')) amountClass = "log-amount milestone";
+                    if (log.action.includes('⚡')) amountClass = "log-amount"; // 体力干预显示绿色
                     let txt = typeof log.amount === 'string' ? log.amount : (log.amount > 0 ? '+' + log.amount : log.amount);
-                    return `<div class="log-item"><span class="log-time">[${log.time}]</span><span class="log-action">${log.action}</span><span class="${amountClass}">${txt}</span></div>`;
+                    return `<div class="log-item"><span class="log-time">[${log.time}]</span><span class="log-action">${log.action}</span><span class="${amountClass}">${txt === '0' ? '' : txt}</span></div>`;
                 }).join('');
             } else { container.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">暂无记录</div>'; }
         }

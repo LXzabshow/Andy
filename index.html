@@ -197,6 +197,7 @@
         </div>
     </div>
 
+    <!-- 主界面 UI -->
     <div class="ui-container" id="uiLayer">
         <div class="card" id="ui-card">
             <div class="mute-btn" onclick="toggleMute()">🔊</div>
@@ -215,6 +216,7 @@
                 <div class="health-bar-bg"><div id="healthBarFill" class="health-bar-fill"></div></div>
             </div>
 
+            <!-- ⚡ 10段式体能血条引擎 -->
             <div class="health-bar-container vitality-clickable" style="margin-top:12px;" onclick="openDecayModal()">
                 <div class="health-bar-label" style="align-items: center;">
                     <span style="display:flex; align-items:center;">⚡ 体力值：<span id="vitalityStatusBadge" style="margin-left:5px;"></span></span>
@@ -365,6 +367,9 @@
             let logs = record.childLogs || [];
             let updated = false;
             let loopCount = 0;
+            
+            record.coins = record.coins || 0;
+            let currentRank = record.currentRank || 1;
 
             while (iterDate < today && loopCount < 30) {
                 loopCount++;
@@ -373,6 +378,7 @@
                 d.setDate(d.getDate() + 1);
                 iterDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                 
+                // 1. 体能衰减扣除
                 if (!record.vitality.freeze && record.vitality.current > 0) {
                     record.vitality.inactiveDays = (record.vitality.inactiveDays || 0) + 1;
                     let decayIdx = Math.min(record.vitality.inactiveDays - 1, 6);
@@ -381,13 +387,26 @@
                     logs.unshift({ time: iterDate + ' 00:00', action: `⚡ 衰减 (-${decay.toFixed(1)}/停训${record.vitality.inactiveDays}天)`, amount: 0 });
                 }
                 record.vitality.dailyAbsorbed = { date: iterDate, amount: 0 };
+                
+                // 2. 营地日常消耗 (阶梯硬币扣减)
+                let dailyTax = 5;
+                if (currentRank >= 9) dailyTax = 15;
+                else if (currentRank >= 7) dailyTax = 10;
+                else if (currentRank >= 4) dailyTax = 8;
+                
+                let actualDeducted = Math.min(record.coins, dailyTax);
+                if (actualDeducted > 0) {
+                    record.coins -= actualDeducted;
+                    logs.unshift({ time: iterDate + ' 00:00', action: `⛺ 营地日常消耗`, amount: -actualDeducted });
+                }
+
                 updated = true;
             }
             
             record.vitality.lastDecayDate = today;
             if(updated) {
                 record.childLogs = logs.slice(0, 10);
-                try { await dbClient.from('gamedata').update({ vitality: record.vitality, childLogs: record.childLogs }).eq('id', ROW_ID); } catch(e){}
+                try { await dbClient.from('gamedata').update({ vitality: record.vitality, childLogs: record.childLogs, coins: record.coins }).eq('id', ROW_ID); } catch(e){}
             }
             return record;
         }
@@ -549,7 +568,6 @@
             localStorage.setItem('andy_last_seen_coins', newCoins); currentData.activeContract = contract; updateValue(newCoins); openContractModal(); playSound('fuse');
         }
 
-        // 💡 修复：图鉴跨越逻辑升级，全面适配浮点数进度
         function openMilestoneModal() {
             if (!currentData) return; clickCoin(); msModal.style.display = 'flex'; const container = document.getElementById('milestoneContent'); let ms = currentData.milestones || {}; let html = '';
             for (let [key, name] of Object.entries(MS_NAMES)) { 
@@ -568,7 +586,6 @@
             record.milestones[type] = (record.milestones[type] || 0) + addVal; 
             let count = record.milestones[type]; 
             let extraCoins = 0;
-            // 💡 修复：采用 >= 阈值跨越发奖，绝对防御浮点数吞奖Bug
             for (let tier of MILESTONES) { 
                 if (count >= tier.count && !record.milestoneClaimed[type].includes(tier.count)) { 
                     extraCoins += tier.reward; 
@@ -593,7 +610,6 @@
             container.innerHTML = currentData.taskItems.map(task => {
                 let staminaUI = task.stamina_val ? `<span style="background:#2980b9; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">⚡ +${task.stamina_val}</span>` : '';
                 
-                // 💡 动态渲染图鉴进度数值
                 let msVal = task.milestone_val || 1.0;
                 let msDisplay = Number.isInteger(msVal) ? msVal : msVal.toFixed(1);
                 let milestoneUI = task.milestone ? `<span class="badge" style="background:#8e44ad; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">属性: ${MS_NAMES[task.milestone]} +${msDisplay}</span>` : '';
@@ -689,7 +705,6 @@
 
                 let extraMilestoneReward = 0; 
                 if (taskData.milestone) {
-                    // 💡 注入自定义的图鉴进度值
                     extraMilestoneReward = checkMilestoneProgress(taskData.milestone, record, logs, taskData.milestone_val || 1.0);
                 }
 

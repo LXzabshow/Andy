@@ -63,6 +63,7 @@
 </head>
 <body>
     <div class="container">
+        <!-- 资产操作区 -->
         <div class="card" id="card-assets">
             <div class="card-header" onclick="toggleCard('card-assets')">
                 <h3>💰 资产余额 <span id="rankBadge" class="rank-info">读取中...</span></h3>
@@ -84,6 +85,7 @@
             </div>
         </div>
 
+        <!-- ⚡ 体能引擎控制台 -->
         <div class="card" id="card-vitality">
             <div class="card-header" onclick="toggleCard('card-vitality')">
                 <h3 style="color:#3498db;">⚡ 体能引擎控制台</h3>
@@ -124,6 +126,7 @@
             </div>
         </div>
 
+        <!-- 契约审批中心 -->
         <div class="card" id="card-contract">
             <div class="card-header" onclick="toggleCard('card-contract')">
                 <h3 style="color:#e67e22;">📜 对赌契约审批</h3>
@@ -132,6 +135,7 @@
             <div class="card-content" id="adminContractArea"></div>
         </div>
 
+        <!-- 动态悬赏任务管理 -->
         <div class="card" id="card-tasks">
             <div class="card-header" onclick="toggleCard('card-tasks')">
                 <h3 style="color:#2ecc71;">⚔️ 任务告示牌管理</h3>
@@ -171,6 +175,7 @@
             </div>
         </div>
 
+        <!-- 神秘商店货架管理 -->
         <div class="card collapsed" id="card-shop">
             <div class="card-header" onclick="toggleCard('card-shop')">
                 <h3 style="color:#9b59b6;">🛒 神秘商店管理</h3>
@@ -195,6 +200,18 @@
             </div>
         </div>
 
+        <!-- 💡 新增：激活法宝监控 -->
+        <div class="card collapsed" id="card-buffs">
+            <div class="card-header" onclick="toggleCard('card-buffs')">
+                <h3 style="color:#f1c40f;">✨ 激活法宝监控</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="card-content" id="activeBuffsAdminContainer">
+                <div style="text-align:center; color:#555; padding:10px;">读取中...</div>
+            </div>
+        </div>
+
+        <!-- 高塔经济学配置面板 -->
         <div class="card collapsed" id="card-tower">
             <div class="card-header" onclick="toggleCard('card-tower')">
                 <h3 style="color:#d35400;">🏰 高塔法则配置</h3>
@@ -226,19 +243,25 @@
         
         let currentData = null; let editingTaskId = null; const ROW_ID = 1; 
 
-        const CARD_IDS = ['card-assets', 'card-vitality', 'card-contract', 'card-tasks', 'card-shop', 'card-tower', 'card-logs'];
+        // 💡 加入 card-buffs 到记忆数组
+        const CARD_IDS = ['card-assets', 'card-vitality', 'card-contract', 'card-tasks', 'card-shop', 'card-buffs', 'card-tower', 'card-logs'];
+        
         function initCardStates() {
             CARD_IDS.forEach(id => {
                 const card = document.getElementById(id);
-                const isCollapsed = localStorage.getItem('admin_collapse_' + id);
-                if (isCollapsed === 'true') card.classList.add('collapsed');
-                else if (isCollapsed === 'false') card.classList.remove('collapsed');
+                if(card) {
+                    const isCollapsed = localStorage.getItem('admin_collapse_' + id);
+                    if (isCollapsed === 'true') card.classList.add('collapsed');
+                    else if (isCollapsed === 'false') card.classList.remove('collapsed');
+                }
             });
         }
         function toggleCard(cardId) {
             const card = document.getElementById(cardId);
-            card.classList.toggle('collapsed');
-            localStorage.setItem('admin_collapse_' + cardId, card.classList.contains('collapsed'));
+            if(card) {
+                card.classList.toggle('collapsed');
+                localStorage.setItem('admin_collapse_' + cardId, card.classList.contains('collapsed'));
+            }
         }
         initCardStates(); 
 
@@ -261,6 +284,7 @@
                 currentData.currentRank = currentData.currentRank || 1;
                 currentData.shopItems = currentData.shopItems || [];
                 currentData.taskItems = currentData.taskItems || [];
+                currentData.activeBuffs = currentData.activeBuffs || {}; // 💡 保护初始化
                 currentData.vitality = currentData.vitality || { current: 10.0, freeze: false };
                 let matrix = currentData.vitalityConfig || [0.2, 0.5, 1.0, 1.5, 2.0, 2.3, 2.5];
                 for(let i=1; i<=7; i++) document.getElementById('mat_'+i).value = matrix[i-1];
@@ -279,9 +303,64 @@
                 let displayVit = Number.isInteger(currentData.vitality.current) ? currentData.vitality.current : currentData.vitality.current.toFixed(1);
                 document.getElementById('vitalityStatusText').innerText = currentData.vitality.freeze ? `🕊️ 和平模式生效中 (体力锁定 ${displayVit})` : `当前体力值: ${displayVit} / 10.0`;
 
-                renderLogs(currentData.childLogs); renderShopItems(currentData.shopItems); renderTaskItems(currentData.taskItems); renderContract(currentData.activeContract);
+                renderLogs(currentData.childLogs); 
+                renderShopItems(currentData.shopItems); 
+                renderTaskItems(currentData.taskItems); 
+                renderContract(currentData.activeContract);
+                renderActiveBuffs(currentData.activeBuffs); // 💡 渲染Buff面版
+                
                 document.getElementById('log-status').innerText = "✅ 数据同步良好 - " + new Date().toLocaleTimeString();
             } catch (e) { document.getElementById('log-status').innerText = "❌ 刷新失败: " + e.message; }
+        }
+
+        // 💡 新增：渲染当前激活法宝的逻辑
+        function renderActiveBuffs(buffs) {
+            const container = document.getElementById('activeBuffsAdminContainer');
+            if (!buffs || Object.keys(buffs).length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">当前无生效法宝</div>';
+                return;
+            }
+            
+            const now = Date.now();
+            let hasActive = false;
+            let html = '';
+            
+            for (const [id, buff] of Object.entries(buffs)) {
+                const remain = buff.endTime - now;
+                if (remain > 0) {
+                    hasActive = true;
+                    let days = Math.floor(remain / (24 * 3600000));
+                    let hours = Math.floor((remain % (24 * 3600000)) / 3600000);
+                    let mins = Math.floor((remain % 3600000) / 60000);
+                    let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}小时 ${mins}分`;
+                    
+                    html += `
+                    <div class="shop-item" style="border-color: #f1c40f; flex-direction: row; align-items: center; margin-bottom: 8px;">
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; font-size:15px; color:#f1c40f;">${buff.icon} ${buff.name}</div>
+                            <div style="font-size:12px; color:#aaa; margin-top:4px;">⏳ 剩余: ${timeStr}</div>
+                        </div>
+                        <button class="btn-danger" style="background:#c0392b; padding:8px 12px; border-radius:6px; font-weight:bold; font-size:13px;" onclick="dispelBuff('${id}')">💥 驱散</button>
+                    </div>`;
+                }
+            }
+            container.innerHTML = hasActive ? html : '<div style="text-align:center; color:#555; padding:10px;">当前无生效法宝</div>';
+        }
+
+        // 💡 新增：强制驱散逻辑
+        async function dispelBuff(buffId) {
+            if (!currentData || !currentData.activeBuffs || !currentData.activeBuffs[buffId]) return;
+            if (!confirm("确定要强制驱散该法宝吗？")) return;
+            
+            const buffName = currentData.activeBuffs[buffId].name;
+            delete currentData.activeBuffs[buffId]; // 从对象中抹除
+            
+            let logs = currentData.childLogs || [];
+            logs.unshift({ time: getFormattedTime(), action: `💥 神明干预: 强制驱散 [${buffName}]`, amount: 0 }); // 写入审计账单
+            
+            document.getElementById('log-status').innerText = "施放驱散咒语中...";
+            await dbClient.from('gamedata').update({ activeBuffs: currentData.activeBuffs, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
+            getCoins();
         }
 
         async function saveVitalityConfig() {

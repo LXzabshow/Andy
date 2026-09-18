@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的世界：学霸之路</title>
+    <!-- 引入 Tailwind CSS 框架实现简约布局 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Chart.js 用于绘制折线图 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 引入 Supabase JS 客户端 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- 引入像素字体 (Minecraft 风格) -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #f3f4f6;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .mc-font {
+            font-family: 'Press Start 2P', cursive;
+        }
+        /* Minecraft 风格按钮 */
+        .mc-btn {
+            background-color: #5eba35;
+            border: 4px solid;
+            border-color: #8ce363 #37751c #37751c #8ce363;
+            color: white;
+            text-shadow: 2px 2px #37751c;
+            transition: all 0.1s;
+        }
+        .mc-btn:active {
+            border-color: #37751c #8ce363 #8ce363 #37751c;
+        }
+        .mc-card {
+            border: 4px solid #7a542b;
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="p-6 md:p-12 text-gray-800">
+
+    <div class="max-w-5xl mx-auto space-y-8">
+        
+        <!-- 标题区 -->
+        <div class="text-center space-y-2">
+            <h1 class="text-2xl md:text-4xl mc-font text-[#5eba35]" style="text-shadow: 2px 2px #37751c;">成绩记录工作台</h1>
+            <p class="text-gray-500 font-bold">Crafting Your Future</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- 输入表单区 -->
+            <div class="bg-white p-6 rounded-lg mc-card col-span-1 h-fit">
+                <h2 class="text-xl font-bold mb-4 border-b-2 border-gray-200 pb-2">➕ 新增成绩记录</h2>
+                <form id="scoreForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold mb-1">考试名称 (如: 第一单元测试)</label>
+                        <input type="text" id="examName" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">科目名称 (可自定义)</label>
+                        <!-- 带有历史下拉记忆的输入框 -->
+                        <input type="text" id="subject" list="subjectList" placeholder="点击选择或输入新科目" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none bg-gray-50">
+                        <datalist id="subjectList">
+                            <option value="语文"></option>
+                            <option value="数学"></option>
+                            <option value="英语"></option>
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">本次得分</label>
+                        <input type="number" id="score" step="0.5" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">班级最高分</label>
+                        <input type="number" id="highestScore" step="0.5" class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none bg-gray-50">
+                    </div>
+                    <button type="submit" class="w-full mc-btn py-3 font-bold text-lg mt-4">合成数据！</button>
+                </form>
+                <div id="loadingMsg" class="hidden text-center text-sm text-gray-500 mt-2">正在保存到云端...</div>
+            </div>
+
+            <!-- 折线图展示区 -->
+            <div class="bg-white p-6 rounded-lg mc-card col-span-1 md:col-span-2">
+                <div class="flex justify-between items-center mb-4 border-b-2 border-gray-200 pb-2">
+                    <h2 class="text-xl font-bold">📈 成绩趋势图</h2>
+                </div>
+                <div class="relative h-80 w-full">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 配置 URL 和 Key
+        const SUPABASE_URL = 'https://ykbvwhmvmzdqrdibct.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrYnZ3dmhtdm16ZHpxcmRpYmN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3MDgyOTEsImV4cCI6MjEwNTI4NDI5MX0.w7RixTnjr2j23_rLKGFuiaWgwHfbQ0JodFTLoTi4hUQ';
+
+        // 【关键修复点】：将变量名从 supabase 改为 db，解决命名冲突
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let myChart = null;
+        let allData = []; 
+
+        const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+
+        async function fetchData() {
+            // 这里也同步改为了 db.from
+            const { data, error } = await db
+                .from('exam_scores')
+                .select('*')
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                console.error('获取数据失败:', error);
+                return;
+            }
+            allData = data;
+            renderChart(data);
+        }
+
+        function renderChart(data) {
+            const examNames = [...new Set(data.map(item => item.exam_name))];
+            const subjects = [...new Set(data.map(item => item.subject))];
+
+            // 自动同步并填充科目历史下拉列表，防止拼写误差
+            const subjectList = document.getElementById('subjectList');
+            subjectList.innerHTML = '';
+            subjects.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub;
+                subjectList.appendChild(option);
+            });
+
+            const datasets = subjects.map((sub, index) => {
+                const subData = examNames.map(exam => {
+                    const record = data.find(d => d.subject === sub && d.exam_name === exam);
+                    return record ? record.score : null; 
+                });
+
+                return {
+                    label: sub,
+                    data: subData,
+                    borderColor: colors[index % colors.length],
+                    backgroundColor: colors[index % colors.length],
+                    tension: 0.3, 
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    spanGaps: true 
+                };
+            });
+
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: examNames,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const exam = context.chart.data.labels[context.dataIndex];
+                                    const sub = context.dataset.label;
+                                    const currentScore = context.parsed.y;
+                                    const record = allData.find(d => d.subject === sub && d.exam_name === exam);
+                                    
+                                    let labels = [];
+
+                                    // 1. 班级最高分展示
+                                    if (record && record.highest_score) {
+                                        labels.push(`班级最高分: ${record.highest_score}`);
+                                    }
+
+                                    // 2. 环比上次运算逻辑
+                                    let prevScore = null;
+                                    for (let i = context.dataIndex - 1; i >= 0; i--) {
+                                        if (context.dataset.data[i] !== null) {
+                                            prevScore = context.dataset.data[i];
+                                            break;
+                                        }
+                                    }
+
+                                    if (prevScore !== null) {
+                                        const diff = (currentScore - prevScore).toFixed(1);
+                                        if (diff > 0) {
+                                            labels.push(`环比上次: +${diff}分 📈`);
+                                        } else if (diff < 0) {
+                                            labels.push(`环比上次: ${diff}分 📉`);
+                                        } else {
+                                            labels.push(`环比上次: 持平 ➖`);
+                                        }
+                                    } else {
+                                        labels.push(`环比上次: (首次记录)`);
+                                    }
+
+                                    return labels;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            suggestedMin: 60,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        document.getElementById('scoreForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const examName = document.getElementById('examName').value.trim();
+            // 无情清洗：自动去除输入名称中的所有空格，保证数据库分类绝对统一
+            const subject = document.getElementById('subject').value.replace(/\s+/g, '');
+            const score = document.getElementById('score').value;
+            const highestScore = document.getElementById('highestScore').value;
+
+            document.getElementById('loadingMsg').classList.remove('hidden');
+
+            // 这里也同步改为了 db.from
+            const { data, error } = await db
+                .from('exam_scores')
+                .insert([
+                    { 
+                        exam_name: examName, 
+                        subject: subject, 
+                        score: parseFloat(score), 
+                        highest_score: highestScore ? parseFloat(highestScore) : null 
+                    }
+                ]);
+
+            document.getElementById('loadingMsg').classList.add('hidden');
+
+            if (error) {
+                alert('保存失败，请检查配置！');
+                console.error(error);
+            } else {
+                document.getElementById('score').value = '';
+                document.getElementById('highestScore').value = '';
+                fetchData();
+            }
+        });
+
+        window.onload = fetchData;
+    </script>
+</body>
+</html>

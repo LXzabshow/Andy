@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的世界：学霸之路</title>
-    <!-- 引入 Tailwind CSS 框架实现简约布局 -->
+    <title>我的世界：学霸之路 V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Chart.js 用于绘制折线图 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- 引入 Supabase JS 客户端 -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 引入像素字体 (Minecraft 风格) -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     
     <style>
@@ -22,7 +18,6 @@
         .mc-font {
             font-family: 'Press Start 2P', cursive;
         }
-        /* Minecraft 风格按钮 */
         .mc-btn {
             background-color: #5eba35;
             border: 4px solid;
@@ -37,77 +32,144 @@
         .mc-card {
             border: 4px solid #7a542b;
             box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
+            background-color: white;
+        }
+        .mc-select {
+            border: 2px solid #7a542b;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237a542b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat, repeat;
+            background-position: right .7em top 50%, 0 0;
+            background-size: .65em auto, 100%;
         }
     </style>
 </head>
-<body class="p-6 md:p-12 text-gray-800">
+<body class="p-4 md:p-8 text-gray-800">
 
-    <div class="max-w-5xl mx-auto space-y-8">
+    <div class="max-w-6xl mx-auto space-y-6">
         
-        <!-- 标题区 -->
-        <div class="text-center space-y-2">
+        <!-- 头部 -->
+        <div class="text-center space-y-2 mb-8">
             <h1 class="text-2xl md:text-4xl mc-font text-[#5eba35]" style="text-shadow: 2px 2px #37751c;">成绩记录工作台</h1>
-            <p class="text-gray-500 font-bold">Crafting Your Future</p>
+            <p class="text-gray-500 font-bold">版本: V2 (能力雷达版)</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- 输入表单区 -->
-            <div class="bg-white p-6 rounded-lg mc-card col-span-1 h-fit">
-                <h2 class="text-xl font-bold mb-4 border-b-2 border-gray-200 pb-2">➕ 新增成绩记录</h2>
-                <form id="scoreForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-bold mb-1">考试名称 (如: 第一单元测试)</label>
-                        <input type="text" id="examName" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none bg-gray-50">
+        <!-- 学期全局选择器 -->
+        <div class="mc-card p-4 flex justify-between items-center bg-[#e5e7eb]">
+            <span class="font-bold text-lg">当前数据维度：</span>
+            <select id="globalSemester" class="mc-select bg-white px-4 py-2 font-bold focus:outline-none rounded">
+                <option value="初一上学期">初一上学期</option>
+                <option value="初一下学期">初一下学期</option>
+                <option value="初二上学期">初二上学期</option>
+                <option value="初二下学期">初二下学期</option>
+                <option value="初三上学期">初三上学期</option>
+                <option value="初三下学期">初三下学期</option>
+            </select>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- 左侧：录入与雷达图 -->
+            <div class="space-y-6 col-span-1">
+                
+                <!-- 录入表单 -->
+                <div class="p-6 rounded-lg mc-card">
+                    <h2 class="text-xl font-bold mb-4 border-b-2 border-gray-200 pb-2">➕ 新增记录</h2>
+                    <form id="scoreForm" class="space-y-4">
+                        <input type="hidden" id="formSemester" value="初一上学期">
+                        <div>
+                            <label class="block text-sm font-bold mb-1">考试名称</label>
+                            <input type="text" id="examName" placeholder="如: 期中考试" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">科目</label>
+                            <input type="text" id="subject" list="subjectList" placeholder="点击选择或输入" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none">
+                            <datalist id="subjectList"></datalist>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-sm font-bold mb-1">得分</label>
+                                <input type="number" id="score" step="0.5" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-1">班级最高分</label>
+                                <input type="number" id="highestScore" step="0.5" class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full mc-btn py-3 font-bold text-lg mt-2">合成数据！</button>
+                    </form>
+                    <div id="loadingMsg" class="hidden text-center text-sm text-gray-500 mt-2">保存中...</div>
+                </div>
+
+                <!-- 雷达图展示区 -->
+                <div class="p-6 rounded-lg mc-card">
+                    <h2 class="text-xl font-bold mb-2 text-center">🎯 综合能力雷达图</h2>
+                    <p class="text-xs text-gray-500 text-center mb-4">(当前学期各科平均分)</p>
+                    <div class="relative h-64 w-full">
+                        <canvas id="radarChart"></canvas>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold mb-1">科目名称 (可自定义)</label>
-                        <!-- 带有历史下拉记忆的输入框 -->
-                        <input type="text" id="subject" list="subjectList" placeholder="点击选择或输入新科目" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none bg-gray-50">
-                        <datalist id="subjectList">
-                            <option value="语文"></option>
-                            <option value="数学"></option>
-                            <option value="英语"></option>
-                        </datalist>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold mb-1">本次得分</label>
-                        <input type="number" id="score" step="0.5" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none bg-gray-50">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold mb-1">班级最高分</label>
-                        <input type="number" id="highestScore" step="0.5" class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none bg-gray-50">
-                    </div>
-                    <button type="submit" class="w-full mc-btn py-3 font-bold text-lg mt-4">合成数据！</button>
-                </form>
-                <div id="loadingMsg" class="hidden text-center text-sm text-gray-500 mt-2">正在保存到云端...</div>
+                </div>
             </div>
 
-            <!-- 折线图展示区 -->
-            <div class="bg-white p-6 rounded-lg mc-card col-span-1 md:col-span-2">
-                <div class="flex justify-between items-center mb-4 border-b-2 border-gray-200 pb-2">
-                    <h2 class="text-xl font-bold">📈 成绩趋势图</h2>
+            <!-- 右侧：单科趋势折线图 -->
+            <div class="p-6 rounded-lg mc-card col-span-1 lg:col-span-2 flex flex-col">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b-2 border-gray-200 pb-4">
+                    <h2 class="text-xl font-bold mb-2 sm:mb-0">📈 单科成绩走势</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-sm text-gray-600">切换科目:</span>
+                        <select id="subjectFilter" class="mc-select bg-gray-100 px-3 py-1 font-bold focus:outline-none rounded">
+                            <option value="">(请先录入数据)</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="relative h-80 w-full">
-                    <canvas id="scoreChart"></canvas>
+                
+                <div class="relative flex-grow min-h-[400px] w-full">
+                    <canvas id="lineChart"></canvas>
                 </div>
+                <!-- 提示区域 -->
+                 <div id="noDataTip" class="hidden text-center text-gray-500 mt-10 font-bold">当前学期该科目暂无数据 🕸️</div>
             </div>
         </div>
     </div>
 
     <script>
-        // 配置 URL 和 Key
+        // ==========================================
+        // 配置 URL 和 Key (确认无误)
+        // ==========================================
         const SUPABASE_URL = 'https://ykbvwvhmvmzdzqrdibct.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_zcVIJ86gQsYO3clU-HjAfA_e62kSSqj';
+        // ==========================================
 
-        // 【关键修复点】：将变量名从 supabase 改为 db，解决命名冲突
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let myChart = null;
-        let allData = []; 
+        
+        let lineChartObj = null;
+        let radarChartObj = null;
+        let allData = []; // 存储所有取回的数据
 
-        const colors = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+        // DOM 元素引用
+        const domGlobalSemester = document.getElementById('globalSemester');
+        const domFormSemester = document.getElementById('formSemester');
+        const domSubjectFilter = document.getElementById('subjectFilter');
+        const domNoDataTip = document.getElementById('noDataTip');
+        const canvasLine = document.getElementById('lineChart');
 
+        // 颜色池
+        const radarColor = 'rgba(94, 186, 53, 0.5)'; // Minecraft 绿
+        const radarBorder = 'rgba(55, 117, 28, 1)';
+        
+        // 监听全局学期切换
+        domGlobalSemester.addEventListener('change', (e) => {
+            domFormSemester.value = e.target.value; // 同步给隐藏表单，保证插入的学期正确
+            refreshViews(); // 切换学期后刷新所有视图
+        });
+
+        // 监听折线图科目切换
+        domSubjectFilter.addEventListener('change', () => {
+            renderLineChart();
+        });
+
+        // 核心获取数据逻辑
         async function fetchData() {
-            // 这里也同步改为了 db.from
             const { data, error } = await db
                 .from('exam_scores')
                 .select('*')
@@ -118,14 +180,18 @@
                 return;
             }
             allData = data;
-            renderChart(data);
+            
+            // 更新下拉科目列表
+            updateSubjectLists();
+            // 刷新图表
+            refreshViews();
         }
 
-        function renderChart(data) {
-            const examNames = [...new Set(data.map(item => item.exam_name))];
-            const subjects = [...new Set(data.map(item => item.subject))];
-
-            // 自动同步并填充科目历史下拉列表，防止拼写误差
+        // 更新表单历史记忆和图表科目切换下拉框
+        function updateSubjectLists() {
+            const subjects = [...new Set(allData.map(item => item.subject))];
+            
+            // 1. 表单 datalist
             const subjectList = document.getElementById('subjectList');
             subjectList.innerHTML = '';
             subjects.forEach(sub => {
@@ -134,35 +200,145 @@
                 subjectList.appendChild(option);
             });
 
-            const datasets = subjects.map((sub, index) => {
-                const subData = examNames.map(exam => {
-                    const record = data.find(d => d.subject === sub && d.exam_name === exam);
-                    return record ? record.score : null; 
+            // 2. 右侧折线图筛选下拉框
+            const currentSelected = domSubjectFilter.value;
+            domSubjectFilter.innerHTML = '';
+            
+            if (subjects.length === 0) {
+                domSubjectFilter.innerHTML = '<option value="">暂无数据</option>';
+            } else {
+                subjects.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub;
+                    domSubjectFilter.appendChild(option);
                 });
+                
+                // 试图保持之前的选择，如果不在这批里就选第一个
+                if (subjects.includes(currentSelected)) {
+                    domSubjectFilter.value = currentSelected;
+                } else {
+                    domSubjectFilter.value = subjects[0];
+                }
+            }
+        }
 
-                return {
-                    label: sub,
-                    data: subData,
-                    borderColor: colors[index % colors.length],
-                    backgroundColor: colors[index % colors.length],
-                    tension: 0.3, 
-                    pointRadius: 6,
-                    pointHoverRadius: 8,
-                    spanGaps: true 
-                };
+        // 视图路由：负责根据当前学期分发数据
+        function refreshViews() {
+            renderRadarChart();
+            renderLineChart();
+        }
+
+        // ============== 雷达图渲染逻辑 ==============
+        function renderRadarChart() {
+            const currentSemester = domGlobalSemester.value;
+            // 过滤出当前学期的数据
+            const semesterData = allData.filter(d => d.semester === currentSemester);
+            
+            // 获取该学期涉及到的所有独特科目
+            const subjectsInSemester = [...new Set(semesterData.map(item => item.subject))];
+            
+            // 计算各科平均分
+            const averageScores = subjectsInSemester.map(sub => {
+                const scores = semesterData.filter(d => d.subject === sub).map(d => d.score);
+                const sum = scores.reduce((a, b) => a + b, 0);
+                return (sum / scores.length).toFixed(1); // 保留一位小数
             });
 
-            const ctx = document.getElementById('scoreChart').getContext('2d');
-            
-            if (myChart) {
-                myChart.destroy();
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if (radarChartObj) { radarChartObj.destroy(); }
+
+            // 如果该学期一条数据都没有，雷达图不显示线
+            if (subjectsInSemester.length === 0) {
+                subjectsInSemester.push('暂无数据');
+                averageScores.push(0);
             }
 
-            myChart = new Chart(ctx, {
+            radarChartObj = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: subjectsInSemester,
+                    datasets: [{
+                        label: '科目平均分',
+                        data: averageScores,
+                        backgroundColor: radarColor,
+                        borderColor: radarBorder,
+                        pointBackgroundColor: radarBorder,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: radarBorder
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0,0,0,0.1)' },
+                            grid: { color: 'rgba(0,0,0,0.1)' },
+                            pointLabels: {
+                                font: { size: 12, family: "'Press Start 2P', cursive" },
+                                color: '#374151'
+                            },
+                            ticks: { min: 40, max: 100, stepSize: 20, display: false } // 隐藏默认刻度数字
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // ============== 折线图渲染逻辑 ==============
+        function renderLineChart() {
+            const currentSemester = domGlobalSemester.value;
+            const currentSubject = domSubjectFilter.value;
+            
+            // 过滤出 当前学期 且 当前选中科目 的数据
+            const targetData = allData.filter(d => d.semester === currentSemester && d.subject === currentSubject);
+
+            const ctx = canvasLine.getContext('2d');
+            if (lineChartObj) { lineChartObj.destroy(); }
+
+            // 判空处理
+            if (targetData.length === 0) {
+                canvasLine.style.display = 'none';
+                domNoDataTip.classList.remove('hidden');
+                return;
+            } else {
+                canvasLine.style.display = 'block';
+                domNoDataTip.classList.add('hidden');
+            }
+
+            const examNames = targetData.map(item => item.exam_name);
+            const myScores = targetData.map(item => item.score);
+            // 将不存在最高分的数据视为 null，使得线可以断开或忽略
+            const highestScores = targetData.map(item => item.highest_score ? item.highest_score : null);
+
+            lineChartObj = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: examNames,
-                    datasets: datasets
+                    datasets: [
+                        {
+                            label: '我的分数',
+                            data: myScores,
+                            borderColor: '#3B82F6', // 蓝色
+                            backgroundColor: '#3B82F6',
+                            tension: 0.3,
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        },
+                        {
+                            label: '班级最高分',
+                            data: highestScores,
+                            borderColor: '#F59E0B', // 金色
+                            backgroundColor: '#F59E0B',
+                            borderDash: [5, 5], // 虚线表示
+                            tension: 0.3,
+                            pointRadius: 5,
+                            spanGaps: true // 允许跨越 null 数据
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
@@ -172,20 +348,13 @@
                         tooltip: {
                             callbacks: {
                                 afterLabel: function(context) {
-                                    const exam = context.chart.data.labels[context.dataIndex];
-                                    const sub = context.dataset.label;
+                                    // 只在“我的分数”这一条线上计算环比
+                                    if (context.datasetIndex === 1) return []; // 最高分线不显示环比
+
                                     const currentScore = context.parsed.y;
-                                    const record = allData.find(d => d.subject === sub && d.exam_name === exam);
-                                    
                                     let labels = [];
-
-                                    // 1. 班级最高分展示
-                                    if (record && record.highest_score) {
-                                        labels.push(`班级最高分: ${record.highest_score}`);
-                                    }
-
-                                    // 2. 环比上次运算逻辑
                                     let prevScore = null;
+                                    
                                     for (let i = context.dataIndex - 1; i >= 0; i--) {
                                         if (context.dataset.data[i] !== null) {
                                             prevScore = context.dataset.data[i];
@@ -195,17 +364,12 @@
 
                                     if (prevScore !== null) {
                                         const diff = (currentScore - prevScore).toFixed(1);
-                                        if (diff > 0) {
-                                            labels.push(`环比上次: +${diff}分 📈`);
-                                        } else if (diff < 0) {
-                                            labels.push(`环比上次: ${diff}分 📉`);
-                                        } else {
-                                            labels.push(`环比上次: 持平 ➖`);
-                                        }
+                                        if (diff > 0) labels.push(`环比上次: +${diff}分 📈`);
+                                        else if (diff < 0) labels.push(`环比上次: ${diff}分 📉`);
+                                        else labels.push(`环比上次: 持平 ➖`);
                                     } else {
-                                        labels.push(`环比上次: (首次记录)`);
+                                        labels.push(`环比上次: (本学期首次)`);
                                     }
-
                                     return labels;
                                 }
                             }
@@ -213,7 +377,6 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: false,
                             suggestedMin: 60,
                             suggestedMax: 100
                         }
@@ -222,22 +385,23 @@
             });
         }
 
+        // ============== 表单提交逻辑 ==============
         document.getElementById('scoreForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const semester = document.getElementById('formSemester').value; // 始终读取当前全局学期
             const examName = document.getElementById('examName').value.trim();
-            // 无情清洗：自动去除输入名称中的所有空格，保证数据库分类绝对统一
             const subject = document.getElementById('subject').value.replace(/\s+/g, '');
             const score = document.getElementById('score').value;
             const highestScore = document.getElementById('highestScore').value;
 
             document.getElementById('loadingMsg').classList.remove('hidden');
 
-            // 这里也同步改为了 db.from
-            const { data, error } = await db
+            const { error } = await db
                 .from('exam_scores')
                 .insert([
                     { 
+                        semester: semester,
                         exam_name: examName, 
                         subject: subject, 
                         score: parseFloat(score), 
@@ -248,15 +412,26 @@
             document.getElementById('loadingMsg').classList.add('hidden');
 
             if (error) {
-                alert('保存失败，请检查配置！');
+                alert('保存失败，请检查网络或联系管理员！');
                 console.error(error);
             } else {
+                // 清空数据字段
                 document.getElementById('score').value = '';
                 document.getElementById('highestScore').value = '';
-                fetchData();
+                // 如果录入的新科目下拉框没有，强制设为刚录入的，方便查看
+                if (!domSubjectFilter.querySelector(`option[value="${subject}"]`)) {
+                    const opt = document.createElement('option');
+                    opt.value = subject;
+                    opt.textContent = subject;
+                    domSubjectFilter.appendChild(opt);
+                }
+                domSubjectFilter.value = subject;
+                
+                fetchData(); // 重新拉取所有数据并刷新视图
             }
         });
 
+        // 页面启动
         window.onload = fetchData;
     </script>
 </body>

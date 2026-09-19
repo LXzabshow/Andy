@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的世界：学霸之路 V2</title>
+    <title>Andy的学霸之路</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -51,7 +51,7 @@
         <!-- 头部 -->
         <div class="text-center space-y-2 mb-8">
             <h1 class="text-2xl md:text-4xl mc-font text-[#5eba35]" style="text-shadow: 2px 2px #37751c;">成绩记录工作台</h1>
-            <p class="text-gray-500 font-bold">版本: V2 (能力雷达版)</p>
+            <p class="text-gray-500 font-bold">版本: V2.1 (双层雷达版)</p>
         </div>
 
         <!-- 学期全局选择器 -->
@@ -104,7 +104,7 @@
                 <!-- 雷达图展示区 -->
                 <div class="p-6 rounded-lg mc-card">
                     <h2 class="text-xl font-bold mb-2 text-center">🎯 综合能力雷达图</h2>
-                    <p class="text-xs text-gray-500 text-center mb-4">(当前学期各科平均分)</p>
+                    <p class="text-xs text-gray-500 text-center mb-4">(当前学期各项平均分对比)</p>
                     <div class="relative h-64 w-full">
                         <canvas id="radarChart"></canvas>
                     </div>
@@ -134,7 +134,7 @@
 
     <script>
         // ==========================================
-        // 配置 URL 和 Key (确认无误)
+        // 配置 URL 和 Key
         // ==========================================
         const SUPABASE_URL = 'https://ykbvwvhmvmzdzqrdibct.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_zcVIJ86gQsYO3clU-HjAfA_e62kSSqj';
@@ -144,31 +144,23 @@
         
         let lineChartObj = null;
         let radarChartObj = null;
-        let allData = []; // 存储所有取回的数据
+        let allData = []; 
 
-        // DOM 元素引用
         const domGlobalSemester = document.getElementById('globalSemester');
         const domFormSemester = document.getElementById('formSemester');
         const domSubjectFilter = document.getElementById('subjectFilter');
         const domNoDataTip = document.getElementById('noDataTip');
         const canvasLine = document.getElementById('lineChart');
-
-        // 颜色池
-        const radarColor = 'rgba(94, 186, 53, 0.5)'; // Minecraft 绿
-        const radarBorder = 'rgba(55, 117, 28, 1)';
         
-        // 监听全局学期切换
         domGlobalSemester.addEventListener('change', (e) => {
-            domFormSemester.value = e.target.value; // 同步给隐藏表单，保证插入的学期正确
-            refreshViews(); // 切换学期后刷新所有视图
+            domFormSemester.value = e.target.value; 
+            refreshViews(); 
         });
 
-        // 监听折线图科目切换
         domSubjectFilter.addEventListener('change', () => {
             renderLineChart();
         });
 
-        // 核心获取数据逻辑
         async function fetchData() {
             const { data, error } = await db
                 .from('exam_scores')
@@ -181,17 +173,13 @@
             }
             allData = data;
             
-            // 更新下拉科目列表
             updateSubjectLists();
-            // 刷新图表
             refreshViews();
         }
 
-        // 更新表单历史记忆和图表科目切换下拉框
         function updateSubjectLists() {
             const subjects = [...new Set(allData.map(item => item.subject))];
             
-            // 1. 表单 datalist
             const subjectList = document.getElementById('subjectList');
             subjectList.innerHTML = '';
             subjects.forEach(sub => {
@@ -200,7 +188,6 @@
                 subjectList.appendChild(option);
             });
 
-            // 2. 右侧折线图筛选下拉框
             const currentSelected = domSubjectFilter.value;
             domSubjectFilter.innerHTML = '';
             
@@ -214,7 +201,6 @@
                     domSubjectFilter.appendChild(option);
                 });
                 
-                // 试图保持之前的选择，如果不在这批里就选第一个
                 if (subjects.includes(currentSelected)) {
                     domSubjectFilter.value = currentSelected;
                 } else {
@@ -223,51 +209,74 @@
             }
         }
 
-        // 视图路由：负责根据当前学期分发数据
         function refreshViews() {
             renderRadarChart();
             renderLineChart();
         }
 
-        // ============== 雷达图渲染逻辑 ==============
+        // ============== 雷达图渲染逻辑 (双层多边形) ==============
         function renderRadarChart() {
             const currentSemester = domGlobalSemester.value;
-            // 过滤出当前学期的数据
             const semesterData = allData.filter(d => d.semester === currentSemester);
             
-            // 获取该学期涉及到的所有独特科目
             const subjectsInSemester = [...new Set(semesterData.map(item => item.subject))];
             
-            // 计算各科平均分
-            const averageScores = subjectsInSemester.map(sub => {
-                const scores = semesterData.filter(d => d.subject === sub).map(d => d.score);
-                const sum = scores.reduce((a, b) => a + b, 0);
-                return (sum / scores.length).toFixed(1); // 保留一位小数
-            });
+            const myAverageScores = [];
+            const highestAverageScores = [];
+
+            if (subjectsInSemester.length === 0) {
+                subjectsInSemester.push('暂无数据');
+                myAverageScores.push(0);
+                highestAverageScores.push(0);
+            } else {
+                subjectsInSemester.forEach(sub => {
+                    const records = semesterData.filter(d => d.subject === sub);
+                    
+                    // 1. 计算我的平均分
+                    const myScores = records.map(d => d.score);
+                    const mySum = myScores.reduce((a, b) => a + b, 0);
+                    myAverageScores.push((mySum / records.length).toFixed(1));
+
+                    // 2. 计算班级最高分的平均分 (方案A)
+                    // 如果以前有某次没填最高分，默认以满分 100 计算以保证图形边界不塌陷
+                    const highestScores = records.map(d => d.highest_score ? d.highest_score : 100);
+                    const highestSum = highestScores.reduce((a, b) => a + b, 0);
+                    highestAverageScores.push((highestSum / records.length).toFixed(1));
+                });
+            }
 
             const ctx = document.getElementById('radarChart').getContext('2d');
             if (radarChartObj) { radarChartObj.destroy(); }
-
-            // 如果该学期一条数据都没有，雷达图不显示线
-            if (subjectsInSemester.length === 0) {
-                subjectsInSemester.push('暂无数据');
-                averageScores.push(0);
-            }
 
             radarChartObj = new Chart(ctx, {
                 type: 'radar',
                 data: {
                     labels: subjectsInSemester,
-                    datasets: [{
-                        label: '科目平均分',
-                        data: averageScores,
-                        backgroundColor: radarColor,
-                        borderColor: radarBorder,
-                        pointBackgroundColor: radarBorder,
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: radarBorder
-                    }]
+                    datasets: [
+                        {
+                            label: '我的平均分',
+                            data: myAverageScores,
+                            backgroundColor: 'rgba(94, 186, 53, 0.6)', // 绿色填充
+                            borderColor: 'rgba(55, 117, 28, 1)',       // 绿色边框
+                            pointBackgroundColor: 'rgba(55, 117, 28, 1)',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: 'rgba(55, 117, 28, 1)',
+                            order: 1 // 保证绘制在上层
+                        },
+                        {
+                            label: '班级最高平均',
+                            data: highestAverageScores,
+                            backgroundColor: 'rgba(245, 158, 11, 0.15)', // 淡金色填充，透出底部
+                            borderColor: '#F59E0B',                      // 金色虚线边框
+                            borderDash: [5, 5],
+                            pointBackgroundColor: '#F59E0B',
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: '#F59E0B',
+                            order: 2 // 绘制在下层作为天花板边界
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
@@ -277,13 +286,22 @@
                             angleLines: { color: 'rgba(0,0,0,0.1)' },
                             grid: { color: 'rgba(0,0,0,0.1)' },
                             pointLabels: {
-                                font: { size: 12, family: "'Press Start 2P', cursive" },
+                                font: { size: 12, family: "'Press Start 2P', cursive", weight: 'bold' },
                                 color: '#374151'
                             },
-                            ticks: { min: 40, max: 100, stepSize: 20, display: false } // 隐藏默认刻度数字
+                            ticks: { min: 40, max: 100, stepSize: 20, display: false }
                         }
                     },
-                    plugins: { legend: { display: false } }
+                    plugins: { 
+                        legend: { 
+                            display: true, 
+                            position: 'bottom',
+                            labels: {
+                                font: { family: "'Press Start 2P', cursive", size: 10 },
+                                boxWidth: 12
+                            }
+                        } 
+                    }
                 }
             });
         }
@@ -293,13 +311,11 @@
             const currentSemester = domGlobalSemester.value;
             const currentSubject = domSubjectFilter.value;
             
-            // 过滤出 当前学期 且 当前选中科目 的数据
             const targetData = allData.filter(d => d.semester === currentSemester && d.subject === currentSubject);
 
             const ctx = canvasLine.getContext('2d');
             if (lineChartObj) { lineChartObj.destroy(); }
 
-            // 判空处理
             if (targetData.length === 0) {
                 canvasLine.style.display = 'none';
                 domNoDataTip.classList.remove('hidden');
@@ -311,7 +327,6 @@
 
             const examNames = targetData.map(item => item.exam_name);
             const myScores = targetData.map(item => item.score);
-            // 将不存在最高分的数据视为 null，使得线可以断开或忽略
             const highestScores = targetData.map(item => item.highest_score ? item.highest_score : null);
 
             lineChartObj = new Chart(ctx, {
@@ -322,7 +337,7 @@
                         {
                             label: '我的分数',
                             data: myScores,
-                            borderColor: '#3B82F6', // 蓝色
+                            borderColor: '#3B82F6', 
                             backgroundColor: '#3B82F6',
                             tension: 0.3,
                             pointRadius: 6,
@@ -331,12 +346,12 @@
                         {
                             label: '班级最高分',
                             data: highestScores,
-                            borderColor: '#F59E0B', // 金色
+                            borderColor: '#F59E0B', 
                             backgroundColor: '#F59E0B',
-                            borderDash: [5, 5], // 虚线表示
+                            borderDash: [5, 5], 
                             tension: 0.3,
                             pointRadius: 5,
-                            spanGaps: true // 允许跨越 null 数据
+                            spanGaps: true 
                         }
                     ]
                 },
@@ -348,8 +363,7 @@
                         tooltip: {
                             callbacks: {
                                 afterLabel: function(context) {
-                                    // 只在“我的分数”这一条线上计算环比
-                                    if (context.datasetIndex === 1) return []; // 最高分线不显示环比
+                                    if (context.datasetIndex === 1) return []; 
 
                                     const currentScore = context.parsed.y;
                                     let labels = [];
@@ -389,7 +403,7 @@
         document.getElementById('scoreForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const semester = document.getElementById('formSemester').value; // 始终读取当前全局学期
+            const semester = document.getElementById('formSemester').value; 
             const examName = document.getElementById('examName').value.trim();
             const subject = document.getElementById('subject').value.replace(/\s+/g, '');
             const score = document.getElementById('score').value;
@@ -415,10 +429,9 @@
                 alert('保存失败，请检查网络或联系管理员！');
                 console.error(error);
             } else {
-                // 清空数据字段
                 document.getElementById('score').value = '';
                 document.getElementById('highestScore').value = '';
-                // 如果录入的新科目下拉框没有，强制设为刚录入的，方便查看
+                
                 if (!domSubjectFilter.querySelector(`option[value="${subject}"]`)) {
                     const opt = document.createElement('option');
                     opt.value = subject;
@@ -427,7 +440,7 @@
                 }
                 domSubjectFilter.value = subject;
                 
-                fetchData(); // 重新拉取所有数据并刷新视图
+                fetchData(); 
             }
         });
 

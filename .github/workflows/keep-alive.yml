@@ -1,0 +1,15 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 0 */3 * *' # 每 3 天执行一次
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase API
+        run: |
+          curl -X GET "https://ykbvwvhmvmzdzqrdibct.supabase.co/rest/v1/exam_scores?select=id&limit=1" \
+          -H "apikey: sb_publishable_zcVIJ86gQsYO3clU-HjAfA_e62kSSqj" \
+          -H "Authorization: Bearer sb_publishable_zcVIJ86gQsYO3clU-HjAfA_e62kSSqj"

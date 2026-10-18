@@ -3,13 +3,20 @@ name: Keep Supabase Alive
 on:
   schedule:
     - cron: '0 0 */3 * *' # 每 3 天执行一次
+  workflow_dispatch:      # 允许在 GitHub Actions 页面手动点击触发测试
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase API
+      - name: Ping Supabase API (Exam Scores & Game Data)
         run: |
-          curl -X GET "https://ykbvwvhmvmzdzqrdibct.supabase.co/rest/v1/exam_scores?select=id&limit=1" \
+          echo "1. 正在唤醒成绩监控数据库 (exam_scores)..."
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" -X GET "https://ykbvwvhmvmzdzqrdibct.supabase.co/rest/v1/exam_scores?select=id&limit=1" \
           -H "apikey: sb_publishable_zcVIJ86gQsYO3clU-HjAfA_e62kSSqj" \
           -H "Authorization: Bearer sb_publishable_zcVIJ86gQsYO3clU-HjAfA_e62kSSqj"
+
+          echo "2. 正在唤醒探险背包数据库 (gamedata)..."
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" -X GET "https://ollnjvnytqmurqxvqtrp.supabase.co/rest/v1/gamedata?select=id&limit=1" \
+          -H "apikey: sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB" \
+          -H "Authorization: Bearer sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB"

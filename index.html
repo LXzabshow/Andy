@@ -146,7 +146,7 @@
         @keyframes floatUp { 0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -20px) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -60px) scale(1); opacity: 0; } }
 
         /* ========================================================
-           ⚔️ 横版挂机 RPG 引擎：史蒂夫动态神装与怪物模型样式
+           ⚔️ 横版挂机 RPG 引擎：史蒂夫单手持武与怪物单手持武模型
            ======================================================== */
         .skin-steve { width: 44px; height: 100px; left: 28%; bottom: 26px; z-index: 40; transition: left 0.3s ease; }
         .skin-steve .head { width: 36px; height: 36px; background: #F8B090; position: absolute; top: 0; left: 4px; z-index: 3; border: 2px solid #222; }
@@ -155,11 +155,15 @@
         /* 动态头盔 */
         .skin-steve .helmet { position: absolute; top: -3px; left: 2px; width: 40px; height: 18px; z-index: 5; border: 2px solid #000; display: none; box-shadow: inset 0 3px rgba(255,255,255,0.4); }
         /* 身体与胸甲 */
-        .skin-steve .body { width: 32px; height: 36px; background: #00AAAA; position: absolute; top: 36px; left: 6px; z-index: 2; border: 2px solid #222; box-shadow: inset 0 4px rgba(255,255,255,0.25); }
-        .skin-steve .arm { width: 14px; height: 32px; background: #00AAAA; position: absolute; top: 38px; left: 15px; z-index: 6; border: 2px solid #222; transform-origin: 50% 15%; }
+        .skin-steve .body { width: 30px; height: 36px; background: #00AAAA; position: absolute; top: 36px; left: 7px; z-index: 2; border: 2px solid #222; box-shadow: inset 0 4px rgba(255,255,255,0.25); }
+        /* 💡 前置手臂：单手武器直接绑定在手臂末端手部位置 */
+        .skin-steve .arm { width: 12px; height: 30px; background: #00AAAA; position: absolute; top: 38px; left: 16px; z-index: 6; border: 2px solid #222; transform-origin: 6px 4px; transform: rotate(-28deg); box-shadow: inset 0 -6px #F8B090; }
+        .skin-steve .weapon-hand { position: absolute; bottom: -6px; left: 2px; width: 34px; height: 34px; transform-origin: 6px 28px; transform: rotate(22deg); pointer-events: none; z-index: 8; }
+        .skin-steve .weapon-hand svg { width: 100%; height: 100%; display: block; shape-rendering: crispEdges; }
+
         /* 双腿与迈步动画 */
-        .skin-steve .leg-l, .skin-steve .leg-r { width: 14px; height: 28px; background: #303090; position: absolute; top: 72px; left: 15px; border: 2px solid #111; transform-origin: 50% 0%; }
-        .skin-steve .leg-l { z-index: 1; filter: brightness(0.8); }
+        .skin-steve .leg-l, .skin-steve .leg-r { width: 13px; height: 28px; background: #303090; position: absolute; top: 72px; left: 15px; border: 2px solid #111; transform-origin: 50% 0%; }
+        .skin-steve .leg-l { z-index: 1; filter: brightness(0.78); }
         .skin-steve .leg-r { z-index: 3; }
         
         .skin-steve.walking .leg-l { animation: walkLegL 0.45s ease-in-out infinite alternate; }
@@ -169,18 +173,22 @@
 
         @keyframes walkLegL { from { transform: rotate(-28deg); } to { transform: rotate(28deg); } }
         @keyframes walkLegR { from { transform: rotate(28deg); } to { transform: rotate(-28deg); } }
-        @keyframes walkArm { from { transform: rotate(20deg); } to { transform: rotate(-25deg); } }
+        @keyframes walkArm { from { transform: rotate(-12deg); } to { transform: rotate(-42deg); } }
         @keyframes walkBob { from { transform: translateY(0); } to { transform: translateY(-3px); } }
 
-        /* 武器与挥砍刀光 */
-        .skin-steve .sword { position: absolute; top: 20px; right: -34px; font-size: 40px; transform: scaleX(-1) rotate(35deg); transform-origin: 15% 85%; z-index: 8; filter: drop-shadow(2px 2px 0 #000); transition: transform 0.1s; }
-        .skin-steve .slash-fx { position: absolute; top: 15px; right: -55px; width: 45px; height: 65px; border-right: 6px solid #fff; border-radius: 50%; opacity: 0; z-index: 9; pointer-events: none; filter: drop-shadow(0 0 8px #00ffff); }
-        .anim-attack { animation: swordSwing 0.32s cubic-bezier(0.2, 0.8, 0.4, 1) forwards !important; }
+        /* 💡 手臂带动单手武器劈砍与刀光动画 */
+        .skin-steve .slash-fx { position: absolute; top: 18px; right: -46px; width: 42px; height: 60px; border-right: 6px solid #fff; border-radius: 50%; opacity: 0; z-index: 9; pointer-events: none; filter: drop-shadow(0 0 8px #00ffff); }
+        .anim-arm-attack { animation: armChop 0.32s cubic-bezier(0.2, 0.8, 0.4, 1) forwards !important; }
         .anim-slash { animation: slashArc 0.32s ease-out forwards; }
-        @keyframes swordSwing { 0% { transform: scaleX(-1) rotate(35deg) scale(1); } 45% { transform: scaleX(-1) rotate(-75deg) scale(1.25); } 100% { transform: scaleX(-1) rotate(35deg) scale(1); } }
+        @keyframes armChop {
+            0% { transform: rotate(-28deg); }
+            30% { transform: rotate(-95deg); }
+            65% { transform: rotate(22deg); }
+            100% { transform: rotate(-28deg); }
+        }
         @keyframes slashArc { 0% { opacity: 0; transform: scale(0.5) rotate(-30deg); } 40% { opacity: 1; transform: scale(1.1) rotate(10deg); } 100% { opacity: 0; transform: scale(1.3) rotate(35deg); } }
 
-        /* 👾 巡逻怪物通用像素模型与血条 */
+        /* 👾 巡逻怪物通用像素模型与单手武器绑定 */
         .patrol-mob { position: absolute; bottom: 26px; z-index: 35; display: flex; flex-direction: column; align-items: center; transition: filter 0.1s; }
         .patrol-mob.flying { bottom: 68px; animation: mobHover 0.8s ease-in-out infinite alternate; }
         @keyframes mobHover { from { transform: translateY(0); } to { transform: translateY(-10px); } }
@@ -194,15 +202,22 @@
         .mob-walking .mob-sprite { animation: mobBounce 0.32s ease-in-out infinite alternate; }
         @keyframes mobBounce { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-4px) rotate(2deg); } }
 
-        .mob-head { width: 34px; height: 34px; border: 2px solid #111; position: relative; box-shadow: inset -3px -3px rgba(0,0,0,0.35); }
+        .mob-head { width: 34px; height: 34px; border: 2px solid #111; position: relative; box-shadow: inset -3px -3px rgba(0,0,0,0.35); z-index: 3; }
         .mob-eye-l, .mob-eye-r { position: absolute; top: 14px; width: 6px; height: 6px; }
         .mob-eye-l { left: 4px; } .mob-eye-r { left: 16px; }
         .mob-mouth { position: absolute; bottom: 5px; left: 7px; width: 12px; height: 5px; background: #111; }
-        .mob-body { width: 30px; height: 34px; border: 2px solid #111; border-top: none; position: relative; box-shadow: inset -3px -3px rgba(0,0,0,0.35); }
-        .mob-legs { display: flex; gap: 4px; justify-content: center; }
+        .mob-body { width: 28px; height: 34px; border: 2px solid #111; border-top: none; position: relative; box-shadow: inset -3px -3px rgba(0,0,0,0.35); z-index: 2; }
+        .mob-legs { display: flex; gap: 4px; justify-content: center; z-index: 1; }
         .mob-leg { width: 11px; height: 22px; border: 2px solid #111; border-top: none; }
-        .mob-weapon { position: absolute; top: 32px; left: -22px; font-size: 28px; filter: drop-shadow(2px 2px 0 #000); }
-        .mob-wing { position: absolute; top: -8px; right: -24px; width: 36px; height: 22px; border: 2px solid #000; transform-origin: left center; animation: wingFlap 0.35s infinite alternate; opacity: 0.9; }
+        
+        /* 💡 怪物前置手臂与单手武器槽（朝左指向史蒂夫） */
+        .mob-arm { position: absolute; top: 36px; left: 8px; width: 11px; height: 26px; border: 2px solid #111; transform-origin: 5px 4px; transform: rotate(28deg); z-index: 5; }
+        .mob-walking .mob-arm { animation: mobArmWalk 0.4s ease-in-out infinite alternate; }
+        @keyframes mobArmWalk { from { transform: rotate(15deg); } to { transform: rotate(40deg); } }
+        .mob-weapon-hand { position: absolute; bottom: -6px; right: 2px; width: 30px; height: 30px; transform-origin: 24px 24px; transform: scaleX(-1) rotate(18deg); pointer-events: none; }
+        .mob-weapon-hand svg { width: 100%; height: 100%; display: block; shape-rendering: crispEdges; }
+
+        .mob-wing { position: absolute; top: -8px; right: -24px; width: 36px; height: 22px; border: 2px solid #000; transform-origin: left center; animation: wingFlap 0.35s infinite alternate; opacity: 0.9; z-index: 1; }
         @keyframes wingFlap { from { transform: rotate(-20deg) scaleY(1); } to { transform: rotate(25deg) scaleY(0.6); } }
 
         /* 怪物受击与死亡特效 */
@@ -218,7 +233,6 @@
         .anim-swell { animation: swell 2.5s ease-in forwards; } @keyframes swell { 0% { transform: scale(1); filter: brightness(1); } 95% { transform: scale(2.5); filter: brightness(100); opacity: 1;} 100% { transform: scale(3); opacity: 0; } }
         .shake { animation: shake 0.5s infinite; } @keyframes shake { 0% { transform: translate(2px, 2px); } 20% { transform: translate(-4px, 0px); } 40% { transform: translate(2px, -2px); } 60% { transform: translate(-4px, 2px); } 80% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, -4px); } }
         
-        /* 💡 修复：突破境界时的白光闪烁样式回归 */
         .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 9998; opacity: 0; pointer-events: none; animation: flashAnim 1.2s ease-out forwards; }
         @keyframes flashAnim { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
 
@@ -346,16 +360,17 @@
         </div>
     </div>
 
-    <!-- ⚔️ 底部横版挂机巡逻与战斗舞台 -->
+    <!-- ⚔️ 底部横版挂机巡逻与战斗舞台（单手武器直接绑定在手臂末端） -->
     <div class="stage" id="stage">
         <div id="hero-steve" class="actor skin-steve walking">
             <div class="helmet" id="steve-helmet"></div>
             <div class="head"><div class="hair"></div><div class="eyes"></div></div>
             <div class="body" id="steve-body"></div>
-            <div class="arm" id="steve-arm"></div>
+            <div class="arm" id="steve-arm">
+                <div class="weapon-hand" id="steve-sword"></div>
+            </div>
             <div class="leg-l" id="steve-leg-l"></div>
             <div class="leg-r" id="steve-leg-r"></div>
-            <div class="sword" id="steve-sword">🪵</div>
             <div class="slash-fx" id="steve-slash"></div>
         </div>
         <div id="hero-creeper" class="actor skin-creeper" style="right: -200px; display: none; z-index: 99;">
@@ -377,7 +392,6 @@
         const ROW_ID = 1;
         let dbClient = null;
 
-        // 💡 精度锁死工具函数：消除 IEEE 754 浮点数毛刺
         function round1(num) { return Math.round((Number(num) || 0) * 10) / 10; }
 
         window.addEventListener('error', function(e) {
@@ -433,6 +447,60 @@
         let nextTargetNum = 1, gameClockTimer = null, potionTimer = null, gameTimeRemaining = 40, gameStartTime = 0;
         let comboCount = 0, maxCombo = 0, lastHitTime = 0;
 
+        // ========================================================
+        // 🗡️ 2D 像素单手武器 SVG 渲染引擎 (支持史蒂夫与怪物共用)
+        // ========================================================
+        function renderPixelWeaponSVG(type, color, glowColor) {
+            const filterStyle = glowColor && glowColor !== 'none' ? `filter: drop-shadow(1px 1px 0 #000) drop-shadow(0 0 4px ${glowColor});` : `filter: drop-shadow(1px 1px 0 #000);`;
+            let inner = '';
+            if (type === 'axe') {
+                // 单手战斧：木柄 + 单侧宽刃
+                inner = `
+                    <path d="M2 13h2v2H2zM3 12h2v2H3zM4 11h2v2H4zM5 10h2v2H5zM6 9h2v2H6zM7 8h2v2H7zM8 7h2v2H8zM9 6h2v2H9zM10 5h2v2h-2zM11 4h2v2h-2z" fill="#6e4720"/>
+                    <path d="M8 2h5v2H8zM9 4h6v3H9zM11 7h4v2h-4z" fill="${color}"/>
+                    <path d="M13 2h2v6h-2z" fill="#ffffff" opacity="0.65"/>
+                `;
+            } else if (type === 'pick') {
+                // 单手矿镐：木柄 + 弧形镐头
+                inner = `
+                    <path d="M2 13h2v2H2zM3 12h2v2H3zM4 11h2v2H4zM5 10h2v2H5zM6 9h2v2H6zM7 8h2v2H7zM8 7h2v2H8zM9 6h2v2H9zM10 5h2v2h-2zM11 4h2v2h-2z" fill="#6e4720"/>
+                    <path d="M7 1h5v2H7zM11 2h3v3h-3zM13 4h2v5h-2z" fill="${color}"/>
+                    <rect x="11" y="2" width="2" height="2" fill="#ffffff" opacity="0.6"/>
+                `;
+            } else if (type === 'mace') {
+                // 单手重锤：短柄 + 棱角锤头
+                inner = `
+                    <path d="M2 13h2v2H2zM3 12h2v2H3zM4 11h2v2H4zM5 10h2v2H5zM6 9h2v2H6zM7 8h2v2H7zM8 7h2v2H8zM9 6h2v2H9z" fill="#5d4037"/>
+                    <rect x="8" y="1" width="7" height="6" fill="${color}"/>
+                    <rect x="9" y="2" width="3" height="2" fill="#ffffff" opacity="0.7"/>
+                `;
+            } else if (type === 'trident') {
+                // 单手三叉戟：长柄 + 三叉戟尖
+                inner = `
+                    <path d="M2 13h2v2H2zM3 12h2v2H3zM4 11h2v2H4zM5 10h2v2H5zM6 9h2v2H6zM7 8h2v2H7zM8 7h2v2H8zM9 6h2v2H9zM10 5h2v2h-2z" fill="#2c3e50"/>
+                    <path d="M9 1h2v4H9zM10 4h4v2h-4zM12 0h3v2h-3zM13 2h3v4h-3z" fill="${color}"/>
+                    <rect x="12" y="1" width="2" height="2" fill="#ffffff" opacity="0.75"/>
+                `;
+            } else if (type === 'staff') {
+                // 单手法杖：暗木杖身 + 辉光法球
+                inner = `
+                    <path d="M2 13h2v2H2zM3 12h2v2H3zM4 11h2v2H4zM5 10h2v2H5zM6 9h2v2H6zM7 8h2v2H7zM8 7h2v2H8zM9 6h2v2H9zM10 5h2v2h-2z" fill="#4a235a"/>
+                    <rect x="10" y="1" width="5" height="5" fill="${color}"/>
+                    <rect x="11" y="2" width="2" height="2" fill="#ffffff" opacity="0.85"/>
+                `;
+            } else {
+                // 默认单手剑 (sword)：剑首 + 握柄 + 护手 + 单手剑刃
+                inner = `
+                    <rect x="1" y="13" width="2" height="2" fill="#3e2723"/>
+                    <path d="M2 12h2v1H2zM3 11h2v2H3zM4 10h2v2H4z" fill="#6e4720"/>
+                    <path d="M2 8h2v2H2zM4 9h3v3H4zM6 11h2v2H6z" fill="#d4af37"/>
+                    <path d="M6 8h2v2H6zM7 7h2v2H7zM8 6h2v2H8zM9 5h2v2H9zM10 4h2v2h-2zM11 3h2v2h-2zM12 2h2v2h-2zM13 1h2v2h-2z" fill="${color}"/>
+                    <path d="M6 7h1v1H6zM7 6h1v1H7zM8 5h1v1H8zM9 4h1v1H9zM10 3h1v1h-1zM11 2h1v1h-1zM12 1h1v1h-1z" fill="#ffffff" opacity="0.75"/>
+                `;
+            }
+            return `<svg viewBox="0 0 16 16" style="${filterStyle}">${inner}</svg>`;
+        }
+
         const SVG_TEX = {
             oak: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23775533'/><path d='M0 4h16M0 10h16M4 0v4M12 4v6M8 10v6' stroke='%23503515' stroke-width='1'/></svg>",
             cobble: "data:image/svg+xml;utf8,<svg width='16' height='16' xmlns='http://www.w3.org/2000/svg'><rect width='16' height='16' fill='%23666'/><path d='M0 0h6v6H0zM8 2h8v8H8zM2 8h6v8H2z' fill='%23888'/><path d='M0 6h16M6 0v8M10 8v8' stroke='%23444' stroke-width='1'/></svg>",
@@ -459,92 +527,91 @@
             { rank: 10, cap: Infinity, cost: 0, title: "🐲 末影屠龙者", tex: SVG_TEX.void, cardBg: "#0f0f1a", borderColor: "#2c3e50", glow: "pulse", animClass: "glow-end" }
         ];
 
-        // ========================================================
-        // 🛡️ 史蒂夫 1~10 级神装外观配置表与 50 种等级怪物生态池
-        // ========================================================
+        // 🛡️ 史蒂夫 1~10 级神装与单手武器配置
         const STEVE_GEAR = [
-            { helm: null, armor: "#00AAAA", pants: "#303090", weapon: "🪵", glow: "none" },
-            { helm: "#8B5A2B", armor: "#A0522D", pants: "#6E4720", weapon: "🪨", glow: "none" },
-            { helm: "#E0E0E0", armor: "#D0D0D0", pants: "#A9A9A9", weapon: "🗡️", glow: "0 0 4px #fff" },
-            { helm: "#FFD700", armor: "#DAA520", pants: "#B8860B", weapon: "⚔️", glow: "0 0 8px #ffd700" },
-            { helm: "#FF2222", armor: "#990000", pants: "#550000", weapon: "🔨", glow: "0 0 10px #ff0000" },
-            { helm: "#00FFFF", armor: "#00CED1", pants: "#008B8B", weapon: "💎", glow: "0 0 12px #00ffff" },
-            { helm: "#3B1E54", armor: "#240046", pants: "#10002B", weapon: "🪓", glow: "0 0 12px #9d4edd" },
-            { helm: "#2ECC71", armor: "#27AE60", pants: "#1E8449", weapon: "🔱", glow: "0 0 14px #00ff00" },
-            { helm: "#4A3B3C", armor: "#3D2C2E", pants: "#2B1B17", weapon: "🔥", glow: "0 0 15px #ff4500" },
-            { helm: "#1A0033", armor: "#110022", pants: "#08020F", weapon: "⚡", glow: "0 0 18px #ff00ff" }
+            { helm: null, armor: "#00AAAA", pants: "#303090", wpnType: "axe", wpnColor: "#A06F3E", glowColor: "none", glow: "none" },
+            { helm: "#8B5A2B", armor: "#A0522D", pants: "#6E4720", wpnType: "pick", wpnColor: "#95A5A6", glowColor: "none", glow: "none" },
+            { helm: "#E0E0E0", armor: "#D0D0D0", pants: "#A9A9A9", wpnType: "sword", wpnColor: "#ECF0F1", glowColor: "#ffffff", glow: "0 0 4px #fff" },
+            { helm: "#FFD700", armor: "#DAA520", pants: "#B8860B", wpnType: "sword", wpnColor: "#FFD700", glowColor: "#ffd700", glow: "0 0 8px #ffd700" },
+            { helm: "#FF2222", armor: "#990000", pants: "#550000", wpnType: "mace", wpnColor: "#FF2222", glowColor: "#ff0000", glow: "0 0 10px #ff0000" },
+            { helm: "#00FFFF", armor: "#00CED1", pants: "#008B8B", wpnType: "sword", wpnColor: "#00FFFF", glowColor: "#00ffff", glow: "0 0 12px #00ffff" },
+            { helm: "#3B1E54", armor: "#240046", pants: "#10002B", wpnType: "axe", wpnColor: "#9D4EDD", glowColor: "#9d4edd", glow: "0 0 12px #9d4edd" },
+            { helm: "#2ECC71", armor: "#27AE60", pants: "#1E8449", wpnType: "trident", wpnColor: "#2ECC71", glowColor: "#00ff00", glow: "0 0 14px #00ff00" },
+            { helm: "#4A3B3C", armor: "#3D2C2E", pants: "#2B1B17", wpnType: "sword", wpnColor: "#FF4500", glowColor: "#ff4500", glow: "0 0 15px #ff4500" },
+            { helm: "#1A0033", armor: "#110022", pants: "#08020F", wpnType: "sword", wpnColor: "#FF00FF", glowColor: "#ff00ff", glow: "0 0 18px #ff00ff" }
         ];
 
+        // 👾 1~10 级怪物生态池（所有持械怪物均配置单手像素武器参数 wpn）
         const MOB_POOLS = {
             1: [
                 { name: "绿史莱姆", hp: 1, head: "#55FF55", body: "#33CC33", eye: "#004400", scale: 0.85, short: true },
                 { name: "荒野僵尸", hp: 2, head: "#4C7838", body: "#00AAAA", eye: "#111", leg: "#303090" },
                 { name: "洞穴毒蛛", hp: 1, head: "#1B3B48", body: "#142B34", eye: "#FF0000", scale: 0.8, short: true },
-                { name: "森林骷髅", hp: 2, head: "#DCDCDC", body: "#BDBDBD", eye: "#222", leg: "#A9A9A9", weapon: "🏹" },
-                { name: "僵尸村民", hp: 2, head: "#5E7C38", body: "#684831", eye: "#900", leg: "#4A3525" }
+                { name: "森林骷髅", hp: 2, head: "#DCDCDC", body: "#BDBDBD", eye: "#222", leg: "#A9A9A9", wpn: { type: "sword", color: "#B0BEC5" } },
+                { name: "僵尸村民", hp: 2, head: "#5E7C38", body: "#684831", eye: "#900", leg: "#4A3525", wpn: { type: "axe", color: "#8D6E63" } }
             ],
             2: [
                 { name: "矿洞苦力怕", hp: 2, head: "#00AA00", body: "#009900", eye: "#000", leg: "#007700" },
-                { name: "矿工僵尸", hp: 2, head: "#4C7838", body: "#555555", eye: "#111", leg: "#333", weapon: "⛏️" },
+                { name: "矿工僵尸", hp: 2, head: "#4C7838", body: "#555555", eye: "#111", leg: "#333", wpn: { type: "pick", color: "#95A5A6" } },
                 { name: "地底蠹虫", hp: 1, head: "#888888", body: "#666666", eye: "#000", scale: 0.7, short: true },
-                { name: "岩石骷髅", hp: 2, head: "#A9A9A9", body: "#808080", eye: "#111", leg: "#666", weapon: "🗡️" },
+                { name: "岩石骷髅", hp: 2, head: "#A9A9A9", body: "#808080", eye: "#111", leg: "#666", wpn: { type: "sword", color: "#9E9E9E" } },
                 { name: "幽暗蜘蛛", hp: 2, head: "#2C221E", body: "#1E1714", eye: "#FF2222", scale: 0.9, short: true }
             ],
             3: [
-                { name: "巡逻掠夺者", hp: 2, head: "#72787A", body: "#523A28", eye: "#111", leg: "#2F3538", weapon: "🏹" },
-                { name: "铁斧卫道士", hp: 3, head: "#72787A", body: "#2C3E50", eye: "#111", leg: "#1A252F", weapon: "🪓" },
-                { name: "沼泽女巫", hp: 2, head: "#A38A70", body: "#4A235A", eye: "#220033", leg: "#2E1538", weapon: "🧪" },
-                { name: "铁甲僵尸", hp: 3, head: "#4C7838", body: "#D0D0D0", eye: "#111", leg: "#999", weapon: "🗡️" },
-                { name: "飞翼恼鬼", hp: 1, head: "#85C1E9", body: "#5DADE2", eye: "#FF0000", flying: true, scale: 0.8, weapon: "🗡️" }
+                { name: "巡逻掠夺者", hp: 2, head: "#72787A", body: "#523A28", eye: "#111", leg: "#2F3538", wpn: { type: "axe", color: "#B0BEC5" } },
+                { name: "铁斧卫道士", hp: 3, head: "#72787A", body: "#2C3E50", eye: "#111", leg: "#1A252F", wpn: { type: "axe", color: "#ECEFF1" } },
+                { name: "沼泽女巫", hp: 2, head: "#A38A70", body: "#4A235A", eye: "#220033", leg: "#2E1538", wpn: { type: "staff", color: "#2ECC71" } },
+                { name: "铁甲僵尸", hp: 3, head: "#4C7838", body: "#D0D0D0", eye: "#111", leg: "#999", wpn: { type: "sword", color: "#E0E0E0" } },
+                { name: "飞翼恼鬼", hp: 1, head: "#85C1E9", body: "#5DADE2", eye: "#FF0000", flying: true, scale: 0.8, wpn: { type: "sword", color: "#FFFFFF" } }
             ],
             4: [
-                { name: "沙漠尸壳", hp: 2, head: "#776B55", body: "#A8946D", eye: "#111", leg: "#6B5E45" },
-                { name: "冰原流浪者", hp: 2, head: "#C8D6E5", body: "#8395A7", eye: "#00FFFF", leg: "#576574", weapon: "🏹" },
-                { name: "金甲骷髅", hp: 3, head: "#DCDCDC", body: "#FFD700", eye: "#111", leg: "#DAA520", weapon: "⚔️" },
+                { name: "沙漠尸壳", hp: 2, head: "#776B55", body: "#A8946D", eye: "#111", leg: "#6B5E45", wpn: { type: "sword", color: "#D4AF37" } },
+                { name: "冰原流浪者", hp: 2, head: "#C8D6E5", body: "#8395A7", eye: "#00FFFF", leg: "#576574", wpn: { type: "staff", color: "#00FFFF" } },
+                { name: "金甲骷髅", hp: 3, head: "#DCDCDC", body: "#FFD700", eye: "#111", leg: "#DAA520", wpn: { type: "sword", color: "#FFD700" } },
                 { name: "夜空幻翼", hp: 2, head: "#1B263B", body: "#415A77", eye: "#00FF00", flying: true, wing: "#0D1B2A" },
-                { name: "唤魔者法师", hp: 3, head: "#72787A", body: "#1C1C1C", eye: "#FFD700", leg: "#111", weapon: "✨" }
+                { name: "唤魔者法师", hp: 3, head: "#72787A", body: "#1C1C1C", eye: "#FFD700", leg: "#111", wpn: { type: "staff", color: "#FFD700" } }
             ],
             5: [
                 { name: "红石苦力怕", hp: 2, head: "#AA0000", body: "#880000", eye: "#FFCC00", leg: "#550000" },
-                { name: "失控铁傀儡", hp: 3, head: "#D9D9D9", body: "#CCCCCC", eye: "#FF0000", leg: "#999999", scale: 1.2 },
+                { name: "失控铁傀儡", hp: 3, head: "#D9D9D9", body: "#CCCCCC", eye: "#FF0000", leg: "#999999", scale: 1.2, wpn: { type: "mace", color: "#BDC3C7" } },
                 { name: "闪电苦力怕", hp: 3, head: "#00CC66", body: "#00994D", eye: "#00FFFF", leg: "#006633" },
-                { name: "红石魔像", hp: 3, head: "#8B0000", body: "#B22222", eye: "#FFFF00", leg: "#4A0000", scale: 1.15, weapon: "🔨" },
-                { name: "发条骷髅", hp: 2, head: "#CD7F32", body: "#8B4513", eye: "#FF3300", leg: "#5C2E0E", weapon: "⚙️" }
+                { name: "红石魔像", hp: 3, head: "#8B0000", body: "#B22222", eye: "#FFFF00", leg: "#4A0000", scale: 1.15, wpn: { type: "mace", color: "#FF2222" } },
+                { name: "发条骷髅", hp: 2, head: "#CD7F32", body: "#8B4513", eye: "#FF3300", leg: "#5C2E0E", wpn: { type: "pick", color: "#E67E22" } }
             ],
             6: [
-                { name: "僵尸猪灵", hp: 2, head: "#E69999", body: "#5E7C38", eye: "#900", leg: "#6E4720", weapon: "⚔️" },
+                { name: "僵尸猪灵", hp: 2, head: "#E69999", body: "#5E7C38", eye: "#900", leg: "#6E4720", wpn: { type: "sword", color: "#FFD700" } },
                 { name: "狂暴疣猪兽", hp: 3, head: "#A0624E", body: "#7D4938", eye: "#FFF", scale: 1.1, short: true },
                 { name: "熔岩岩浆怪", hp: 2, head: "#3B170B", body: "#61210B", eye: "#FF9900", scale: 0.95, short: true },
                 { name: "下界恶魂", hp: 2, head: "#F2F2F2", body: "#E6E6E6", eye: "#990000", flying: true, scale: 1.15 },
-                { name: "猪灵蛮兵", hp: 3, head: "#E69999", body: "#2C2C2C", eye: "#FFF", leg: "#1A1A1A", weapon: "🪓" }
+                { name: "猪灵蛮兵", hp: 3, head: "#E69999", body: "#2C2C2C", eye: "#FFF", leg: "#1A1A1A", wpn: { type: "axe", color: "#FFD700" } }
             ],
             7: [
-                { name: "下界烈焰人", hp: 2, head: "#FFB700", body: "#FF6600", eye: "#FFF", flying: true, weapon: "🔥" },
-                { name: "凋灵骷髅", hp: 3, head: "#262626", body: "#1A1A1A", eye: "#888", leg: "#111", scale: 1.15, weapon: "🗡️" },
-                { name: "黑曜石卫士", hp: 3, head: "#240046", body: "#10002B", eye: "#9D4EDD", leg: "#000", scale: 1.15, weapon: "🪓" },
+                { name: "下界烈焰人", hp: 2, head: "#FFB700", body: "#FF6600", eye: "#FFF", flying: true, wpn: { type: "staff", color: "#FF4500" } },
+                { name: "凋灵骷髅", hp: 3, head: "#262626", body: "#1A1A1A", eye: "#888", leg: "#111", scale: 1.15, wpn: { type: "sword", color: "#555555" } },
+                { name: "黑曜石卫士", hp: 3, head: "#240046", body: "#10002B", eye: "#9D4EDD", leg: "#000", scale: 1.15, wpn: { type: "axe", color: "#9D4EDD" } },
                 { name: "灵魂沙幽灵", hp: 2, head: "#3D2B1F", body: "#261A12", eye: "#00FFFF", flying: true },
-                { name: "下界熔岩巨兽", hp: 3, head: "#800000", body: "#FF4500", eye: "#FFFF00", leg: "#4A0000", scale: 1.2 }
+                { name: "下界熔岩巨兽", hp: 3, head: "#800000", body: "#FF4500", eye: "#FFFF00", leg: "#4A0000", scale: 1.2, wpn: { type: "mace", color: "#FF5722" } }
             ],
             8: [
                 { name: "深海守卫者", hp: 2, head: "#588276", body: "#45695E", eye: "#FF5500", flying: true, short: true },
-                { name: "三叉戟溺尸", hp: 3, head: "#437A6E", body: "#3A5A52", eye: "#00FFFF", leg: "#2D423E", weapon: "🔱" },
+                { name: "三叉戟溺尸", hp: 3, head: "#437A6E", body: "#3A5A52", eye: "#00FFFF", leg: "#2D423E", wpn: { type: "trident", color: "#00E5FF" } },
                 { name: "远古守卫者", hp: 3, head: "#B8B5A8", body: "#8C897A", eye: "#00FFFF", flying: true, scale: 1.25 },
                 { name: "潜影贝卫兵", hp: 2, head: "#8E44AD", body: "#6C3483", eye: "#FFF", short: true },
-                { name: "绿宝石魔像", hp: 3, head: "#2ECC71", body: "#1E8449", eye: "#FFFF00", leg: "#145A32", scale: 1.15, weapon: "⚔️" }
+                { name: "绿宝石魔像", hp: 3, head: "#2ECC71", body: "#1E8449", eye: "#FFFF00", leg: "#145A32", scale: 1.15, wpn: { type: "sword", color: "#2ECC71" } }
             ],
             9: [
-                { name: "幽匿监守者", hp: 3, head: "#0B2B32", body: "#071D22", eye: "#00FFFF", leg: "#041114", scale: 1.35, weapon: "💠" },
+                { name: "幽匿监守者", hp: 3, head: "#0B2B32", body: "#071D22", eye: "#00FFFF", leg: "#041114", scale: 1.35, wpn: { type: "mace", color: "#00FFFF" } },
                 { name: "狂暴劫掠兽", hp: 3, head: "#5A5A5A", body: "#444444", eye: "#FF0000", leg: "#2E2E2E", scale: 1.25 },
-                { name: "虚空末影人", hp: 3, head: "#111111", body: "#080808", eye: "#FF00FF", leg: "#050505", scale: 1.2 },
-                { name: "合金重甲卫", hp: 3, head: "#4A3B3C", body: "#2B1B17", eye: "#FF4500", leg: "#1A110E", scale: 1.15, weapon: "🔥" },
-                { name: "深渊凋灵怪", hp: 3, head: "#1F1F1F", body: "#141414", eye: "#00E5FF", flying: true, scale: 1.2 }
+                { name: "虚空末影人", hp: 3, head: "#111111", body: "#080808", eye: "#FF00FF", leg: "#050505", scale: 1.2, wpn: { type: "sword", color: "#9B59B6" } },
+                { name: "合金重甲卫", hp: 3, head: "#4A3B3C", body: "#2B1B17", eye: "#FF4500", leg: "#1A110E", scale: 1.15, wpn: { type: "sword", color: "#FF4500" } },
+                { name: "深渊凋灵怪", hp: 3, head: "#1F1F1F", body: "#141414", eye: "#00E5FF", flying: true, scale: 1.2, wpn: { type: "staff", color: "#00E5FF" } }
             ],
             10: [
-                { name: "🐲 末影魔龙", hp: 3, head: "#111111", body: "#1A0526", eye: "#FF00FF", flying: true, wing: "#3B0954", scale: 1.4, weapon: "🔮" },
-                { name: "💀 三头凋灵王", hp: 3, head: "#222222", body: "#111111", eye: "#00FFFF", flying: true, scale: 1.35, weapon: "💀" },
-                { name: "⚡ 终界守卫长", hp: 3, head: "#10002B", body: "#240046", eye: "#FF00FF", leg: "#000", scale: 1.25, weapon: "⚡" },
-                { name: "👁️ 虚空审判者", hp: 3, head: "#2B0033", body: "#14001A", eye: "#00FFCC", flying: true, wing: "#4A0059", scale: 1.3 },
-                { name: "👑 混沌末影王", hp: 3, head: "#000000", body: "#1F0033", eye: "#FFD700", leg: "#0A0012", scale: 1.35, weapon: "🔱" }
+                { name: "🐲 末影魔龙", hp: 3, head: "#111111", body: "#1A0526", eye: "#FF00FF", flying: true, wing: "#3B0954", scale: 1.4 },
+                { name: "💀 三头凋灵王", hp: 3, head: "#222222", body: "#111111", eye: "#00FFFF", flying: true, scale: 1.35, wpn: { type: "staff", color: "#00FFFF" } },
+                { name: "⚡ 终界守卫长", hp: 3, head: "#10002B", body: "#240046", eye: "#FF00FF", leg: "#000", scale: 1.25, wpn: { type: "sword", color: "#FF00FF" } },
+                { name: "👁️ 虚空审判者", hp: 3, head: "#2B0033", body: "#14001A", eye: "#00FFCC", flying: true, wing: "#4A0059", scale: 1.3, wpn: { type: "trident", color: "#00FFCC" } },
+                { name: "👑 混沌末影王", hp: 3, head: "#000000", body: "#1F0033", eye: "#FFD700", leg: "#0A0012", scale: 1.35, wpn: { type: "axe", color: "#FFD700" } }
             ]
         };
 
@@ -593,7 +660,6 @@
                 d.setDate(d.getDate() + 1);
                 iterDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                 
-                // 1. 体能衰减扣除
                 if (!record.vitality.freeze && record.vitality.current > 0) {
                     record.vitality.inactiveDays = (record.vitality.inactiveDays || 0) + 1;
                     let decayIdx = Math.min(record.vitality.inactiveDays - 1, 6);
@@ -603,7 +669,6 @@
                 }
                 record.vitality.dailyAbsorbed = { date: iterDate, amount: 0 };
                 
-                // 2. 营地日常消耗 (阶梯硬币扣减)
                 let dailyTax = 5;
                 if (currentRank >= 9) dailyTax = 15;
                 else if (currentRank >= 7) dailyTax = 10;
@@ -627,9 +692,9 @@
         }
 
         // ========================================================
-        // ⚔️ 横版挂机 RPG 巡逻与战斗状态机 (静默视觉打击版)
+        // ⚔️ 横版挂机 RPG 巡逻与战斗状态机 (单手2D像素武器版)
         // ========================================================
-        let patrolState = 'WALKING'; // 'WALKING' | 'APPROACHING' | 'FIGHTING' | 'PAUSED'
+        let patrolState = 'WALKING';
         let currentMob = null;
         let nextMobSpawnTime = 0;
         let nextSwingTime = 0;
@@ -652,7 +717,7 @@
             if (armEl) { armEl.style.background = g.armor; }
             if (legLEl) { legLEl.style.background = g.pants; }
             if (legREl) { legREl.style.background = g.pants; }
-            if (swordEl) { swordEl.innerText = g.weapon; }
+            if (swordEl) { swordEl.innerHTML = renderPixelWeaponSVG(g.wpnType, g.wpnColor, g.glowColor); }
         }
 
         function setSteveWalking(walking) {
@@ -691,7 +756,13 @@
             const bodyH = tpl.short ? 20 : 32;
             const legHtml = tpl.short ? '' : `<div class="mob-legs"><div class="mob-leg" style="background:${tpl.leg || tpl.body}"></div><div class="mob-leg" style="background:${tpl.leg || tpl.body}"></div></div>`;
             const wingHtml = tpl.wing ? `<div class="mob-wing" style="background:${tpl.wing}"></div>` : '';
-            const weaponHtml = tpl.weapon ? `<div class="mob-weapon">${tpl.weapon}</div>` : '';
+            
+            // 💡 怪物单手武器绑定在怪物前置手臂末端
+            const armAndWeaponHtml = tpl.wpn ? `
+                <div class="mob-arm" style="background:${tpl.body};">
+                    <div class="mob-weapon-hand">${renderPixelWeaponSVG(tpl.wpn.type, tpl.wpn.color, 'none')}</div>
+                </div>
+            ` : '';
 
             el.innerHTML = `
                 <div class="mob-tag">Lv.${rank} ${tpl.name}</div>
@@ -704,8 +775,8 @@
                         <div class="mob-mouth"></div>
                     </div>
                     <div class="mob-body" style="background:${tpl.body}; height:${bodyH}px;"></div>
+                    ${armAndWeaponHtml}
                     ${legHtml}
-                    ${weaponHtml}
                 </div>
             `;
             stage.appendChild(el);
@@ -722,9 +793,9 @@
 
         function performPatrolStrike() {
             if (!currentMob || !currentMob.el) return;
-            const sword = document.getElementById('steve-sword');
+            const arm = document.getElementById('steve-arm');
             const slash = document.getElementById('steve-slash');
-            if (sword) { sword.classList.remove('anim-attack'); void sword.offsetWidth; sword.classList.add('anim-attack'); }
+            if (arm) { arm.classList.remove('anim-arm-attack'); void arm.offsetWidth; arm.classList.add('anim-arm-attack'); }
             if (slash) { slash.classList.remove('anim-slash'); void slash.offsetWidth; slash.classList.add('anim-slash'); }
 
             setTimeout(() => {
@@ -732,13 +803,11 @@
                 currentMob.hp -= 1;
                 currentMob.el.classList.add('mob-hurt');
 
-                // 更新头顶像素血条
                 const segs = currentMob.el.querySelectorAll('.mob-hp-seg');
                 segs.forEach((s, idx) => {
                     if (idx >= currentMob.hp) s.classList.add('empty');
                 });
 
-                // 弹出伤害飘字
                 const dmg = document.createElement('div');
                 dmg.className = 'dmg-popup';
                 dmg.innerText = currentMob.hp === 0 ? '💥 斩杀!' : '-1';
@@ -749,7 +818,7 @@
                     const dropX = currentMob.x;
                     currentMob = null;
                     patrolState = 'WALKING';
-                    nextMobSpawnTime = Date.now() + 5000 + Math.random() * 5000; // 5~10秒后遇到下一个怪物
+                    nextMobSpawnTime = Date.now() + 5000 + Math.random() * 5000;
 
                     setTimeout(() => {
                         deadEl.classList.remove('mob-hurt');
@@ -802,7 +871,7 @@
             if (isAnimating || isGameRunning) return;
 
             const now = Date.now();
-            const steveRightX = window.innerWidth * 0.28 + 68; // 史蒂夫前方交战距离
+            const steveRightX = window.innerWidth * 0.28 + 68;
 
             if (patrolState === 'WALKING') {
                 if (now >= nextMobSpawnTime) {
@@ -810,7 +879,7 @@
                 }
             } else if (patrolState === 'APPROACHING') {
                 if (!currentMob) { patrolState = 'WALKING'; return; }
-                currentMob.x -= 2.2; // 随地面向左平移靠近史蒂夫
+                currentMob.x -= 2.2;
                 currentMob.el.style.left = currentMob.x + 'px';
 
                 if (currentMob.x <= steveRightX) {
@@ -818,7 +887,7 @@
                     currentMob.el.style.left = currentMob.x + 'px';
                     currentMob.el.classList.remove('mob-walking');
                     patrolState = 'FIGHTING';
-                    setSteveWalking(false); // 停步交战
+                    setSteveWalking(false);
                     nextSwingTime = now + 200;
                 }
             } else if (patrolState === 'FIGHTING') {
@@ -837,6 +906,7 @@
             if (!dbClient) return alert("数据库尚未初始化完成，请稍后再试或检查网络。");
             document.getElementById('start-overlay').style.display='none';
             if (!isMuted) { bgm.play().catch(e=>{}); } 
+            updateSteveGear(1);
             await syncData(); syncInterval = setInterval(syncData, 5000); 
             setInterval(processCooldowns, 1000); setInterval(renderBuffs, 1000); 
             startPatrolEngine();
@@ -869,7 +939,6 @@
                 currentData = record; 
                 let cloudCoins = record.coins || 0;
                 
-                // 🎁 检测空投悬赏宝箱
                 if (record.activeEvent && record.activeEvent.expireTime > Date.now()) {
                     activeEventData = record.activeEvent;
                     if (chest && chest.style.display !== 'block') {
@@ -882,7 +951,6 @@
                     stopFloatingChest();
                 }
 
-                // 📜 契约按钮呼吸提示
                 const contractBtn = document.getElementById('btnContractMain');
                 if (contractBtn) {
                     if (record.activeContract && record.activeContract.status === 'active') {
@@ -992,7 +1060,7 @@
             if (btnUpgrade) { btnUpgrade.innerText = rank >= RANK_DATA.length ? "已达最高境界 👑" : `🆙 突破界限 (需花费 ${rData.cost} 币)`; btnUpgrade.disabled = rank >= RANK_DATA.length || coins < rData.cost; }
 
             renderVitalityBar(currentData.vitality.current);
-            updateSteveGear(rank); // 同步史蒂夫全身装备与武器
+            updateSteveGear(rank);
         }
 
         function openRankModal() {
@@ -1065,7 +1133,6 @@
                 let msDisplay = Number.isInteger(msVal) ? msVal : msVal.toFixed(1);
                 let milestoneUI = task.milestone ? `<span class="badge" style="background:#8e44ad; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">属性: ${MS_NAMES[task.milestone]} +${msDisplay}</span>` : '';
                 
-                // 💡 真实到手收益可视化透出
                 let actualReward = Math.floor(task.price * multi.coin);
                 let rewardHtml = `+${task.price} 🪙`;
                 if (multi.coin < 1.0) {
@@ -1176,9 +1243,6 @@
             } catch (e) { alert("申报异常，请重试"); }
         }
 
-        // ========================================================
-        // 🎁 空中飘浮空投宝箱控制逻辑
-        // ========================================================
         function startFloatingChest() { if(!chestFloatInterval) { moveChest(); chestFloatInterval = setInterval(moveChest, 3500); } }
         function stopFloatingChest() { clearInterval(chestFloatInterval); chestFloatInterval = null; }
         function moveChest() { if(!chest) return; const randomX = Math.floor(Math.random() * 70) + 12, randomY = Math.floor(Math.random() * 20) + 6; chest.style.left = randomX + '%'; chest.style.top = randomY + '%'; }
@@ -1225,9 +1289,6 @@
             }
         }
 
-        // ========================================================
-        // 👁️ 试炼高塔模块 (含防作弊单例监听器修复)
-        // ========================================================
         function openGameModal() {
             if (!currentData || !currentData.towerConfig) return alert('高塔参数未同步，请重试');
             [sModal, rModal, lModal, cfModal, rankModal, ctModal, msModal].forEach(m => { if(m) m.style.display = 'none'; });
@@ -1269,7 +1330,6 @@
             const gridContainer = document.getElementById('schulteGrid'); gridContainer.style.gridTemplateColumns = `repeat(${currentGameSize}, 1fr)`; gridContainer.innerHTML = '';
             numberPool.forEach(num => { const cell = document.createElement('div'); cell.className = 'schulte-cell'; cell.innerText = num; cell.style.fontSize = currentGameSize === 7 ? '20px' : '24px'; cell.onclick = () => handleCellClick(cell, num); gridContainer.appendChild(cell); });
             
-            // 💡 修复：使用 ontouchstart 直接赋值，避免重复叠加监听器导致内存泄漏
             gridContainer.ontouchstart = function(e) { if (e.touches.length > 1) { e.preventDefault(); triggerAntiCheat(); } };
             
             clearInterval(gameClockTimer); clearInterval(potionTimer);
@@ -1329,7 +1389,6 @@
                     setTimeout(() => {
                         localStorage.setItem('andy_last_seen_coins', newCoins); currentData.coins = newCoins; currentData.currentRank = nextRank; updateValue(newCoins);
                         let banner = document.createElement('div'); banner.className = 'level-up-banner';
-                        // 💡 修复：使用高亮金黄色与新边框色渲染突破横幅
                         banner.innerHTML = `<div style="font-size:40px; color:#fff;">境界突破</div><div style="font-size:70px; color:#ffb700;">${nextRData.title}</div>`;
                         document.body.appendChild(banner); setTimeout(() => banner.remove(), 3500);
                         if(uiLayer) uiLayer.style.opacity = '1'; isAnimating = false; setSteveWalking(true);
@@ -1343,13 +1402,19 @@
         function renderBuffs() { if (!currentData || !currentData.activeBuffs) return; const container = document.getElementById('activeBuffsContainer'); if (!container) return; const now = Date.now(); let hasActive = false; let html = ''; for (const [id, buff] of Object.entries(currentData.activeBuffs)) { const remain = buff.endTime - now; if (remain > 0) { hasActive = true; let days = Math.floor(remain / (24 * 3600000)), hours = Math.floor((remain % (24 * 3600000)) / 3600000), mins = Math.floor((remain % 3600000) / 60000), secs = Math.floor((remain % 60000) / 1000); let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}:${mins<10?'0'+mins:mins}:${secs<10?'0'+secs:secs}`; html += `<div class="buff-pill"><span>${buff.icon} ${buff.name}</span><span style="color:#ffb700;">⏳ ${timeStr}</span></div>`; } } container.innerHTML = hasActive ? html : ''; }
         function processCooldowns() { if(!currentData || !currentData.cooldowns || !currentData.taskItems) return; const now = Date.now(); currentData.taskItems.forEach(task => { const btn = document.getElementById(`btn-${task.id}`); if (!btn) return; const remain = (currentData.cooldowns[task.id] || 0) - now; if(remain > 0) { btn.classList.add('in-cd'); const totalMs = (task.hours || 3) * 3600000; btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg'); const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000); let timerEl = btn.querySelector('.cd-timer'); if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; } else btn.classList.remove('in-cd'); }); }
         
-        // 🎉 大场面领奖与受袭演出（带音效，与巡逻引擎平滑切换）
+        // 🎉 大场面领奖与受袭演出（单手挥砍联动）
         function playAttackSequence(amount, finalCoins) {
             isAnimating = true; clearPatrolMob(); setSteveWalking(false);
             if(uiLayer) uiLayer.style.opacity = '0.15';
             if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "35%"; }
-            let sword = document.getElementById('steve-sword');
-            setTimeout(() => { if(sword) { sword.classList.remove('anim-attack'); void sword.offsetWidth; sword.classList.add('anim-attack'); } playSound('hit'); setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); }, 400);
+            let arm = document.getElementById('steve-arm');
+            let slash = document.getElementById('steve-slash');
+            setTimeout(() => {
+                if(arm) { arm.classList.remove('anim-arm-attack'); void arm.offsetWidth; arm.classList.add('anim-arm-attack'); }
+                if(slash) { slash.classList.remove('anim-slash'); void slash.offsetWidth; slash.classList.add('anim-slash'); }
+                playSound('hit');
+                setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150);
+            }, 400);
             setTimeout(() => { if(heroCreeper) heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#2ecc71"; } }, 1100);
             setTimeout(() => { updateValue(finalCoins); resetStage(); }, 2800);
         }

@@ -6,8 +6,9 @@
     <title>家长控制面板</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px 10px; background: #121212; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 40px;}
+        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 60px;}
         
+        /* 卡片折叠引擎样式 */
         .card { background: #1e1e1e; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); border: 1px solid #333; overflow: hidden; transition: all 0.3s ease; }
         .card-header { padding: 15px 20px; background: #252525; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; border-bottom: 1px solid transparent; transition: background 0.2s; }
         .card-header:active { background: #2a2a2a; }
@@ -26,19 +27,22 @@
         .log-item { background: #2a2a2a; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; border-left: 4px solid #007aff; display: flex; justify-content: space-between; align-items: center;}
         .log-time { color: #888; font-family: monospace; font-size: 11px; margin-right: 8px; min-width: 80px;}
         .log-action { color: #ddd; font-weight: bold; flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .log-amount { color: #27ae60; font-weight: bold; min-width: 30px; text-align: right; }
+        .log-amount { color: #27ae60; font-weight: bold; min-width: 45px; text-align: right; }
         .log-amount.sub { color: #e74c3c; }
         .log-amount.milestone { color: #ffb700; }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;}
         button { padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.1s; }
-        button:active { transform: scale(0.95); }
+        button:active:not(:disabled) { transform: scale(0.95); }
+        button:disabled { opacity: 0.25; cursor: not-allowed; }
         .btn-add { background: #1c7a44; color: white; }
         .btn-sub { background: #962d22; color: white; }
         .btn-primary { background: #007aff; color: white; width: 100%; }
         .btn-danger { background: #c0392b; color: white; padding: 8px; font-size: 12px; }
         .btn-edit { background: #f39c12; color: white; padding: 8px; font-size: 12px; }
         .input-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #121212; color: white; font-size: 15px; box-sizing: border-box; }
+        .input-box:focus, .config-input:focus, .matrix-input:focus { outline: none; border-color: #007aff; box-shadow: 0 0 0 2px rgba(0,122,255,0.25); }
+        textarea.input-box { resize: vertical; min-height: 80px; font-family: inherit; line-height: 1.5; }
         
         .flex-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;}
         .switch { position: relative; width: 44px; height: 24px; display: inline-block; }
@@ -48,12 +52,12 @@
         input:checked + .slider { background-color: #34c759; }
         input:checked + .slider:before { transform: translateX(20px); }
         
-        #log-status { color: #888; font-size: 12px; text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; background: rgba(18,18,18,0.9); backdrop-filter: blur(5px); z-index: 1000;}
+        #log-status { color: #888; font-size: 12px; text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; background: rgba(18,18,18,0.92); backdrop-filter: blur(5px); z-index: 1000; border-top: 1px solid #2a2a2a;}
 
         .shop-item { background: #2a2a2a; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #444;}
         
-        .config-input { width: 60px; padding: 5px; text-align: center; border-radius: 4px; border: 1px solid #555; background: #222; color: #fff;}
-        .matrix-input { width: 40px; padding: 4px; text-align: center; border-radius: 4px; border: 1px solid #3498db; background: #111; color: #fff; font-size: 12px;}
+        .config-input { width: 60px; padding: 6px; text-align: center; border-radius: 6px; border: 1px solid #555; background: #222; color: #fff; font-size: 14px;}
+        .matrix-input { width: 42px; padding: 6px 2px; text-align: center; border-radius: 6px; border: 1px solid #3498db; background: #111; color: #fff; font-size: 13px;}
         .badge-milestone { background: #8e44ad; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; border: 1px solid #9b59b6;}
         .badge-stamina { background: #2980b9; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; border: 1px solid #3498db;}
 
@@ -63,7 +67,7 @@
 </head>
 <body>
     <div class="container">
-        <!-- 资产操作区 -->
+        <!-- 💰 资产操作区 -->
         <div class="card" id="card-assets">
             <div class="card-header" onclick="toggleCard('card-assets')">
                 <h3>💰 资产余额 <span id="rankBadge" class="rank-info">读取中...</span></h3>
@@ -92,7 +96,7 @@
                 <span class="toggle-icon">▼</span>
             </div>
             <div class="card-content">
-                <div id="vitalityStatusText" style="margin-bottom:12px; font-size:16px; font-weight:bold; color:#3498db; text-align:center; background: #2a2a2a; padding: 10px; border-radius: 6px;">当前体力值: 同步中...</div>
+                <div id="vitalityStatusText" style="margin-bottom:12px; font-size:15px; font-weight:bold; color:#3498db; text-align:center; background: #2a2a2a; padding: 10px; border-radius: 6px;">当前体力值: 同步中...</div>
                 
                 <div style="background: rgba(52,152,219,0.1); padding: 10px; border-radius: 8px; border: 1px dashed #3498db; margin-bottom: 15px;">
                     <div style="font-size: 13px; color: #fff; margin-bottom: 8px; font-weight: bold;">[GM 神明干预] 不受单日恢复极值限制</div>
@@ -119,14 +123,14 @@
                 
                 <hr style="border-color:#333; margin:15px 0;">
                 <div style="font-size: 13px; color: #ccc; margin-bottom: 10px;">📉 连续未锻炼 1~7 天扣减矩阵设定：</div>
-                <div style="display: flex; gap: 5px; justify-content: space-between; margin-bottom: 15px;">
-                    <input type="number" id="mat_1" class="matrix-input" step="0.1"><input type="number" id="mat_2" class="matrix-input" step="0.1"><input type="number" id="mat_3" class="matrix-input" step="0.1"><input type="number" id="mat_4" class="matrix-input" step="0.1"><input type="number" id="mat_5" class="matrix-input" step="0.1"><input type="number" id="mat_6" class="matrix-input" step="0.1"><input type="number" id="mat_7" class="matrix-input" step="0.1">
+                <div style="display: flex; gap: 4px; justify-content: space-between; margin-bottom: 15px;">
+                    <input type="number" id="mat_1" class="matrix-input" step="0.1" title="第1天"><input type="number" id="mat_2" class="matrix-input" step="0.1" title="第2天"><input type="number" id="mat_3" class="matrix-input" step="0.1" title="第3天"><input type="number" id="mat_4" class="matrix-input" step="0.1" title="第4天"><input type="number" id="mat_5" class="matrix-input" step="0.1" title="第5天"><input type="number" id="mat_6" class="matrix-input" step="0.1" title="第6天"><input type="number" id="mat_7" class="matrix-input" step="0.1" title="第7天">
                 </div>
                 <button class="btn-primary" onclick="saveVitalityConfig()" style="background:#8e44ad; font-size:14px; padding:10px;">💾 保存体能法则与矩阵</button>
             </div>
         </div>
 
-        <!-- 契约审批中心 -->
+        <!-- 📜 对赌契约审批中心 -->
         <div class="card" id="card-contract">
             <div class="card-header" onclick="toggleCard('card-contract')">
                 <h3 style="color:#e67e22;">📜 对赌契约审批</h3>
@@ -135,7 +139,7 @@
             <div class="card-content" id="adminContractArea"></div>
         </div>
 
-        <!-- 动态悬赏任务管理 -->
+        <!-- ⚔️ 动态悬赏任务管理 -->
         <div class="card" id="card-tasks">
             <div class="card-header" onclick="toggleCard('card-tasks')">
                 <h3 style="color:#2ecc71;">⚔️ 任务告示牌管理</h3>
@@ -169,13 +173,16 @@
                         <input type="number" id="t_stamina" class="input-box" style="flex:1; border-color:#3498db; background: #1a1a1a;" placeholder="体力(+)" step="0.1">
                         <input type="number" id="t_hours" class="input-box" style="flex:1;" placeholder="冷却(时)">
                     </div>
-                    <button id="btn_add_task" class="btn-primary" onclick="addTaskItem()" style="background:#27ae60;">➕ 上架新任务</button>
+                    <div style="display:flex; gap:8px;">
+                        <button id="btn_add_task" class="btn-primary" onclick="addTaskItem()" style="background:#27ae60; flex:2;">➕ 上架新任务</button>
+                        <button id="btn_cancel_edit" class="btn-primary" onclick="cancelEditTask()" style="background:#555; flex:1; display:none;">❌ 取消</button>
+                    </div>
                 </div>
                 <div id="adminTaskList" style="margin-top: 15px;"></div>
             </div>
         </div>
 
-        <!-- 神秘商店货架管理 -->
+        <!-- 🛒 神秘商店货架管理 -->
         <div class="card collapsed" id="card-shop">
             <div class="card-header" onclick="toggleCard('card-shop')">
                 <h3 style="color:#9b59b6;">🛒 神秘商店管理</h3>
@@ -185,7 +192,7 @@
                 <div style="display:flex; flex-direction: column; gap: 10px; background: #2a2a2a; padding: 15px; border-radius: 10px; border: 1px solid #444;">
                     <div style="display:flex; gap:10px;">
                         <select id="s_icon" class="input-box" style="flex:1; padding: 12px 5px; text-align: center;">
-                            <option value="🎫">🎫</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="💎">💎</option><option value="🥇">🥇</option><option value="🔮">🔮</option><option value="⚡">⚡</option><option value="✨">✨</option><option value="📜">📜</option><option value="🍎">🍎</option><option value="🍖">🍖</option><option value="👑">👑</option>
+                            <option value="🎫">🎫</option><option value="⚔️">⚔️</option><option value="🛡️">🛡️</option><option value="⛏️">⛏️</option><option value="🪓">🪓</option><option value="💎">💎</option><option value="🥇">🥇</option><option value="🟢">🟢</option><option value="🔮">🔮</option><option value="🪵">🪵</option><option value="🪨">🪨</option><option value="🧪">🧪</option><option value="⚡">⚡</option><option value="✨">✨</option><option value="📜">📜</option><option value="🍎">🍎</option><option value="🍖">🍖</option><option value="🍞">🍞</option><option value="🗝️">🗝️</option><option value="👑">👑</option><option value="🪟">🪟</option>
                         </select>
                         <input type="text" id="s_name" class="input-box" style="flex:3;" placeholder="商品名称">
                     </div>
@@ -200,7 +207,7 @@
             </div>
         </div>
 
-        <!-- 💡 新增：激活法宝监控 -->
+        <!-- ✨ 激活法宝监控 -->
         <div class="card collapsed" id="card-buffs">
             <div class="card-header" onclick="toggleCard('card-buffs')">
                 <h3 style="color:#f1c40f;">✨ 激活法宝监控</h3>
@@ -211,21 +218,52 @@
             </div>
         </div>
 
-        <!-- 高塔经济学配置面板 -->
+        <!-- 🎁 临时空投悬赏管理 -->
+        <div class="card collapsed" id="card-event">
+            <div class="card-header" onclick="toggleCard('card-event')">
+                <h3 style="color:#e67e22;">🎁 临时空投悬赏 (宝箱)</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="card-content">
+                <div id="activeEventStatus" style="background:#2a2a2a; padding:12px; border-radius:8px; border:1px solid #444; margin-bottom:12px; font-size:13px; text-align:left;">
+                    当前无生效中的空投宝箱
+                </div>
+                <button class="btn-primary" style="background:#e67e22;" onclick="openTaskModal()">✨ 投放 / 编辑空投宝箱</button>
+            </div>
+        </div>
+
+        <!-- 🏰 高塔法则配置 -->
         <div class="card collapsed" id="card-tower">
             <div class="card-header" onclick="toggleCard('card-tower')">
                 <h3 style="color:#d35400;">🏰 高塔法则配置</h3>
                 <span class="toggle-icon">▼</span>
             </div>
             <div class="card-content">
+                <div id="towerDailyMonitor" style="background:#2a2a2a; padding:8px 12px; border-radius:6px; font-size:13px; color:#ffb700; text-align:center; margin-bottom:12px; font-weight:bold;">
+                    今日高塔监控: 读取中...
+                </div>
                 <div style="display:flex; flex-direction:column; gap:12px; font-size: 14px;">
                     <div class="flex-row"><span style="color:#aaa;">每日免费次数:</span><input type="number" id="tc_free" class="config-input"></div>
                     <div class="flex-row"><span style="color:#aaa;">每日领奖上限:</span><input type="number" id="tc_max" class="config-input"></div>
+                    <hr style="border-color:#333; margin:0;">
+                    <div class="flex-row">
+                        <span style="color:#2ecc71; font-weight:bold;">🟢 普通(6x6)</span>
+                        <div>门票: <input type="number" id="tc_n_t" class="config-input" style="width:45px;"> | 奖: <input type="number" id="tc_n_r" class="config-input" style="width:45px;"></div>
+                    </div>
+                    <div class="flex-row">
+                        <span style="color:#e67e22; font-weight:bold;">🔴 困难(7x7)</span>
+                        <div>门票: <input type="number" id="tc_h_t" class="config-input" style="width:45px;"> | 奖: <input type="number" id="tc_h_r" class="config-input" style="width:45px;"></div>
+                    </div>
+                    <div class="flex-row">
+                        <span style="color:#9b59b6; font-weight:bold;">💀 生存(7x7)</span>
+                        <div>门票: <input type="number" id="tc_s_t" class="config-input" style="width:45px;"> | 奖: <input type="number" id="tc_s_r" class="config-input" style="width:45px;"></div>
+                    </div>
                     <button class="btn-primary" onclick="saveTowerConfig()" style="background:#d35400; margin-top:5px;">💾 覆写高塔法则</button>
                 </div>
             </div>
         </div>
 
+        <!-- 🕒 全局增减记录 -->
         <div class="card collapsed" id="card-logs">
             <div class="card-header" onclick="toggleCard('card-logs')">
                 <h3>🕒 全局增减记录</h3>
@@ -234,7 +272,26 @@
             <div class="card-content" id="childLogList" style="max-height: 400px; overflow-y: auto;"></div>
         </div>
     </div>
+    
     <div id="log-status">数据建立握手...</div>
+
+    <!-- 🎁 临时悬赏宝箱编辑弹窗 -->
+    <div id="taskModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1100; display: none; justify-content: center; align-items: center;">
+        <div style="background: #2c2c2e; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; box-sizing: border-box;">
+            <h3 style="margin-top: 0; text-align: center; color: white; font-size: 20px; margin-bottom: 20px;">发布临时悬赏宝箱</h3>
+            <div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 8px; color: #a1a1aa; font-size: 14px;">问题描述 (可回车换行)</label><textarea id="t_question" class="input-box"></textarea></div>
+            <div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 8px; color: #a1a1aa; font-size: 14px;">标准答案</label><input type="text" id="t_answer" class="input-box"></div>
+            <div class="grid">
+                <div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 8px; color: #a1a1aa; font-size: 14px;">奖励币数</label><input type="number" id="t_reward" class="input-box"></div>
+                <div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 8px; color: #a1a1aa; font-size: 14px;">有效时效 (小时)</label><input type="number" id="t_hours_event" class="input-box"></div>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 15px;">
+                <button style="background: #555; color: white; flex: 1; padding: 12px; border-radius: 8px;" onclick="closeTaskModal()">取消</button>
+                <button style="background: #c0392b; color: white; flex: 1; padding: 12px; border-radius: 8px;" onclick="clearActiveEvent()">撤回宝箱</button>
+                <button style="background: #27ae60; color: white; flex: 1.2; padding: 12px; border-radius: 8px;" onclick="saveTask()">发布至云端</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
@@ -243,8 +300,18 @@
         
         let currentData = null; let editingTaskId = null; const ROW_ID = 1; 
 
-        // 💡 加入 card-buffs 到记忆数组
-        const CARD_IDS = ['card-assets', 'card-vitality', 'card-contract', 'card-tasks', 'card-shop', 'card-buffs', 'card-tower', 'card-logs'];
+        // 💡 浮点数一位小数精度锁
+        function round1(num) { return Math.round((Number(num) || 0) * 10) / 10; }
+
+        // 💡 焦点保护工具：如果家长正在输入某表单，5秒轮询不强行重置其数值
+        function setInputValueIfNotFocused(id, val) {
+            const el = document.getElementById(id);
+            if (el && document.activeElement !== el) {
+                el.value = val;
+            }
+        }
+
+        const CARD_IDS = ['card-assets', 'card-vitality', 'card-contract', 'card-tasks', 'card-shop', 'card-buffs', 'card-event', 'card-tower', 'card-logs'];
         
         function initCardStates() {
             CARD_IDS.forEach(id => {
@@ -273,6 +340,12 @@
         const MILESTONES = [ { count: 5, reward: 50, name: "铁阶" }, { count: 10, reward: 100, name: "金阶" }, { count: 20, reward: 200, name: "钻石" }, { count: 30, reward: 300, name: "绿宝石" }, { count: 50, reward: 500, name: "下界之星" }, { count: 75, reward: 800, name: "龙蛋" }, { count: 100, reward: 1200, name: "终界信标" }, { count: 250, reward: 3000, name: "不死图腾" }, { count: 500, reward: 6000, name: "基岩之心" } ];
         const MS_NAMES = { strength: '力量', agility: '敏捷', endurance: '耐力', intelligence: '智力', spirit: '精神', stamina: '体力' };
 
+        function getTodayStr() { 
+            const parts = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+            let y, m, d; parts.forEach(p => { if(p.type==='year') y=p.value; if(p.type==='month') m=p.value; if(p.type==='day') d=p.value; });
+            return `${y}-${m}-${d}`;
+        }
+
         function getFormattedTime() { const now = new Date(); return `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`; }
 
         async function getCoins() {
@@ -284,47 +357,129 @@
                 currentData.currentRank = currentData.currentRank || 1;
                 currentData.shopItems = currentData.shopItems || [];
                 currentData.taskItems = currentData.taskItems || [];
-                currentData.activeBuffs = currentData.activeBuffs || {}; // 💡 保护初始化
+                currentData.activeBuffs = currentData.activeBuffs || {};
+                currentData.schulteDaily = currentData.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
                 currentData.vitality = currentData.vitality || { current: 10.0, freeze: false };
+                currentData.milestones = currentData.milestones || {};
+                currentData.milestoneClaimed = currentData.milestoneClaimed || {};
+
+                // 💡 [底层基线]: 自动数据清洗与属性映射迁移 (OTA Migration)
+                const MIGRATION_MAP = { 'run': 'strength', 'jump': 'agility', 'contract': 'endurance', 'read': 'intelligence', 'piano': 'spirit' };
+                let needsMigration = false;
+
+                currentData.taskItems.forEach(t => {
+                    if (t.milestone && MIGRATION_MAP[t.milestone]) { t.milestone = MIGRATION_MAP[t.milestone]; needsMigration = true; }
+                });
+
+                Object.keys(MIGRATION_MAP).forEach(oldKey => {
+                    let newKey = MIGRATION_MAP[oldKey];
+                    if (currentData.milestones[oldKey] !== undefined) {
+                        currentData.milestones[newKey] = currentData.milestones[oldKey];
+                        delete currentData.milestones[oldKey];
+                        needsMigration = true;
+                    }
+                    if (currentData.milestoneClaimed[oldKey] !== undefined) {
+                        currentData.milestoneClaimed[newKey] = currentData.milestoneClaimed[oldKey];
+                        delete currentData.milestoneClaimed[oldKey];
+                        needsMigration = true;
+                    }
+                });
+
+                Object.keys(MS_NAMES).forEach(k => {
+                    currentData.milestones[k] = round1(currentData.milestones[k] || 0);
+                    currentData.milestoneClaimed[k] = currentData.milestoneClaimed[k] || [];
+                });
+
+                if (needsMigration) {
+                    await dbClient.from('gamedata').update({ taskItems: currentData.taskItems, milestones: currentData.milestones, milestoneClaimed: currentData.milestoneClaimed }).eq('id', ROW_ID);
+                }
+                
                 let matrix = currentData.vitalityConfig || [0.2, 0.5, 1.0, 1.5, 2.0, 2.3, 2.5];
-                for(let i=1; i<=7; i++) document.getElementById('mat_'+i).value = matrix[i-1];
+                for(let i=1; i<=7; i++) {
+                    setInputValueIfNotFocused('mat_'+i, matrix[i-1]);
+                }
                 
-                if(!currentData.towerConfig) currentData.towerConfig = { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
+                if(!currentData.towerConfig) {
+                    currentData.towerConfig = { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
+                }
+                bindTowerConfigUI(currentData.towerConfig);
                 
-                document.getElementById('tc_free').value = currentData.towerConfig.freePlays; 
-                document.getElementById('tc_max').value = currentData.towerConfig.maxRewards;
-                
-                let rData = RANK_DATA[currentData.currentRank - 1];
+                let rData = RANK_DATA[currentData.currentRank - 1] || RANK_DATA[0];
                 document.getElementById('currentCoins').innerText = currentData.coins;
                 document.getElementById('rankBadge').innerText = `${rData.title} (Lv.${currentData.currentRank})`;
                 document.getElementById('capText').innerText = `当前背包容量上限: ${rData.cap === Infinity ? '无限' : rData.cap}`;
                 
-                document.getElementById('freezeToggle').checked = currentData.vitality.freeze;
-                let displayVit = Number.isInteger(currentData.vitality.current) ? currentData.vitality.current : currentData.vitality.current.toFixed(1);
+                document.getElementById('freezeToggle').checked = !!currentData.vitality.freeze;
+                let vitNum = round1(currentData.vitality.current);
+                let displayVit = Number.isInteger(vitNum) ? vitNum.toFixed(1) : vitNum.toFixed(1);
                 document.getElementById('vitalityStatusText').innerText = currentData.vitality.freeze ? `🕊️ 和平模式生效中 (体力锁定 ${displayVit})` : `当前体力值: ${displayVit} / 10.0`;
+
+                // 今日高塔实时监控
+                let sWin = (currentData.schulteDaily.lastDate === getTodayStr()) ? (currentData.schulteDaily.winCount || 0) : 0;
+                let sPlay = (currentData.schulteDaily.lastDate === getTodayStr()) ? (currentData.schulteDaily.playCount || 0) : 0;
+                let tMax = currentData.towerConfig.maxRewards ?? 5;
+                let tFree = currentData.towerConfig.freePlays ?? 5;
+                document.getElementById('towerDailyMonitor').innerText = `👁️ 今日高塔监控 — 已开局: ${sPlay}次 (免费额度:${tFree}) | 已领奖: ${sWin} / ${tMax}次`;
 
                 renderLogs(currentData.childLogs); 
                 renderShopItems(currentData.shopItems); 
                 renderTaskItems(currentData.taskItems); 
                 renderContract(currentData.activeContract);
-                renderActiveBuffs(currentData.activeBuffs); // 💡 渲染Buff面版
+                renderActiveBuffs(currentData.activeBuffs);
+                renderActiveEvent(currentData.activeEvent);
                 
                 document.getElementById('log-status').innerText = "✅ 数据同步良好 - " + new Date().toLocaleTimeString();
             } catch (e) { document.getElementById('log-status').innerText = "❌ 刷新失败: " + e.message; }
         }
 
-        // 💡 新增：渲染当前激活法宝的逻辑
+        function bindTowerConfigUI(conf) {
+            if(!conf) return;
+            setInputValueIfNotFocused('tc_free', conf.freePlays ?? 5);
+            setInputValueIfNotFocused('tc_max', conf.maxRewards ?? 5);
+            setInputValueIfNotFocused('tc_n_t', conf.normal?.ticket ?? 1);
+            setInputValueIfNotFocused('tc_n_r', conf.normal?.reward ?? 2);
+            setInputValueIfNotFocused('tc_h_t', conf.hard?.ticket ?? 1);
+            setInputValueIfNotFocused('tc_h_r', conf.hard?.reward ?? 4);
+            setInputValueIfNotFocused('tc_s_t', conf.survival?.ticket ?? 2);
+            setInputValueIfNotFocused('tc_s_r', conf.survival?.reward ?? 6);
+        }
+
+        async function saveTowerConfig() {
+            const conf = currentData.towerConfig || {};
+            conf.freePlays = parseInt(document.getElementById('tc_free').value) || 0;
+            conf.maxRewards = parseInt(document.getElementById('tc_max').value) || 0;
+            conf.normal = {
+                ticket: parseInt(document.getElementById('tc_n_t').value) || 0,
+                reward: parseInt(document.getElementById('tc_n_r').value) || 0
+            };
+            conf.hard = {
+                ticket: parseInt(document.getElementById('tc_h_t').value) || 0,
+                reward: parseInt(document.getElementById('tc_h_r').value) || 0
+            };
+            conf.survival = {
+                ticket: parseInt(document.getElementById('tc_s_t').value) || 0,
+                reward: parseInt(document.getElementById('tc_s_r').value) || 0
+            };
+            
+            document.getElementById('log-status').innerText = "正在保存高塔法则...";
+            const { error } = await dbClient.from('gamedata').update({ towerConfig: conf }).eq('id', ROW_ID);
+            if(!error) {
+                alert("✅ 高塔法则覆写保存成功！");
+                getCoins();
+            } else {
+                alert("❌ 保存失败：" + error.message);
+            }
+        }
+
         function renderActiveBuffs(buffs) {
             const container = document.getElementById('activeBuffsAdminContainer');
             if (!buffs || Object.keys(buffs).length === 0) {
                 container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">当前无生效法宝</div>';
                 return;
             }
-            
             const now = Date.now();
             let hasActive = false;
             let html = '';
-            
             for (const [id, buff] of Object.entries(buffs)) {
                 const remain = buff.endTime - now;
                 if (remain > 0) {
@@ -333,7 +488,6 @@
                     let hours = Math.floor((remain % (24 * 3600000)) / 3600000);
                     let mins = Math.floor((remain % 3600000) / 60000);
                     let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}小时 ${mins}分`;
-                    
                     html += `
                     <div class="shop-item" style="border-color: #f1c40f; flex-direction: row; align-items: center; margin-bottom: 8px;">
                         <div style="flex:1;">
@@ -347,20 +501,86 @@
             container.innerHTML = hasActive ? html : '<div style="text-align:center; color:#555; padding:10px;">当前无生效法宝</div>';
         }
 
-        // 💡 新增：强制驱散逻辑
         async function dispelBuff(buffId) {
             if (!currentData || !currentData.activeBuffs || !currentData.activeBuffs[buffId]) return;
             if (!confirm("确定要强制驱散该法宝吗？")) return;
-            
             const buffName = currentData.activeBuffs[buffId].name;
-            delete currentData.activeBuffs[buffId]; // 从对象中抹除
-            
+            delete currentData.activeBuffs[buffId];
             let logs = currentData.childLogs || [];
-            logs.unshift({ time: getFormattedTime(), action: `💥 神明干预: 强制驱散 [${buffName}]`, amount: 0 }); // 写入审计账单
-            
+            logs.unshift({ time: getFormattedTime(), action: `💥 神明干预: 强制驱散 [${buffName}]`, amount: 0 });
             document.getElementById('log-status').innerText = "施放驱散咒语中...";
             await dbClient.from('gamedata').update({ activeBuffs: currentData.activeBuffs, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
             getCoins();
+        }
+
+        function renderActiveEvent(eventData) {
+            const container = document.getElementById('activeEventStatus');
+            if (!container) return;
+            const now = Date.now();
+            if (eventData && eventData.expireTime > now) {
+                let remainMs = eventData.expireTime - now;
+                let hours = Math.floor(remainMs / 3600000);
+                let mins = Math.floor((remainMs % 3600000) / 60000);
+                container.innerHTML = `
+                    <div style="color:#2ecc71; font-weight:bold; margin-bottom:6px;">🎁 空投宝箱生效中</div>
+                    <div style="color:#ddd; margin-bottom:4px; white-space:pre-wrap;"><b>题目:</b> ${eventData.question}</div>
+                    <div style="color:#aaa; margin-bottom:4px;"><b>答案:</b> ${eventData.answer}</div>
+                    <div style="color:#ffb700; margin-bottom:4px;"><b>赏金:</b> +${eventData.reward} 🪙</div>
+                    <div style="color:#3498db;"><b>剩余时间:</b> ${hours}小时 ${mins}分</div>
+                `;
+            } else {
+                container.innerHTML = '<div style="color:#888; text-align:center;">当前无生效中的空投宝箱</div>';
+            }
+        }
+
+        function openTaskModal() {
+            document.getElementById('taskModal').style.display = 'flex';
+            const now = Date.now();
+            if (currentData && currentData.activeEvent && currentData.activeEvent.expireTime > now) {
+                document.getElementById('t_question').value = currentData.activeEvent.question || '';
+                document.getElementById('t_answer').value = currentData.activeEvent.answer || '';
+                document.getElementById('t_reward').value = currentData.activeEvent.reward || '';
+                document.getElementById('t_hours_event').value = Math.max(1, Math.ceil((currentData.activeEvent.expireTime - now) / 3600000));
+            } else {
+                document.getElementById('t_question').value = '';
+                document.getElementById('t_answer').value = '';
+                document.getElementById('t_reward').value = '';
+                document.getElementById('t_hours_event').value = '';
+            }
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').style.display = 'none';
+        }
+
+        async function saveTask() {
+            const q = document.getElementById('t_question').value.trim();
+            const a = document.getElementById('t_answer').value.trim();
+            const r = parseInt(document.getElementById('t_reward').value);
+            const h = parseFloat(document.getElementById('t_hours_event').value);
+            if (!q || !a || isNaN(r) || isNaN(h) || r <= 0 || h <= 0) return alert("请完整且正确填写表单！");
+
+            const eventObj = { question: q, answer: a, reward: r, expireTime: Date.now() + (h * 3600000) };
+            document.getElementById('log-status').innerText = "正在投放空投宝箱...";
+            const { error } = await dbClient.from('gamedata').update({ activeEvent: eventObj }).eq('id', ROW_ID);
+            if (!error) {
+                closeTaskModal();
+                alert("✅ 空投宝箱已成功投放至孩子端！");
+                getCoins();
+            } else {
+                alert("❌ 投放失败：" + error.message);
+            }
+        }
+
+        async function clearActiveEvent() {
+            if (!confirm("确定要撤回当前生效中的空投宝箱吗？")) return;
+            document.getElementById('log-status').innerText = "正在撤回宝箱...";
+            const { error } = await dbClient.from('gamedata').update({ activeEvent: null }).eq('id', ROW_ID);
+            if (!error) {
+                closeTaskModal();
+                alert("✅ 空投宝箱已撤回！");
+                getCoins();
+            }
         }
 
         async function saveVitalityConfig() {
@@ -369,22 +589,17 @@
             let mat = [];
             for(let i=1; i<=7; i++) {
                 let v = parseFloat(document.getElementById('mat_'+i).value);
-                mat.push(isNaN(v) ? 0 : v);
+                mat.push(isNaN(v) ? 0 : round1(v));
             }
-            
             document.getElementById('log-status').innerText = "⏳ 正在写入底层法则...";
-            
-            const { error } = await dbClient.from('gamedata').update({ 
-                vitality: currentData.vitality, 
-                vitalityConfig: mat 
-            }).eq('id', ROW_ID);
-            
+            const { error } = await dbClient.from('gamedata').update({ vitality: currentData.vitality, vitalityConfig: mat }).eq('id', ROW_ID);
             if (error) {
-                alert("🚨 写入失败！数据库报错: " + error.message + "\n请检查 Supabase 是否已添加 vitalityConfig 列(jsonb类型)");
+                alert("🚨 写入失败！数据库报错: " + error.message);
                 document.getElementById('log-status').innerText = "❌ 保存失败";
                 document.getElementById('freezeToggle').checked = !document.getElementById('freezeToggle').checked;
             } else {
                 document.getElementById('log-status').innerText = "✅ 体能法则与矩阵已覆盖保存";
+                getCoins();
             }
         }
 
@@ -392,10 +607,11 @@
             let val = parseFloat(document.getElementById('mVitalityInput').value);
             let reason = document.getElementById('mVitalityReason').value.trim() || '神明干预';
             if (!val || val <= 0) return;
-            let target = currentData.vitality.current + (val * sign);
+            let cur = round1(currentData.vitality.current);
+            let target = round1(cur + (val * sign));
             let finalVal = Math.max(0.0, Math.min(10.0, target));
-            let delta = finalVal - currentData.vitality.current;
-            if (Math.abs(delta) < 0.01) return;
+            let delta = round1(finalVal - cur);
+            if (Math.abs(delta) < 0.05) return alert("操作无效：体力已达上限(10.0)或下限(0.0)！");
             
             currentData.vitality.current = finalVal;
             let logs = currentData.childLogs || [];
@@ -403,12 +619,15 @@
             
             document.getElementById('log-status').innerText = "操纵命运中...";
             await dbClient.from('gamedata').update({ vitality: currentData.vitality, childLogs: logs.slice(0,10) }).eq('id', ROW_ID);
-            getCoins();
             document.getElementById('mVitalityInput').value = '';
             document.getElementById('mVitalityReason').value = '';
+            getCoins();
         }
 
         function renderContract(contract) {
+            // 💡 焦点保护：如果家长正在输入修改契约奖金，跳过本次重绘防止冲掉输入
+            if (document.activeElement && document.activeElement.id === 'contract_reward_mod') return;
+
             const container = document.getElementById('adminContractArea');
             if(!contract) { container.innerHTML = '<div style="text-align:center; color:#555; padding:15px;">暂无进行中的契约</div>'; return; }
             if(contract.status === 'pending') {
@@ -419,9 +638,9 @@
                         <div style="margin-bottom:15px;">💰 已扣除质押: <span style="color:#e74c3c;">-${contract.wager} 币</span></div>
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
                             <span style="color:#2ecc71;">修改胜利奖金:</span>
-                            <input type="number" id="contract_reward_mod" class="input-box" style="width:80px; padding:5px; text-align:center;" value="${contract.wager}">
+                            <input type="number" id="contract_reward_mod" class="input-box" style="width:90px; padding:6px; text-align:center;" value="${contract.reward ?? contract.wager}">
                         </div>
-                        <div style="display:flex; gap:10px;"><button class="btn-primary" style="flex:1; background:#e74c3c;" onclick="processContract(false)">驳回(退钱)</button><button class="btn-primary" style="flex:1; background:#27ae60;" onclick="processContract(true)">批准</button></div>
+                        <div style="display:flex; gap:10px;"><button class="btn-primary" style="flex:1; background:#e74c3c;" onclick="processContract(false)">驳回(退钱)</button><button class="btn-primary" style="flex:1; background:#27ae60;" onclick="processContract(true)">批准生效</button></div>
                     </div>`;
             } else if (contract.status === 'active') {
                 container.innerHTML = `
@@ -429,16 +648,18 @@
                         <div style="color:#27ae60; font-weight:bold; margin-bottom:10px;">🔥 契约执行中</div>
                         <div style="margin-bottom:8px;">🎯 目标: <span style="color:#fff;">${contract.desc}</span></div>
                         <div style="margin-bottom:8px;">💰 已质押: <span style="color:#aaa;">${contract.wager} 币</span></div>
-                        <div style="margin-bottom:15px;">🎁 成功奖金: <span style="color:#2ecc71; font-weight:bold;">${contract.reward} 币</span></div>
+                        <div style="margin-bottom:15px;">🎁 成功净奖: <span style="color:#2ecc71; font-weight:bold;">+${contract.reward} 币 (共返还 ${contract.wager + contract.reward} 币)</span></div>
                         <div style="display:flex; gap:10px;"><button class="btn-primary" style="flex:1; background:#c0392b;" onclick="settleContract(false)">失败吞没</button><button class="btn-primary" style="flex:1; background:#27ae60;" onclick="settleContract(true)">判定成功</button></div>
                     </div>`;
             }
         }
 
         async function processContract(isApprove) {
-            let record = currentData; let logs = record.childLogs || []; let payload = {};
+            let record = currentData; if(!record || !record.activeContract) return;
+            let logs = record.childLogs || []; let payload = {};
             if(isApprove) {
                 let rAmt = parseInt(document.getElementById('contract_reward_mod').value);
+                if (isNaN(rAmt) || rAmt < 0) return alert("请输入有效的胜利奖金数额！");
                 record.activeContract.status = 'active'; record.activeContract.reward = rAmt; payload.activeContract = record.activeContract;
                 logs.unshift({ time: getFormattedTime(), action: `⚖️ 契约生效 (定额奖金 ${rAmt})`, amount: 0 });
             } else {
@@ -449,32 +670,41 @@
         }
 
         async function settleContract(isSuccess) {
-            let record = currentData; let contract = record.activeContract; let logs = record.childLogs || []; let payload = { activeContract: null }; let newCoins = record.coins;
+            let record = currentData; if(!record || !record.activeContract) return;
+            let contract = record.activeContract; let logs = record.childLogs || []; let payload = { activeContract: null }; let newCoins = record.coins;
             if (isSuccess) {
                 let winAmount = contract.wager + contract.reward; newCoins += winAmount;
                 logs.unshift({ time: getFormattedTime(), action: `✅ 契约完成: ${contract.desc}`, amount: winAmount });
-                record.milestones.endurance++; let count = record.milestones.endurance;
-                for (let tier of MILESTONES) { if (count === tier.count && !record.milestoneClaimed.endurance.includes(tier.count)) { newCoins += tier.reward; record.milestoneClaimed.endurance.push(tier.count); logs.unshift({ time: getFormattedTime(), action: `🏆 达成里程碑 [耐力]: ${tier.name}`, amount: tier.reward }); } }
+                
+                record.milestones = record.milestones || {};
+                record.milestoneClaimed = record.milestoneClaimed || {};
+                record.milestoneClaimed.endurance = record.milestoneClaimed.endurance || [];
+                record.milestones.endurance = round1((record.milestones.endurance || 0) + 1.0);
+                let count = record.milestones.endurance;
+                for (let tier of MILESTONES) {
+                    if (count >= tier.count && !record.milestoneClaimed.endurance.includes(tier.count)) {
+                        newCoins += tier.reward;
+                        record.milestoneClaimed.endurance.push(tier.count);
+                        logs.unshift({ time: getFormattedTime(), action: `🏆 达成里程碑 [耐力]: ${tier.name}`, amount: tier.reward });
+                    }
+                }
                 payload.milestones = record.milestones; payload.milestoneClaimed = record.milestoneClaimed;
-            } else { logs.unshift({ time: getFormattedTime(), action: `❌ 契约违约 (质押被深渊吞噬)`, amount: 0 }); }
+            } else {
+                logs.unshift({ time: getFormattedTime(), action: `❌ 契约违约 (质押被深渊吞噬)`, amount: 0 });
+            }
             payload.coins = Math.min(newCoins, RANK_DATA[(record.currentRank||1)-1].cap); payload.childLogs = logs.slice(0, 10);
             await dbClient.from('gamedata').update(payload).eq('id', ROW_ID); getCoins();
-        }
-
-        async function saveTowerConfig() {
-            const conf = currentData.towerConfig;
-            conf.freePlays = parseInt(document.getElementById('tc_free').value) || 0; conf.maxRewards = parseInt(document.getElementById('tc_max').value) || 0;
-            await dbClient.from('gamedata').update({ towerConfig: conf }).eq('id', ROW_ID); alert("✅ 高塔法则保存成功！"); getCoins();
         }
 
         function renderLogs(logs) {
             const container = document.getElementById('childLogList');
             if(logs && logs.length > 0) {
                 container.innerHTML = logs.map(log => {
-                    let amountClass = log.amount > 0 ? "log-amount" : "log-amount sub"; if (log.action.includes('🏆')) amountClass = "log-amount milestone";
-                    if (log.action.includes('⚡')) amountClass = "log-amount"; 
+                    let isNeg = (typeof log.amount === 'number' && log.amount < 0) || (typeof log.amount === 'string' && log.amount.trim().startsWith('-'));
+                    let amountClass = isNeg ? "log-amount sub" : "log-amount";
+                    if (log.action && log.action.includes('🏆')) amountClass = "log-amount milestone";
                     let txt = typeof log.amount === 'string' ? log.amount : (log.amount > 0 ? '+' + log.amount : log.amount);
-                    return `<div class="log-item"><span class="log-time">[${log.time}]</span><span class="log-action">${log.action}</span><span class="${amountClass}">${txt === '0' ? '' : txt}</span></div>`;
+                    return `<div class="log-item"><span class="log-time">[${log.time}]</span><span class="log-action">${log.action}</span><span class="${amountClass}">${txt === '0' || txt === 0 ? '' : txt}</span></div>`;
                 }).join('');
             } else { container.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">暂无记录</div>'; }
         }
@@ -483,13 +713,14 @@
             const container = document.getElementById('adminTaskList');
             if(items.length === 0) { container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">告示牌空空如也</div>'; return; }
             container.innerHTML = items.map((item, index) => {
-                let msValDisplay = item.milestone_val ? `(+${item.milestone_val})` : '';
+                let msVal = round1(item.milestone_val || 1.0);
+                let msValDisplay = `(+${Number.isInteger(msVal) ? msVal : msVal.toFixed(1)})`;
                 return `
-                <div class="shop-item" style="border-color: #27ae60;">
+                <div class="shop-item" style="border-color: ${editingTaskId === item.id ? '#f39c12' : '#27ae60'};">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                         <div style="flex:1;">
                             <div style="font-weight:bold; font-size:15px; color:#2ecc71;">${item.icon} ${item.name} 
-                                ${item.milestone ? `<span class="badge-milestone">属性: ${MS_NAMES[item.milestone]}${msValDisplay}</span>` : ''}
+                                ${item.milestone ? `<span class="badge-milestone">属性: ${MS_NAMES[item.milestone] \vert{}\vert{} item.milestone}${msValDisplay}</span>` : ''}
                                 ${item.stamina_val ? `<span class="badge-stamina">⚡ +${item.stamina_val}</span>` : ''}
                             </div>
                             <div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div>
@@ -497,8 +728,8 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 6px; justify-content: flex-end; border-top: 1px dashed #444; padding-top: 8px;">
-                        <button class="btn-primary" style="background: #2980b9; padding: 6px; font-size: 13px; flex: 1;" onclick="moveTaskItem(${index}, -1)">🔼</button>
-                        <button class="btn-primary" style="background: #2980b9; padding: 6px; font-size: 13px; flex: 1;" onclick="moveTaskItem(${index}, 1)">🔽</button>
+                        <button class="btn-primary" style="background: #2980b9; padding: 6px; font-size: 13px; flex: 1;" onclick="moveTaskItem(${index}, -1)" ${index === 0 ? 'disabled' : ''}>🔼</button>
+                        <button class="btn-primary" style="background: #2980b9; padding: 6px; font-size: 13px; flex: 1;" onclick="moveTaskItem(${index}, 1)" ${index === items.length - 1 ? 'disabled' : ''}>🔽</button>
                         <button class="btn-edit" style="padding: 6px 12px; font-size: 13px; flex: 2;" onclick="prepareEditTask('${item.id}')">✏️ 修改</button>
                         <button class="btn-danger" style="padding: 6px 12px; font-size: 13px; flex: 2;" onclick="deleteTaskItem('${item.id}')">🗑️ 删</button>
                     </div>
@@ -515,60 +746,127 @@
         function prepareEditTask(id) {
             const task = currentData.taskItems.find(t => t.id === id); if(!task) return;
             editingTaskId = id;
-            document.getElementById('t_icon').value = task.icon; document.getElementById('t_name').value = task.name; document.getElementById('t_desc').value = task.desc;
+            document.getElementById('t_icon').value = task.icon;
+            document.getElementById('t_name').value = task.name;
+            document.getElementById('t_desc').value = task.desc;
             document.getElementById('t_milestone').value = task.milestone || ''; 
             document.getElementById('t_milestone_val').value = task.milestone_val || 1.0; 
-            document.getElementById('t_price').value = task.price; document.getElementById('t_hours').value = task.hours;
-            document.getElementById('t_stamina').value = task.stamina_val || 0;
-            const btn = document.getElementById('btn_add_task'); btn.innerHTML = '💾 保存修改'; btn.style.background = '#8e44ad';
+            document.getElementById('t_price').value = task.price;
+            document.getElementById('t_hours').value = task.hours;
+            document.getElementById('t_stamina').value = task.stamina_val || '';
+            
+            const btn = document.getElementById('btn_add_task');
+            btn.innerHTML = '💾 保存修改';
+            btn.style.background = '#8e44ad';
+            document.getElementById('btn_cancel_edit').style.display = 'block';
+            renderTaskItems(currentData.taskItems);
             btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
+        function cancelEditTask() {
+            editingTaskId = null;
+            document.getElementById('t_name').value = '';
+            document.getElementById('t_desc').value = '';
+            document.getElementById('t_price').value = '';
+            document.getElementById('t_hours').value = '';
+            document.getElementById('t_stamina').value = '';
+            document.getElementById('t_milestone').value = '';
+            document.getElementById('t_milestone_val').value = '1.0';
+            const btn = document.getElementById('btn_add_task');
+            btn.innerHTML = '➕ 上架新任务';
+            btn.style.background = '#27ae60';
+            document.getElementById('btn_cancel_edit').style.display = 'none';
+            if(currentData) renderTaskItems(currentData.taskItems);
+        }
+
         async function addTaskItem() {
-            const icon = document.getElementById('t_icon').value; const name = document.getElementById('t_name').value.trim(); const desc = document.getElementById('t_desc').value.trim();
+            const icon = document.getElementById('t_icon').value;
+            const name = document.getElementById('t_name').value.trim();
+            const desc = document.getElementById('t_desc').value.trim();
             const milestone = document.getElementById('t_milestone').value; 
-            const milestone_val = parseFloat(document.getElementById('t_milestone_val').value) || 1.0;
-            const price = parseInt(document.getElementById('t_price').value); const hours = parseFloat(document.getElementById('t_hours').value);
-            const stamina_val = parseFloat(document.getElementById('t_stamina').value) || 0;
+            const milestone_val = round1(parseFloat(document.getElementById('t_milestone_val').value) || 1.0);
+            const price = parseInt(document.getElementById('t_price').value);
+            const hours = parseFloat(document.getElementById('t_hours').value);
+            const stamina_val = round1(parseFloat(document.getElementById('t_stamina').value) || 0);
             
-            if(!name || !desc || !price || !hours) return alert("请完整填写任务信息！");
+            if(!name || !desc || isNaN(price) || isNaN(hours)) return alert("请完整填写任务信息！");
 
             let items = currentData.taskItems || [];
             if (editingTaskId) {
                 let idx = items.findIndex(t => t.id === editingTaskId);
                 if(idx > -1) items[idx] = { id: editingTaskId, icon, name, desc, milestone, milestone_val, price, hours, stamina_val };
-                editingTaskId = null;
-                const btn = document.getElementById('btn_add_task'); btn.innerHTML = '➕ 上架新任务'; btn.style.background = '#27ae60';
+                cancelEditTask();
             } else {
                 items.push({ id: 'task_' + Date.now(), icon, name, desc, milestone, milestone_val, price, hours, stamina_val });
+                cancelEditTask();
             }
 
-            document.getElementById('t_name').value = ''; document.getElementById('t_desc').value = ''; document.getElementById('t_stamina').value = ''; document.getElementById('t_milestone_val').value = '1.0';
             document.getElementById('log-status').innerText = "上架/更新中...";
-            await dbClient.from('gamedata').update({ taskItems: items }).eq('id', ROW_ID); getCoins();
+            await dbClient.from('gamedata').update({ taskItems: items }).eq('id', ROW_ID);
+            getCoins();
         }
 
-        async function deleteTaskItem(id) { if(!confirm("确定下架此项任务吗？")) return; let items = currentData.taskItems.filter(i => i.id !== id); await dbClient.from('gamedata').update({ taskItems: items }).eq('id', ROW_ID); getCoins(); }
+        async function deleteTaskItem(id) {
+            if(!confirm("确定下架此项任务吗？")) return;
+            if(editingTaskId === id) cancelEditTask();
+            let items = currentData.taskItems.filter(i => i.id !== id);
+            await dbClient.from('gamedata').update({ taskItems: items }).eq('id', ROW_ID);
+            getCoins();
+        }
 
         function renderShopItems(items) {
             const container = document.getElementById('shopList');
             if(items.length === 0) { container.innerHTML = '<div style="text-align:center; color:#555; padding:10px;">货架空空如也</div>'; return; }
             container.innerHTML = items.map(item => `<div class="shop-item" style="flex-direction: row; align-items: center;"><div style="flex:1;"><div style="font-weight:bold; font-size:15px; color:#ffb700;">${item.icon} ${item.name}</div><div style="font-size:12px; color:#aaa; margin:4px 0;">${item.desc}</div><div style="font-size:12px; color:#27ae60;">💰 ${item.price} 币 | ⏳ ${item.hours} 小时</div></div><button class="btn-danger" onclick="deleteShopItem('${item.id}')">下架</button></div>`).join('');
         }
+
         async function addShopItem() {
-            const icon = document.getElementById('s_icon').value; const name = document.getElementById('s_name').value.trim(); const desc = document.getElementById('s_desc').value.trim(); const price = parseInt(document.getElementById('s_price').value); const hours = parseFloat(document.getElementById('s_hours').value);
-            if(!name || !desc || !price || !hours) return alert("请完整填写！");
-            let items = currentData.shopItems || []; items.push({ id: 'shop_' + Date.now(), icon, name, desc, price, hours });
-            await dbClient.from('gamedata').update({ shopItems: items }).eq('id', ROW_ID); getCoins();
+            const icon = document.getElementById('s_icon').value;
+            const name = document.getElementById('s_name').value.trim();
+            const desc = document.getElementById('s_desc').value.trim();
+            const price = parseInt(document.getElementById('s_price').value);
+            const hours = parseFloat(document.getElementById('s_hours').value);
+            if(!name || !desc || isNaN(price) || isNaN(hours)) return alert("请完整填写商品名称、描述、售价与时效！");
+            
+            let items = currentData.shopItems || [];
+            items.push({ id: 'shop_' + Date.now(), icon, name, desc, price, hours });
+            document.getElementById('s_name').value = '';
+            document.getElementById('s_desc').value = '';
+            document.getElementById('s_price').value = '';
+            document.getElementById('s_hours').value = '';
+            document.getElementById('log-status').innerText = "正在部署商品...";
+            await dbClient.from('gamedata').update({ shopItems: items }).eq('id', ROW_ID);
+            getCoins();
         }
-        async function deleteShopItem(id) { let items = currentData.shopItems.filter(i => i.id !== id); await dbClient.from('gamedata').update({ shopItems: items }).eq('id', ROW_ID); getCoins(); }
+
+        async function deleteShopItem(id) {
+            if(!confirm("确定下架该商品吗？")) return;
+            let items = currentData.shopItems.filter(i => i.id !== id);
+            await dbClient.from('gamedata').update({ shopItems: items }).eq('id', ROW_ID);
+            getCoins();
+        }
 
         async function modifyCoins(amount, reason) {
-            if (amount === 0) return; let maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap; let targetCoins = currentData.coins + amount; let finalCoins = Math.max(0, Math.min(targetCoins, maxCap)); let actualDelta = finalCoins - currentData.coins;
-            if (actualDelta === 0) return; let logs = currentData.childLogs || []; logs.unshift({ time: getFormattedTime(), action: reason || (amount > 0 ? "手动奖励" : "手动扣减"), amount: actualDelta });
-            await dbClient.from('gamedata').update({ coins: finalCoins, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID); getCoins();
+            if (amount === 0) return;
+            let maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
+            let targetCoins = currentData.coins + amount;
+            let finalCoins = Math.max(0, Math.min(targetCoins, maxCap));
+            let actualDelta = finalCoins - currentData.coins;
+            if (actualDelta === 0) return alert("操作无效：已达容量上限或余额已为 0！");
+            let logs = currentData.childLogs || [];
+            logs.unshift({ time: getFormattedTime(), action: reason || (amount > 0 ? "手动奖励" : "手动扣减"), amount: actualDelta });
+            await dbClient.from('gamedata').update({ coins: finalCoins, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
+            getCoins();
         }
-        function manualMod(sign) { let val = parseInt(document.getElementById('manualInput').value); if(val > 0) { modifyCoins(val * sign, document.getElementById('manualReason').value.trim()); document.getElementById('manualInput').value = ""; document.getElementById('manualReason').value = ""; } }
+
+        function manualMod(sign) {
+            let val = parseInt(document.getElementById('manualInput').value);
+            if(val > 0) {
+                modifyCoins(val * sign, document.getElementById('manualReason').value.trim());
+                document.getElementById('manualInput').value = "";
+                document.getElementById('manualReason').value = "";
+            }
+        }
 
         window.onload = () => { getCoins(); setInterval(getCoins, 5000); };
     </script>

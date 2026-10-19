@@ -1,280 +1,879 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Andy的学霸之路</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- 移动端添加到主屏幕全屏 App 支持 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="学业遥测">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#070B14">
+    <title>NEXUS // 学业数字孪生遥测终端 V3.5</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
+        :root {
+            --bg-primary: #070B14;
+            --bg-card: rgba(15, 23, 42, 0.78);
+            --border-glow: rgba(0, 240, 255, 0.28);
+            --text-main: #E2E8F0;
+            --text-muted: #94A3B8;
+            --accent-cyan: #00F0FF;
+            --accent-gold: #FFB800;
+            --accent-purple: #A855F7;
+        }
+
+        html:not(.dark) {
+            --bg-primary: #F1F5F9;
+            --bg-card: rgba(255, 255, 255, 0.92);
+            --border-glow: rgba(14, 116, 144, 0.25);
+            --text-main: #0F172A;
+            --text-muted: #475569;
+            --accent-cyan: #0284C7;
+            --accent-gold: #D97706;
+            --accent-purple: #7C3AED;
+        }
+
         body {
-            background-color: #f3f4f6;
-            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
-            background-size: 20px 20px;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(0, 240, 255, 0.08) 0%, transparent 35%),
+                radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 35%),
+                linear-gradient(rgba(0, 240, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.035) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 28px 28px, 28px 28px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
         }
-        .mc-font {
-            font-family: 'Press Start 2P', cursive;
+
+        /* 全息毛玻璃机甲卡片 */
+        .hud-card {
+            position: relative;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glow);
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
         }
-        .mc-btn {
-            background-color: #5eba35;
-            border: 4px solid;
-            border-color: #8ce363 #37751c #37751c #8ce363;
-            color: white;
-            text-shadow: 2px 2px #37751c;
-            transition: all 0.1s;
+        .hud-card::before, .hud-card::after {
+            content: '';
+            position: absolute;
+            width: 9px;
+            height: 9px;
+            pointer-events: none;
+            opacity: 0.8;
         }
-        .mc-btn:active {
-            border-color: #37751c #8ce363 #8ce363 #37751c;
+        .hud-card::before {
+            top: -1px; left: -1px;
+            border-top: 2px solid var(--accent-cyan);
+            border-left: 2px solid var(--accent-cyan);
+            border-top-left-radius: 0.75rem;
         }
-        .mc-card {
-            border: 4px solid #7a542b;
-            box-shadow: 8px 8px 0px rgba(0,0,0,0.2);
-            background-color: white;
+        .hud-card::after {
+            bottom: -1px; right: -1px;
+            border-bottom: 2px solid var(--accent-cyan);
+            border-right: 2px solid var(--accent-cyan);
+            border-bottom-right-radius: 0.75rem;
         }
-        .mc-select {
-            border: 2px solid #7a542b;
-            appearance: none;
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%237a542b%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
-            background-repeat: no-repeat, repeat;
-            background-position: right .7em top 50%, 0 0;
-            background-size: .65em auto, 100%;
+
+        /* 科技发光按钮 */
+        .cyber-btn {
+            background: linear-gradient(135deg, #0284C7 0%, #00F0FF 100%);
+            color: #030712;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            box-shadow: 0 0 18px rgba(0, 240, 255, 0.35);
+            transition: all 0.2s ease;
+        }
+        .cyber-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 输入框科技样式 (移动端16px防iOS自动放大) */
+        .hud-input {
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: var(--text-main);
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        html:not(.dark) .hud-input {
+            background: rgba(241, 245, 249, 0.95);
+            border-color: rgba(100, 116, 139, 0.35);
+        }
+        .hud-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+        }
+
+        /* 学科胶囊矩阵 (支持手机端横向无滚动条顺滑滑动) */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .subject-pill {
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .subject-pill.active {
+            background: rgba(0, 240, 255, 0.18);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+        }
+
+        /* 脉冲呼吸灯 */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.9); }
+        }
+        .status-dot { animation: pulse-glow 2s infinite; }
+
+        /* 手机端底部安全区适配 */
+        .pb-safe {
+            padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+        }
+        .bottom-nav-safe {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
         }
     </style>
 </head>
-<body class="p-4 md:p-8 text-gray-800">
+<body class="p-3 sm:p-5 lg:p-8 pb-safe lg:pb-8 font-sans">
 
-    <div class="max-w-6xl mx-auto space-y-6">
-        
-        <!-- 头部 -->
-        <div class="text-center space-y-2 mb-8">
-            <h1 class="text-2xl md:text-4xl mc-font text-[#5eba35]" style="text-shadow: 2px 2px #37751c;">成绩记录工作台</h1>
-            <p class="text-gray-500 font-bold">版本: V2.1 (双层雷达版)</p>
-        </div>
-
-        <!-- 学期全局选择器 -->
-        <div class="mc-card p-4 flex justify-between items-center bg-[#e5e7eb]">
-            <span class="font-bold text-lg">当前数据维度：</span>
-            <select id="globalSemester" class="mc-select bg-white px-4 py-2 font-bold focus:outline-none rounded">
-                <option value="初一上学期">初一上学期</option>
-                <option value="初一下学期">初一下学期</option>
-                <option value="初二上学期">初二上学期</option>
-                <option value="初二下学期">初二下学期</option>
-                <option value="初三上学期">初三上学期</option>
-                <option value="初三下学期">初三下学期</option>
-            </select>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- 左侧：录入与雷达图 -->
-            <div class="space-y-6 col-span-1">
-                
-                <!-- 录入表单 -->
-                <div class="p-6 rounded-lg mc-card">
-                    <h2 class="text-xl font-bold mb-4 border-b-2 border-gray-200 pb-2">➕ 新增记录</h2>
-                    <form id="scoreForm" class="space-y-4">
-                        <input type="hidden" id="formSemester" value="初一上学期">
-                        <div>
-                            <label class="block text-sm font-bold mb-1">考试名称</label>
-                            <input type="text" id="examName" placeholder="如: 期中考试" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-1">科目</label>
-                            <input type="text" id="subject" list="subjectList" placeholder="点击选择或输入" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none">
-                            <datalist id="subjectList"></datalist>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-sm font-bold mb-1">得分</label>
-                                <input type="number" id="score" step="0.5" required class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold mb-1">班级最高分</label>
-                                <input type="number" id="highestScore" step="0.5" class="w-full px-3 py-2 border-2 border-gray-300 rounded focus:border-[#5eba35] focus:outline-none">
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full mc-btn py-3 font-bold text-lg mt-2">合成数据！</button>
-                    </form>
-                    <div id="loadingMsg" class="hidden text-center text-sm text-gray-500 mt-2">保存中...</div>
-                </div>
-
-                <!-- 雷达图展示区 -->
-                <div class="p-6 rounded-lg mc-card">
-                    <h2 class="text-xl font-bold mb-2 text-center">🎯 综合能力雷达图</h2>
-                    <p class="text-xs text-gray-500 text-center mb-4">(当前学期各项平均分对比)</p>
-                    <div class="relative h-64 w-full">
-                        <canvas id="radarChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 右侧：单科趋势折线图 -->
-            <div class="p-6 rounded-lg mc-card col-span-1 lg:col-span-2 flex flex-col">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b-2 border-gray-200 pb-4">
-                    <h2 class="text-xl font-bold mb-2 sm:mb-0">📈 单科成绩走势</h2>
-                    <div class="flex items-center space-x-2">
-                        <span class="font-bold text-sm text-gray-600">切换科目:</span>
-                        <select id="subjectFilter" class="mc-select bg-gray-100 px-3 py-1 font-bold focus:outline-none rounded">
-                            <option value="">(请先录入数据)</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="relative flex-grow min-h-[400px] w-full">
-                    <canvas id="lineChart"></canvas>
-                </div>
-                <!-- 提示区域 -->
-                 <div id="noDataTip" class="hidden text-center text-gray-500 mt-10 font-bold">当前学期该科目暂无数据 🕸️</div>
+    <!-- 突破最高分全息横幅通知 -->
+    <div id="apexToast" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden w-[92%] max-w-md">
+        <div class="hud-card px-4 py-3 border-2 border-amber-400 bg-slate-900/95 text-amber-300 flex items-center space-x-3 shadow-2xl">
+            <span class="text-2xl">🏆</span>
+            <div>
+                <div class="font-orbitron font-bold text-xs sm:text-sm tracking-wider">APEX ACHIEVED // 突破峰值记录</div>
+                <div id="apexToastText" class="text-xs text-amber-200/90 mt-0.5">恭喜登顶班级最高分天花板！</div>
             </div>
         </div>
     </div>
 
+    <div class="max-w-7xl mx-auto space-y-4 sm:space-y-5">
+
+        <!-- 顶部全息导航舱 (响应式紧凑设计) -->
+        <header class="hud-card p-3.5 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="flex items-center justify-between w-full sm:w-auto">
+                <div class="flex items-center space-x-2.5 sm:space-x-3">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-400 font-orbitron font-black text-lg sm:text-xl shadow-inner shrink-0">
+                        N
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h1 class="text-base sm:text-xl md:text-2xl font-orbitron font-black tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-purple-400">
+                                NEXUS // TELEMETRY
+                            </h1>
+                            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">V3.5</span>
+                        </div>
+                        <p class="text-[11px] sm:text-xs text-slate-400">学业数字孪生与多维潜能遥测终端</p>
+                    </div>
+                </div>
+
+                <!-- 手机端右上角极简昼夜按钮 -->
+                <button onclick="toggleTheme()" class="sm:hidden p-2 rounded-lg border border-slate-700 bg-slate-800/50 text-sm">
+                    <span id="themeIconMobile">🌌</span>
+                </button>
+            </div>
+
+            <!-- 控制阵列：云状态灯 + 演示模式 + 主题切换 -->
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-slate-800 pt-2.5 sm:pt-0">
+                <div id="cloudStatusBadge" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-800/70 border border-slate-700 text-[11px] font-mono">
+                    <span id="cloudDot" class="w-2 h-2 rounded-full bg-amber-400 status-dot"></span>
+                    <span id="cloudText" class="text-amber-300">CONNECTING...</span>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button id="demoToggleBtn" onclick="toggleDemoMode()" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold border border-purple-500/40 bg-purple-500/15 text-purple-300 active:scale-95 transition flex items-center space-x-1">
+                        <span>🧪</span>
+                        <span id="demoBtnText">加载演示预览</span>
+                    </button>
+
+                    <button onclick="toggleTheme()" class="hidden sm:flex px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-600/50 bg-slate-800/40 hover:border-cyan-400 transition items-center space-x-1">
+                        <span id="themeIcon">🌌</span>
+                        <span id="themeText">深空模式</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 全局学期维度与数据充能条 -->
+        <div class="hud-card p-3.5 sm:p-4 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center justify-between md:justify-start w-full md:w-auto space-x-3">
+                <span class="text-xs font-mono uppercase tracking-wider text-cyan-400 shrink-0">◈ 学期维度:</span>
+                <select id="globalSemester" class="hud-input px-3 py-1.5 rounded-lg font-bold text-sm cursor-pointer flex-grow md:flex-grow-0">
+                    <option value="初一上学期">初一上学期</option>
+                    <option value="初一下学期">初一下学期</option>
+                    <option value="初二上学期">初二上学期</option>
+                    <option value="初二下学期">初二下学期</option>
+                    <option value="初三上学期">初三上学期</option>
+                    <option value="初三下学期">初三下学期</option>
+                </select>
+            </div>
+
+            <!-- 学期数据采样充能条 -->
+            <div class="w-full md:w-1/2 flex items-center space-x-2.5">
+                <span class="text-[11px] font-mono text-slate-400 shrink-0">SAMPLING:</span>
+                <div class="flex-grow h-2 bg-slate-800/80 rounded-full overflow-hidden border border-slate-700/60 p-0.5">
+                    <div id="xpProgressBar" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <span id="xpProgressText" class="text-xs font-mono text-cyan-400 shrink-0">0 样本</span>
+            </div>
+        </div>
+
+        <!-- 四大核心遥测指标卡 (手机端2x2紧凑网格，平板/电脑4列) -->
+        <div id="kpiSection" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="hud-card p-3 sm:p-4">
+                <div class="text-[11px] font-mono text-slate-400 flex justify-between">
+                    <span>综合能效 // AVG</span>
+                    <span class="text-cyan-400">⚔️</span>
+                </div>
+                <div id="kpiAvgScore" class="text-xl sm:text-3xl font-orbitron font-bold mt-1 text-cyan-400">--</div>
+                <div id="kpiAvgSub" class="text-[11px] text-slate-400 mt-0.5 truncate">本学期全科平均分</div>
+            </div>
+
+            <div class="hud-card p-3 sm:p-4">
+                <div class="text-[11px] font-mono text-slate-400 flex justify-between">
+                    <span>领航学科 // APEX</span>
+                    <span class="text-amber-400">🏆</span>
+                </div>
+                <div id="kpiBestSubject" class="text-lg sm:text-2xl font-bold mt-1 text-amber-400 truncate">--</div>
+                <div id="kpiBestSub" class="text-[11px] text-slate-400 mt-0.5 truncate">距班级天花板最近</div>
+            </div>
+
+            <div class="hud-card p-3 sm:p-4">
+                <div class="text-[11px] font-mono text-slate-400 flex justify-between">
+                    <span>潜能跃迁 // BOOST</span>
+                    <span class="text-purple-400">⚡</span>
+                </div>
+                <div id="kpiBoostSubject" class="text-lg sm:text-2xl font-bold mt-1 text-purple-400 truncate">--</div>
+                <div id="kpiBoostSub" class="text-[11px] text-slate-400 mt-0.5 truncate">最具提分空间学科</div>
+            </div>
+
+            <div class="hud-card p-3 sm:p-4">
+                <div class="text-[11px] font-mono text-slate-400 flex justify-between">
+                    <span>采样规模 // LOGS</span>
+                    <span class="text-emerald-400">📊</span>
+                </div>
+                <div id="kpiTotalLogs" class="text-xl sm:text-3xl font-orbitron font-bold mt-1 text-emerald-400">0</div>
+                <div id="kpiTotalSub" class="text-[11px] text-slate-400 mt-0.5 truncate">本学期累计考次与科目</div>
+            </div>
+        </div>
+
+        <!-- 主体工作区：手机端支持底部Tab按需切换，平板/电脑(lg+)自动左右分栏全显 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+
+            <!-- 右侧图表区在手机端优先排在第一顺位 (order-1 lg:order-2)，打开手机直接看图！ -->
+            <div id="mobileChartsPane" class="order-1 lg:order-2 lg:col-span-7 flex flex-col space-y-5">
+
+                <!-- 单科趋势激光折线图 (支持触屏左右滑动切换科目) -->
+                <div id="lineChartCard" class="hud-card p-4 sm:p-5 flex-grow flex flex-col">
+                    <div class="flex justify-between items-center border-b border-slate-700/60 pb-2.5 mb-3">
+                        <div>
+                            <h2 class="text-sm sm:text-base font-bold flex items-center space-x-2">
+                                <span class="text-cyan-400">◤</span>
+                                <span>单科激光轨迹分析</span>
+                            </h2>
+                            <p class="text-[11px] text-slate-400 mt-0.5">📱 触屏可左右滑动图表切科 / 💻 电脑支持 ← → 键切科</p>
+                        </div>
+                        <span id="currentSubjectBadge" class="text-xs font-mono px-2.5 py-1 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold">--</span>
+                    </div>
+
+                    <!-- 快捷学科切换胶囊矩阵 (手机端单行横向顺滑滚动，不占高度) -->
+                    <div id="subjectHotbar" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 mb-3">
+                        <!-- JS 动态生成学科胶囊 -->
+                    </div>
+
+                    <!-- 折线图画布容器 -->
+                    <div id="lineTouchArea" class="relative flex-grow h-[260px] sm:h-[340px] w-full select-none">
+                        <canvas id="lineChart"></canvas>
+                        <div id="noDataTip" class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-center px-4">
+                            <span class="text-3xl mb-2">🛰️</span>
+                            <span class="font-mono text-xs sm:text-sm">NO TELEMETRY DATA</span>
+                            <span class="text-xs text-slate-500 mt-1">当前学期暂无记录，请点击下方“⚡ 录入成绩”或顶部“🧪 加载演示预览”</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 手机端将雷达图紧跟在折线图下方展示，一眼看全两个核心图表 -->
+                <div id="radarCardContainer" class="hud-card p-4 sm:p-5">
+                    <div class="flex justify-between items-center mb-1">
+                        <div>
+                            <h2 class="text-sm sm:text-base font-bold flex items-center space-x-2">
+                                <span class="text-cyan-400">◤</span>
+                                <span>多维能力护盾雷达</span>
+                            </h2>
+                            <p id="radarSubTitle" class="text-[11px] text-slate-400">个人均分 vs 班级最高均分</p>
+                        </div>
+                        <div class="flex rounded-lg bg-slate-800/80 p-0.5 border border-slate-700 text-[11px]">
+                            <button type="button" id="radarRawBtn" onclick="switchRadarMode('raw')" class="px-2 py-1 rounded bg-cyan-500/20 text-cyan-300 font-bold">原始均分</button>
+                            <button type="button" id="radarRateBtn" onclick="switchRadarMode('rate')" class="px-2 py-1 rounded text-slate-400 hover:text-slate-200">达成率%</button>
+                        </div>
+                    </div>
+                    <div class="relative h-60 sm:h-64 w-full mt-2">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 左侧录入与数据管理区 (手机端默认隐藏，切到“录入”或“数据仓”时显示；电脑/平板常驻显示) -->
+            <div id="mobileLeftColumn" class="order-2 lg:order-1 lg:col-span-5 space-y-5">
+
+                <!-- 遥测数据注入舱 -->
+                <div id="inputPanelCard" class="hidden lg:block hud-card p-4 sm:p-5">
+                    <div class="flex justify-between items-center border-b border-slate-700/60 pb-3 mb-4">
+                        <h2 class="text-sm sm:text-base font-bold flex items-center space-x-2">
+                            <span class="text-cyan-400">◤</span>
+                            <span>遥测数据注入舱</span>
+                        </h2>
+                        <div class="flex rounded-lg bg-slate-800/80 p-0.5 border border-slate-700 text-xs">
+                            <button type="button" id="tabSingleBtn" onclick="switchInputMode('single')" class="px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 font-bold transition">⚡ 单科脉冲</button>
+                            <button type="button" id="tabBatchBtn" onclick="switchInputMode('batch')" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition">🚀 整场矩阵</button>
+                        </div>
+                    </div>
+
+                    <!-- 公共栏位：考试名称与快捷标签 -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-mono text-slate-400 mb-1">EXAM IDENTIFIER // 考试名称</label>
+                        <input type="text" id="examName" list="examNameList" placeholder="如: 第一单元测试 / 期中考试" class="hud-input w-full px-3 py-2.5 rounded-lg font-bold">
+                        <datalist id="examNameList"></datalist>
+                        <div class="flex flex-wrap gap-1.5 mt-2">
+                            <button type="button" onclick="fillExam('第一单元测试')" class="text-xs px-2.5 py-1 rounded bg-slate-800/70 active:bg-cyan-500/30 text-slate-300 border border-slate-700">单元测1</button>
+                            <button type="button" onclick="fillExam('第二单元测试')" class="text-xs px-2.5 py-1 rounded bg-slate-800/70 active:bg-cyan-500/30 text-slate-300 border border-slate-700">单元测2</button>
+                            <button type="button" onclick="fillExam('第一次月考')" class="text-xs px-2.5 py-1 rounded bg-slate-800/70 active:bg-cyan-500/30 text-slate-300 border border-slate-700">月考1</button>
+                            <button type="button" onclick="fillExam('期中考试')" class="text-xs px-2.5 py-1 rounded bg-slate-800/70 active:bg-cyan-500/30 text-slate-300 border border-slate-700">期中考试</button>
+                            <button type="button" onclick="fillExam('第二次月考')" class="text-xs px-2.5 py-1 rounded bg-slate-800/70 active:bg-cyan-500/30 text-slate-300 border border-slate-700">月考2</button>
+                            <button type="button" onclick="fillExam('期末考试')" class="text-xs px-2.5 py-1 rounded bg-slate-800/70 active:bg-cyan-500/30 text-slate-300 border border-slate-700">期末考试</button>
+                        </div>
+                    </div>
+
+                    <!-- 模式A：单科脉冲录入表单 -->
+                    <form id="singleForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-mono text-slate-400 mb-1">SUBJECT // 科目名称 (点选下方胶囊或手输)</label>
+                            <input type="text" id="subject" list="subjectList" placeholder="点击下方胶囊或输入新科目" required class="hud-input w-full px-3 py-2.5 rounded-lg font-bold">
+                            <datalist id="subjectList"></datalist>
+                            <div class="grid grid-cols-3 gap-2 mt-2.5">
+                                <button type="button" onclick="fillSubject('语文')" class="text-xs py-2 rounded-lg bg-slate-800/70 active:border-cyan-400 border border-slate-700 font-bold">📘 语文</button>
+                                <button type="button" onclick="fillSubject('数学')" class="text-xs py-2 rounded-lg bg-slate-800/70 active:border-cyan-400 border border-slate-700 font-bold">📐 数学</button>
+                                <button type="button" onclick="fillSubject('英语')" class="text-xs py-2 rounded-lg bg-slate-800/70 active:border-cyan-400 border border-slate-700 font-bold">🔤 英语</button>
+                                <button type="button" onclick="fillSubject('物理')" class="text-xs py-2 rounded-lg bg-slate-800/70 active:border-cyan-400 border border-slate-700 font-bold">⚡ 物理</button>
+                                <button type="button" onclick="fillSubject('化学')" class="text-xs py-2 rounded-lg bg-slate-800/70 active:border-cyan-400 border border-slate-700 font-bold">🧪 化学</button>
+                                <button type="button" onclick="fillSubject('生物')" class="text-xs py-2 rounded-lg bg-slate-800/70 active:border-cyan-400 border border-slate-700 font-bold">🧬 生物</button>
+                                <button type="button" onclick="fillSubject('历史')" class="text-xs py-2 rounded-lg bg-slate-800/70 active:border-cyan-400 border border-slate-700 font-bold">📜 历史</button>
+                                <button type="button" onclick="fillSubject('地理')" class="text-xs py-2 rounded-lg bg-slate-800/70 active:border-cyan-400 border border-slate-700 font-bold">🌍 地理</button>
+                                <button type="button" onclick="fillSubject('道法')" class="text-xs py-2 rounded-lg bg-slate-800/70 active:border-cyan-400 border border-slate-700 font-bold">⚖️ 道法</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-mono text-slate-400 mb-1">MY SCORE // 个人得分</label>
+                                <input type="number" inputmode="decimal" id="score" step="0.5" placeholder="0.0" required class="hud-input w-full px-3 py-2.5 rounded-lg font-mono font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-mono text-slate-400 mb-1">CLASS MAX // 班级最高</label>
+                                <input type="number" inputmode="decimal" id="highestScore" step="0.5" placeholder="留空默认同分" class="hud-input w-full px-3 py-2.5 rounded-lg font-mono font-bold">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full cyber-btn py-3 rounded-lg text-sm font-orbitron">
+                            ⚡ 注入数据流 (SYNC DATA)
+                        </button>
+                    </form>
+
+                    <!-- 模式B：整场考试批量矩阵录入 -->
+                    <form id="batchForm" class="hidden space-y-3">
+                        <p class="text-xs text-slate-400">只需填写本次考了的科目，留空自动跳过：</p>
+                        <div id="batchRowsContainer" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
+                        <button type="submit" class="w-full cyber-btn py-3 rounded-lg text-sm font-orbitron">
+                            🚀 批量上传矩阵 (BATCH SYNC)
+                        </button>
+                    </form>
+
+                    <div id="loadingMsg" class="hidden text-center text-xs font-mono text-cyan-400 mt-3">↻ TELEMETRY UPLOADING...</div>
+                </div>
+
+                <!-- 云端全息数据仓 (历史明细校准与抹除) -->
+                <div id="vaultPanelCard" class="hidden lg:block hud-card p-4 sm:p-5">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-cyan-400">◤</span>
+                            <h2 class="text-sm sm:text-base font-bold">🗄️ 云端全息数据仓</h2>
+                            <span id="vaultCountBadge" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-400 border border-slate-700">0 条</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-2 border-t border-slate-700/60 overflow-x-auto max-h-72">
+                        <table class="w-full text-left text-xs">
+                            <thead class="font-mono text-slate-400 border-b border-slate-700/60">
+                                <tr>
+                                    <th class="py-2 px-1.5">考试/科目</th>
+                                    <th class="py-2 px-1.5">得分/最高</th>
+                                    <th class="py-2 px-1.5 text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vaultTableBody" class="divide-y divide-slate-800/60 font-mono"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 手机端专属：底部悬浮全息导航坞 (lg及以上大屏自动隐藏) -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-xl border-t border-cyan-500/30 bottom-nav-safe">
+        <div class="grid grid-cols-3 h-14 max-w-md mx-auto">
+            <button type="button" id="mNavCharts" onclick="switchMobileTab('charts')" class="flex flex-col items-center justify-center text-cyan-400 font-bold text-xs space-y-0.5">
+                <span class="text-base">📊</span>
+                <span>遥测图表</span>
+            </button>
+            <button type="button" id="mNavInput" onclick="switchMobileTab('input')" class="flex flex-col items-center justify-center text-slate-400 text-xs space-y-0.5">
+                <span class="text-base">⚡</span>
+                <span>录入成绩</span>
+            </button>
+            <button type="button" id="mNavVault" onclick="switchMobileTab('vault')" class="flex flex-col items-center justify-center text-slate-400 text-xs space-y-0.5">
+                <span class="text-base">🗄️</span>
+                <span>历史数据仓</span>
+            </button>
+        </div>
+    </nav>
+
     <script>
         // ==========================================
-        // 配置 URL 和 Key
+        // Supabase 核心配置
         // ==========================================
         const SUPABASE_URL = 'https://ykbvwvhmvmzdzqrdibct.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_zcVIJ86gQsYO3clU-HjAfA_e62kSSqj';
-        // ==========================================
-
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
+
+        let allData = [];
+        let cloudDataBackup = [];
+        let isDemoMode = false;
+        let currentSubject = '';
+        let radarMode = 'raw';
         let lineChartObj = null;
         let radarChartObj = null;
-        let allData = []; 
 
-        const domGlobalSemester = document.getElementById('globalSemester');
-        const domFormSemester = document.getElementById('formSemester');
-        const domSubjectFilter = document.getElementById('subjectFilter');
-        const domNoDataTip = document.getElementById('noDataTip');
-        const canvasLine = document.getElementById('lineChart');
-        
-        domGlobalSemester.addEventListener('change', (e) => {
-            domFormSemester.value = e.target.value; 
-            refreshViews(); 
-        });
+        const SUBJECT_ICONS = {
+            '语文': '📘', '数学': '📐', '英语': '🔤',
+            '物理': '⚡', '化学': '🧪', '生物': '🧬',
+            '历史': '📜', '地理': '🌍', '道法': '⚖️'
+        };
+        const DEFAULT_BATCH_SUBJECTS = ['语文', '数学', '英语', '物理', '历史', '地理', '生物', '道法'];
 
-        domSubjectFilter.addEventListener('change', () => {
-            renderLineChart();
-        });
+        const DEMO_DATASET = [
+            { id: -1, semester: '初一上学期', exam_name: '第一单元测试', subject: '数学', score: 92, highest_score: 98 },
+            { id: -2, semester: '初一上学期', exam_name: '第一次月考', subject: '数学', score: 95, highest_score: 99 },
+            { id: -3, semester: '初一上学期', exam_name: '期中考试', subject: '数学', score: 98, highest_score: 100 },
+            { id: -4, semester: '初一上学期', exam_name: '第二次月考', subject: '数学', score: 96, highest_score: 98 },
+            { id: -5, semester: '初一上学期', exam_name: '期末考试', subject: '数学', score: 100, highest_score: 100 },
+            { id: -6, semester: '初一上学期', exam_name: '第一单元测试', subject: '语文', score: 86, highest_score: 94 },
+            { id: -7, semester: '初一上学期', exam_name: '第一次月考', subject: '语文', score: 89, highest_score: 95 },
+            { id: -8, semester: '初一上学期', exam_name: '期中考试', subject: '语文', score: 91, highest_score: 96 },
+            { id: -9, semester: '初一上学期', exam_name: '期末考试', subject: '语文', score: 93, highest_score: 96 },
+            { id: -10, semester: '初一上学期', exam_name: '第一单元测试', subject: '英语', score: 88, highest_score: 99 },
+            { id: -11, semester: '初一上学期', exam_name: '第一次月考', subject: '英语', score: 91, highest_score: 98 },
+            { id: -12, semester: '初一上学期', exam_name: '期中考试', subject: '英语', score: 94, highest_score: 99 },
+            { id: -13, semester: '初一上学期', exam_name: '期末考试', subject: '英语', score: 95.5, highest_score: 99 },
+            { id: -14, semester: '初一上学期', exam_name: '期中考试', subject: '历史', score: 46, highest_score: 50 },
+            { id: -15, semester: '初一上学期', exam_name: '期末考试', subject: '历史', score: 48, highest_score: 50 },
+            { id: -16, semester: '初一上学期', exam_name: '期中考试', subject: '地理', score: 45, highest_score: 49 },
+            { id: -17, semester: '初一上学期', exam_name: '期末考试', subject: '地理', score: 47.5, highest_score: 50 },
+            { id: -18, semester: '初一上学期', exam_name: '期中考试', subject: '生物', score: 47, highest_score: 50 },
+            { id: -19, semester: '初一上学期', exam_name: '期末考试', subject: '生物', score: 49, highest_score: 50 }
+        ];
 
-        async function fetchData() {
-            const { data, error } = await db
-                .from('exam_scores')
-                .select('*')
-                .order('created_at', { ascending: true });
+        // 手机端底部导航切换逻辑
+        function switchMobileTab(tab) {
+            const chartsPane = document.getElementById('mobileChartsPane');
+            const inputCard = document.getElementById('inputPanelCard');
+            const vaultCard = document.getElementById('vaultPanelCard');
+            const kpiSection = document.getElementById('kpiSection');
 
-            if (error) {
-                console.error('获取数据失败:', error);
-                return;
+            const btnCharts = document.getElementById('mNavCharts');
+            const btnInput = document.getElementById('mNavInput');
+            const btnVault = document.getElementById('mNavVault');
+
+            const activeCls = 'flex flex-col items-center justify-center text-cyan-400 font-bold text-xs space-y-0.5 border-t-2 border-cyan-400 bg-cyan-500/10';
+            const normalCls = 'flex flex-col items-center justify-center text-slate-400 text-xs space-y-0.5';
+
+            btnCharts.className = tab === 'charts' ? activeCls : normalCls;
+            btnInput.className = tab === 'input' ? activeCls : normalCls;
+            btnVault.className = tab === 'vault' ? activeCls : normalCls;
+
+            if (tab === 'charts') {
+                chartsPane.classList.remove('hidden');
+                kpiSection.classList.remove('hidden');
+                inputCard.classList.add('hidden');
+                vaultCard.classList.add('hidden');
+                renderLineChart();
+                renderRadarChart();
+            } else if (tab === 'input') {
+                chartsPane.classList.add('hidden');
+                kpiSection.classList.add('hidden');
+                inputCard.classList.remove('hidden');
+                vaultCard.classList.add('hidden');
+            } else if (tab === 'vault') {
+                chartsPane.classList.add('hidden');
+                kpiSection.classList.add('hidden');
+                inputCard.classList.add('hidden');
+                vaultCard.classList.remove('hidden');
             }
-            allData = data;
-            
-            updateSubjectLists();
-            refreshViews();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function updateSubjectLists() {
-            const subjects = [...new Set(allData.map(item => item.subject))];
-            
-            const subjectList = document.getElementById('subjectList');
-            subjectList.innerHTML = '';
-            subjects.forEach(sub => {
-                const option = document.createElement('option');
-                option.value = sub;
-                subjectList.appendChild(option);
-            });
+        // 初始化批量录入矩阵行 (绑定 inputmode="decimal")
+        function initBatchRows() {
+            const container = document.getElementById('batchRowsContainer');
+            container.innerHTML = DEFAULT_BATCH_SUBJECTS.map(sub => `
+                <div class="grid grid-cols-12 gap-2 items-center bg-slate-800/30 p-2 rounded-lg border border-slate-700/40">
+                    <div class="col-span-4 text-xs font-bold pl-1">${SUBJECT_ICONS[sub] || '◈'} ${sub}</div>
+                    <div class="col-span-4">
+                        <input type="number" inputmode="decimal" step="0.5" data-batch-sub="${sub}" data-field="score" placeholder="得分" class="hud-input w-full px-2.5 py-1.5 rounded text-sm font-mono">
+                    </div>
+                    <div class="col-span-4">
+                        <input type="number" inputmode="decimal" step="0.5" data-batch-sub="${sub}" data-field="max" placeholder="最高分" class="hud-input w-full px-2.5 py-1.5 rounded text-sm font-mono">
+                    </div>
+                </div>
+            `).join('');
+        }
 
-            const currentSelected = domSubjectFilter.value;
-            domSubjectFilter.innerHTML = '';
-            
-            if (subjects.length === 0) {
-                domSubjectFilter.innerHTML = '<option value="">暂无数据</option>';
+        // 云端状态指示器
+        function setCloudStatus(state, latencyMs = 0) {
+            const dot = document.getElementById('cloudDot');
+            const text = document.getElementById('cloudText');
+            if (state === 'online') {
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-400 status-dot';
+                text.className = 'text-emerald-400';
+                text.textContent = `ONLINE (${latencyMs}ms)`;
+            } else if (state === 'demo') {
+                dot.className = 'w-2 h-2 rounded-full bg-purple-400 status-dot';
+                text.className = 'text-purple-300';
+                text.textContent = 'DEMO PREVIEW';
             } else {
-                subjects.forEach(sub => {
-                    const option = document.createElement('option');
-                    option.value = sub;
-                    option.textContent = sub;
-                    domSubjectFilter.appendChild(option);
-                });
-                
-                if (subjects.includes(currentSelected)) {
-                    domSubjectFilter.value = currentSelected;
-                } else {
-                    domSubjectFilter.value = subjects[0];
-                }
+                dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+                text.className = 'text-rose-400';
+                text.textContent = 'OFFLINE / RETRY';
             }
         }
 
-        function refreshViews() {
+        // 拉取云端真实数据
+        async function fetchData() {
+            try {
+                const t0 = performance.now();
+                const { data, error } = await db
+                    .from('exam_scores')
+                    .select('*')
+                    .order('created_at', { ascending: true });
+
+                if (error) {
+                    console.error('获取数据失败:', error);
+                    setCloudStatus('offline');
+                    return;
+                }
+                const latency = Math.round(performance.now() - t0);
+                cloudDataBackup = (data || []).map(item => ({
+                    ...item,
+                    semester: item.semester || '初一上学期'
+                }));
+
+                if (!isDemoMode) {
+                    allData = cloudDataBackup;
+                    setCloudStatus('online', latency);
+                }
+                refreshAll();
+            } catch (err) {
+                console.error(err);
+                setCloudStatus('offline');
+            }
+        }
+
+        // 切换一键演示预览模式
+        function toggleDemoMode() {
+            isDemoMode = !isDemoMode;
+            const btnText = document.getElementById('demoBtnText');
+            if (isDemoMode) {
+                allData = [...DEMO_DATASET];
+                document.getElementById('globalSemester').value = '初一上学期';
+                btnText.textContent = '切回真实数据';
+                setCloudStatus('demo');
+            } else {
+                allData = [...cloudDataBackup];
+                btnText.textContent = '加载演示预览';
+                setCloudStatus('online', 25);
+            }
+            refreshAll();
+        }
+
+        // 切换昼夜主题
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            const icon = isDark ? '🌌' : '☀️';
+            document.getElementById('themeIcon').textContent = icon;
+            document.getElementById('themeIconMobile').textContent = icon;
+            document.getElementById('themeText').textContent = isDark ? '深空模式' : '极昼模式';
+            refreshAll();
+        }
+
+        function fillExam(name) { document.getElementById('examName').value = name; }
+        function fillSubject(sub) { document.getElementById('subject').value = sub; }
+
+        function switchInputMode(mode) {
+            const singleForm = document.getElementById('singleForm');
+            const batchForm = document.getElementById('batchForm');
+            const singleBtn = document.getElementById('tabSingleBtn');
+            const batchBtn = document.getElementById('tabBatchBtn');
+            if (mode === 'single') {
+                singleForm.classList.remove('hidden');
+                batchForm.classList.add('hidden');
+                singleBtn.className = 'px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 font-bold transition';
+                batchBtn.className = 'px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition';
+            } else {
+                singleForm.classList.add('hidden');
+                batchForm.classList.remove('hidden');
+                batchBtn.className = 'px-2.5 py-1 rounded-md bg-cyan-500/20 text-cyan-300 font-bold transition';
+                singleBtn.className = 'px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition';
+            }
+        }
+
+        function switchRadarMode(mode) {
+            radarMode = mode;
+            document.getElementById('radarRawBtn').className = mode === 'raw'
+                ? 'px-2 py-1 rounded bg-cyan-500/20 text-cyan-300 font-bold'
+                : 'px-2 py-1 rounded text-slate-400 hover:text-slate-200';
+            document.getElementById('radarRateBtn').className = mode === 'rate'
+                ? 'px-2 py-1 rounded bg-cyan-500/20 text-cyan-300 font-bold'
+                : 'px-2 py-1 rounded text-slate-400 hover:text-slate-200';
+            document.getElementById('radarSubTitle').textContent = mode === 'raw'
+                ? '个人均分 vs 班级最高均分'
+                : '个人均分占班级最高均分达成率(%)';
+            renderRadarChart();
+        }
+
+        function refreshAll() {
+            const currentSemester = document.getElementById('globalSemester').value;
+            const semesterData = allData.filter(d => (d.semester || '初一上学期') === currentSemester);
+
+            updateDatalists(semesterData);
+            updateKPIs(semesterData);
+            renderSubjectHotbar(semesterData);
             renderRadarChart();
             renderLineChart();
+            renderVaultTable(semesterData);
         }
 
-        // ============== 雷达图渲染逻辑 (双层多边形) ==============
-        function renderRadarChart() {
-            const currentSemester = domGlobalSemester.value;
-            const semesterData = allData.filter(d => d.semester === currentSemester);
-            
-            const subjectsInSemester = [...new Set(semesterData.map(item => item.subject))];
-            
-            const myAverageScores = [];
-            const highestAverageScores = [];
+        function updateDatalists(semesterData) {
+            const allSubjects = [...new Set(allData.map(d => d.subject))];
+            const allExams = [...new Set(semesterData.map(d => d.exam_name))];
+            document.getElementById('subjectList').innerHTML = allSubjects.map(s => `<option value="${s}">`).join('');
+            document.getElementById('examNameList').innerHTML = allExams.map(e => `<option value="${e}">`).join('');
+        }
 
-            if (subjectsInSemester.length === 0) {
-                subjectsInSemester.push('暂无数据');
-                myAverageScores.push(0);
-                highestAverageScores.push(0);
-            } else {
-                subjectsInSemester.forEach(sub => {
-                    const records = semesterData.filter(d => d.subject === sub);
-                    
-                    // 1. 计算我的平均分
-                    const myScores = records.map(d => d.score);
-                    const mySum = myScores.reduce((a, b) => a + b, 0);
-                    myAverageScores.push((mySum / records.length).toFixed(1));
+        function updateKPIs(semesterData) {
+            const count = semesterData.length;
+            const examsCount = new Set(semesterData.map(d => d.exam_name)).size;
 
-                    // 2. 计算班级最高分的平均分 (方案A)
-                    // 如果以前有某次没填最高分，默认以满分 100 计算以保证图形边界不塌陷
-                    const highestScores = records.map(d => d.highest_score ? d.highest_score : 100);
-                    const highestSum = highestScores.reduce((a, b) => a + b, 0);
-                    highestAverageScores.push((highestSum / records.length).toFixed(1));
-                });
+            const pct = Math.min(100, Math.round((count / 20) * 100));
+            document.getElementById('xpProgressBar').style.width = `${pct}%`;
+            document.getElementById('xpProgressText').textContent = `${count} 样本`;
+            document.getElementById('kpiTotalLogs').textContent = `${examsCount}场/${count}科`;
+
+            if (count === 0) {
+                document.getElementById('kpiAvgScore').textContent = '--';
+                document.getElementById('kpiBestSubject').textContent = '--';
+                document.getElementById('kpiBoostSubject').textContent = '--';
+                return;
             }
 
+            const totalAvg = (semesterData.reduce((acc, d) => acc + Number(d.score), 0) / count).toFixed(1);
+            document.getElementById('kpiAvgScore').textContent = totalAvg;
+
+            const subjects = [...new Set(semesterData.map(d => d.subject))];
+            const gaps = subjects.map(sub => {
+                const recs = semesterData.filter(d => d.subject === sub);
+                const myAvg = recs.reduce((a, b) => a + Number(b.score), 0) / recs.length;
+                const maxAvg = recs.reduce((a, b) => a + Number(b.highest_score || b.score), 0) / recs.length;
+                return { sub, gap: +(maxAvg - myAvg).toFixed(1) };
+            });
+
+            gaps.sort((a, b) => a.gap - b.gap);
+            const best = gaps[0];
+            const boost = gaps[gaps.length - 1];
+
+            document.getElementById('kpiBestSubject').textContent = `${SUBJECT_ICONS[best.sub] || '◈'} ${best.sub}`;
+            document.getElementById('kpiBestSub').textContent = best.gap <= 0 ? '👑 已达天花板!' : `距峰值差 ${best.gap} 分`;
+
+            document.getElementById('kpiBoostSubject').textContent = `${SUBJECT_ICONS[boost.sub] || '◈'} ${boost.sub}`;
+            document.getElementById('kpiBoostSub').textContent = `提分空间 +${boost.gap} 分`;
+        }
+
+        function renderSubjectHotbar(semesterData) {
+            const subjects = [...new Set(semesterData.map(d => d.subject))];
+            const container = document.getElementById('subjectHotbar');
+            const badge = document.getElementById('currentSubjectBadge');
+
+            if (subjects.length === 0) {
+                container.innerHTML = `<span class="text-xs text-slate-500 font-mono">暂无科目胶囊</span>`;
+                currentSubject = '';
+                badge.textContent = '--';
+                return;
+            }
+
+            if (!subjects.includes(currentSubject)) {
+                currentSubject = subjects[0];
+            }
+            badge.textContent = `${SUBJECT_ICONS[currentSubject] || '◈'} ${currentSubject}`;
+
+            container.innerHTML = subjects.map(sub => {
+                const activeCls = sub === currentSubject ? 'active font-bold' : 'text-slate-400 hover:text-slate-200';
+                const icon = SUBJECT_ICONS[sub] || '◈';
+                return `<button type="button" onclick="selectSubject('${sub}')" class="subject-pill px-3.5 py-1.5 rounded-lg text-xs flex items-center space-x-1.5 ${activeCls}">
+                    <span>${icon}</span><span>${sub}</span>
+                </button>`;
+            }).join('');
+        }
+
+        function selectSubject(sub) {
+            currentSubject = sub;
+            const currentSemester = document.getElementById('globalSemester').value;
+            const semesterData = allData.filter(d => (d.semester || '初一上学期') === currentSemester);
+            renderSubjectHotbar(semesterData);
+            renderLineChart();
+        }
+
+        function switchAdjacentSubject(direction) {
+            const currentSemester = document.getElementById('globalSemester').value;
+            const subjects = [...new Set(allData.filter(d => (d.semester || '初一上学期') === currentSemester).map(d => d.subject))];
+            if (subjects.length < 2) return;
+            const idx = subjects.indexOf(currentSubject);
+            const nextIdx = direction === 'next'
+                ? (idx + 1) % subjects.length
+                : (idx - 1 + subjects.length) % subjects.length;
+            selectSubject(subjects[nextIdx]);
+        }
+
+        // 键盘左右方向键切科
+        window.addEventListener('keydown', (e) => {
+            if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+            if (e.key === 'ArrowRight') switchAdjacentSubject('next');
+            if (e.key === 'ArrowLeft') switchAdjacentSubject('prev');
+        });
+
+        // 移动端触屏左右滑动手势切科
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const touchArea = document.getElementById('lineTouchArea');
+        touchArea.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        touchArea.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].screenX - touchStartX;
+            const dy = e.changedTouches[0].screenY - touchStartY;
+            if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                if (dx < 0) switchAdjacentSubject('next'); // 左滑看下一科
+                else switchAdjacentSubject('prev');        // 右滑看上一科
+            }
+        }, { passive: true });
+
+        // 雷达图渲染
+        function renderRadarChart() {
+            const currentSemester = document.getElementById('globalSemester').value;
+            const semesterData = allData.filter(d => (d.semester || '初一上学期') === currentSemester);
+            let subjects = [...new Set(semesterData.map(d => d.subject))];
+
+            const padPool = ['语文', '数学', '英语'];
+            while (subjects.length < 3) {
+                const candidate = padPool.find(p => !subjects.includes(p)) || `维度${subjects.length + 1}`;
+                subjects.push(candidate);
+            }
+
+            const myValues = [];
+            const maxValues = [];
+
+            subjects.forEach(sub => {
+                const recs = semesterData.filter(d => d.subject === sub);
+                if (recs.length === 0) {
+                    myValues.push(0);
+                    maxValues.push(100);
+                    return;
+                }
+                const myAvg = recs.reduce((a, b) => a + Number(b.score), 0) / recs.length;
+                const maxAvg = recs.reduce((a, b) => a + Number(b.highest_score ? b.highest_score : 100), 0) / recs.length;
+
+                if (radarMode === 'rate') {
+                    myValues.push(maxAvg > 0 ? +((myAvg / maxAvg) * 100).toFixed(1) : 0);
+                    maxValues.push(100);
+                } else {
+                    myValues.push(+myAvg.toFixed(1));
+                    maxValues.push(+maxAvg.toFixed(1));
+                }
+            });
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(148, 163, 184, 0.16)' : 'rgba(15, 23, 42, 0.12)';
+            const labelColor = isDark ? '#E2E8F0' : '#0F172A';
+
             const ctx = document.getElementById('radarChart').getContext('2d');
-            if (radarChartObj) { radarChartObj.destroy(); }
+            if (radarChartObj) radarChartObj.destroy();
 
             radarChartObj = new Chart(ctx, {
                 type: 'radar',
                 data: {
-                    labels: subjectsInSemester,
+                    labels: subjects,
                     datasets: [
                         {
-                            label: '我的平均分',
-                            data: myAverageScores,
-                            backgroundColor: 'rgba(94, 186, 53, 0.6)', // 绿色填充
-                            borderColor: 'rgba(55, 117, 28, 1)',       // 绿色边框
-                            pointBackgroundColor: 'rgba(55, 117, 28, 1)',
+                            label: radarMode === 'rate' ? '个人达成率(%)' : '个人平均分',
+                            data: myValues,
+                            backgroundColor: 'rgba(0, 240, 255, 0.25)',
+                            borderColor: '#00F0FF',
+                            borderWidth: 2.5,
+                            pointBackgroundColor: '#00F0FF',
                             pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(55, 117, 28, 1)',
-                            order: 1 // 保证绘制在上层
+                            order: 1
                         },
                         {
-                            label: '班级最高平均',
-                            data: highestAverageScores,
-                            backgroundColor: 'rgba(245, 158, 11, 0.15)', // 淡金色填充，透出底部
-                            borderColor: '#F59E0B',                      // 金色虚线边框
+                            label: radarMode === 'rate' ? '峰值基准(100%)' : '班级最高平均',
+                            data: maxValues,
+                            backgroundColor: 'rgba(255, 184, 0, 0.08)',
+                            borderColor: '#FFB800',
+                            borderWidth: 2,
                             borderDash: [5, 5],
-                            pointBackgroundColor: '#F59E0B',
+                            pointBackgroundColor: '#FFB800',
                             pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: '#F59E0B',
-                            order: 2 // 绘制在下层作为天花板边界
+                            order: 2
                         }
                     ]
                 },
@@ -283,51 +882,61 @@
                     maintainAspectRatio: false,
                     scales: {
                         r: {
-                            angleLines: { color: 'rgba(0,0,0,0.1)' },
-                            grid: { color: 'rgba(0,0,0,0.1)' },
-                            pointLabels: {
-                                font: { size: 12, family: "'Press Start 2P', cursive", weight: 'bold' },
-                                color: '#374151'
-                            },
-                            ticks: { min: 40, max: 100, stepSize: 20, display: false }
+                            angleLines: { color: gridColor },
+                            grid: { color: gridColor },
+                            pointLabels: { color: labelColor, font: { size: 12, weight: 'bold' } },
+                            suggestedMin: 30,
+                            ticks: { display: false }
                         }
                     },
-                    plugins: { 
-                        legend: { 
-                            display: true, 
+                    plugins: {
+                        legend: {
                             position: 'bottom',
-                            labels: {
-                                font: { family: "'Press Start 2P', cursive", size: 10 },
-                                boxWidth: 12
-                            }
-                        } 
+                            labels: { color: labelColor, boxWidth: 12, font: { size: 11 } }
+                        }
                     }
                 }
             });
         }
 
-        // ============== 折线图渲染逻辑 ==============
+        // 折线图渲染
         function renderLineChart() {
-            const currentSemester = domGlobalSemester.value;
-            const currentSubject = domSubjectFilter.value;
-            
-            const targetData = allData.filter(d => d.semester === currentSemester && d.subject === currentSubject);
+            const currentSemester = document.getElementById('globalSemester').value;
+            const targetData = allData.filter(d => (d.semester || '初一上学期') === currentSemester && d.subject === currentSubject);
 
-            const ctx = canvasLine.getContext('2d');
-            if (lineChartObj) { lineChartObj.destroy(); }
+            const canvas = document.getElementById('lineChart');
+            const noDataTip = document.getElementById('noDataTip');
+            if (lineChartObj) lineChartObj.destroy();
 
             if (targetData.length === 0) {
-                canvasLine.style.display = 'none';
-                domNoDataTip.classList.remove('hidden');
+                canvas.style.opacity = '0';
+                noDataTip.classList.remove('hidden');
                 return;
-            } else {
-                canvasLine.style.display = 'block';
-                domNoDataTip.classList.add('hidden');
             }
+            canvas.style.opacity = '1';
+            noDataTip.classList.add('hidden');
 
-            const examNames = targetData.map(item => item.exam_name);
-            const myScores = targetData.map(item => item.score);
-            const highestScores = targetData.map(item => item.highest_score ? item.highest_score : null);
+            const examNames = targetData.map(d => d.exam_name);
+            const myScores = targetData.map(d => Number(d.score));
+            const highestScores = targetData.map(d => d.highest_score ? Number(d.highest_score) : null);
+
+            const myAvg = +(myScores.reduce((a, b) => a + b, 0) / myScores.length).toFixed(1);
+            const avgLine = examNames.map(() => myAvg);
+
+            const allValidVals = [...myScores, ...highestScores.filter(v => v !== null)];
+            const minVal = Math.min(...allValidVals);
+            const maxVal = Math.max(...allValidVals);
+            const yMin = Math.max(0, Math.floor((minVal - 6) / 5) * 5);
+            const yMax = Math.ceil((maxVal + 4) / 5) * 5;
+
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+            gradient.addColorStop(0, 'rgba(0, 240, 255, 0.36)');
+            gradient.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#94A3B8' : '#475569';
+            const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(15, 23, 42, 0.08)';
 
             lineChartObj = new Chart(ctx, {
                 type: 'line',
@@ -335,23 +944,38 @@
                     labels: examNames,
                     datasets: [
                         {
-                            label: '我的分数',
+                            label: '我的得分',
                             data: myScores,
-                            borderColor: '#3B82F6', 
-                            backgroundColor: '#3B82F6',
-                            tension: 0.3,
+                            borderColor: '#00F0FF',
+                            backgroundColor: gradient,
+                            fill: true,
+                            borderWidth: 3,
+                            tension: 0.32,
                             pointRadius: 6,
-                            pointHoverRadius: 8
+                            pointHoverRadius: 9,
+                            pointBackgroundColor: '#070B14',
+                            pointBorderColor: '#00F0FF',
+                            pointBorderWidth: 2.5
                         },
                         {
-                            label: '班级最高分',
+                            label: '班级最高',
                             data: highestScores,
-                            borderColor: '#F59E0B', 
-                            backgroundColor: '#F59E0B',
-                            borderDash: [5, 5], 
-                            tension: 0.3,
-                            pointRadius: 5,
-                            spanGaps: true 
+                            borderColor: '#FFB800',
+                            backgroundColor: '#FFB800',
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            tension: 0.32,
+                            pointRadius: 4,
+                            spanGaps: true
+                        },
+                        {
+                            label: `个人均线(${myAvg})`,
+                            data: avgLine,
+                            borderColor: '#A855F7',
+                            borderDash: [3, 4],
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            fill: false
                         }
                     ]
                 },
@@ -359,93 +983,232 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'top' },
+                        legend: {
+                            position: 'top',
+                            labels: { color: textColor, boxWidth: 10, font: { size: 11 } }
+                        },
                         tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            borderColor: '#00F0FF',
+                            borderWidth: 1,
+                            padding: 10,
                             callbacks: {
                                 afterLabel: function(context) {
-                                    if (context.datasetIndex === 1) return []; 
+                                    if (context.datasetIndex !== 0) return [];
+                                    const cur = context.parsed.y;
+                                    const maxS = highestScores[context.dataIndex];
+                                    const lines = [];
 
-                                    const currentScore = context.parsed.y;
-                                    let labels = [];
-                                    let prevScore = null;
-                                    
-                                    for (let i = context.dataIndex - 1; i >= 0; i--) {
-                                        if (context.dataset.data[i] !== null) {
-                                            prevScore = context.dataset.data[i];
-                                            break;
-                                        }
+                                    if (maxS !== null) {
+                                        const gap = (maxS - cur).toFixed(1);
+                                        lines.push(gap <= 0 ? '👑 已斩获班级最高分!' : `距班级最高: -${gap} 分`);
                                     }
 
-                                    if (prevScore !== null) {
-                                        const diff = (currentScore - prevScore).toFixed(1);
-                                        if (diff > 0) labels.push(`环比上次: +${diff}分 📈`);
-                                        else if (diff < 0) labels.push(`环比上次: ${diff}分 📉`);
-                                        else labels.push(`环比上次: 持平 ➖`);
+                                    if (context.dataIndex > 0) {
+                                        const prev = myScores[context.dataIndex - 1];
+                                        const diff = (cur - prev).toFixed(1);
+                                        if (diff > 0) lines.push(`环比上次: +${diff} 分 📈`);
+                                        else if (diff < 0) lines.push(`环比上次: ${diff} 分 📉`);
+                                        else lines.push(`环比上次: 持平 ➖`);
                                     } else {
-                                        labels.push(`环比上次: (本学期首次)`);
+                                        lines.push('环比上次: (本学期首次)');
                                     }
-                                    return labels;
+                                    return lines;
                                 }
                             }
                         }
                     },
                     scales: {
-                        y: {
-                            suggestedMin: 60,
-                            suggestedMax: 100
-                        }
+                        x: { ticks: { color: textColor, font: { size: 11 } }, grid: { color: gridColor } },
+                        y: { min: yMin, max: yMax, ticks: { color: textColor, font: { size: 11 } }, grid: { color: gridColor } }
                     }
                 }
             });
         }
 
-        // ============== 表单提交逻辑 ==============
-        document.getElementById('scoreForm').addEventListener('submit', async (e) => {
+        // 数据仓列表渲染 (针对手机触屏加大按钮点击热区)
+        function renderVaultTable(semesterData) {
+            document.getElementById('vaultCountBadge').textContent = `${semesterData.length} 条`;
+            const tbody = document.getElementById('vaultTableBody');
+            if (semesterData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-500">当前学期暂无遥测记录</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = [...semesterData].reverse().map(row => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="py-2.5 px-1.5">
+                        <div class="font-sans font-bold text-xs">${row.exam_name}</div>
+                        <div class="text-[11px] text-slate-400">${SUBJECT_ICONS[row.subject] || '◈'} ${row.subject}</div>
+                    </td>
+                    <td class="py-2.5 px-1.5">
+                        <span class="text-cyan-400 font-bold text-sm">${row.score}</span>
+                        <span class="text-slate-500 text-xs"> / </span>
+                        <span class="text-amber-400 text-xs">${row.highest_score ?? '--'}</span>
+                    </td>
+                    <td class="py-2.5 px-1.5 text-right space-x-1">
+                        <button onclick="editRecord(${row.id})" class="px-2 py-1 rounded bg-sky-500/15 text-sky-400 border border-sky-500/30 text-xs">校准</button>
+                        <button onclick="deleteRecord(${row.id})" class="px-2 py-1 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30 text-xs">抹除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function editRecord(id) {
+            const target = allData.find(d => d.id === id);
+            if (!target) return;
+            const newScoreStr = prompt(`校准【${target.exam_name} - ${target.subject}】的个人得分:`, target.score);
+            if (newScoreStr === null) return;
+            const newMaxStr = prompt(`校准【${target.exam_name} - ${target.subject}】的班级最高分:`, target.highest_score ?? target.score);
+            if (newMaxStr === null) return;
+
+            const newScore = parseFloat(newScoreStr);
+            const newMax = Math.max(newScore, parseFloat(newMaxStr) || newScore);
+
+            if (isDemoMode) {
+                target.score = newScore;
+                target.highest_score = newMax;
+                refreshAll();
+                return;
+            }
+
+            const { error } = await db.from('exam_scores').update({ score: newScore, highest_score: newMax }).eq('id', id);
+            if (error) alert('校准失败，请确认 Supabase 已开启 UPDATE 权限');
+            else fetchData();
+        }
+
+        async function deleteRecord(id) {
+            const target = allData.find(d => d.id === id);
+            if (!target) return;
+            if (!confirm(`确定要从数据仓抹除【${target.exam_name} - ${target.subject} (${target.score}分)】吗？`)) return;
+
+            if (isDemoMode) {
+                allData = allData.filter(d => d.id !== id);
+                refreshAll();
+                return;
+            }
+
+            const { error } = await db.from('exam_scores').delete().eq('id', id);
+            if (error) alert('抹除失败，请确认 Supabase 已开启 DELETE 权限');
+            else fetchData();
+        }
+
+        function triggerApexBanner(subject, score) {
+            const toast = document.getElementById('apexToast');
+            document.getElementById('apexToastText').textContent = `${subject}斩获 ${score} 分，成功登顶班级最高天花板！`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 4000);
+        }
+
+        async function upsertRecord(semester, examName, subject, scoreVal, maxVal) {
+            const finalMax = (!maxVal || maxVal < scoreVal) ? scoreVal : maxVal;
+            if (scoreVal >= finalMax) triggerApexBanner(subject, scoreVal);
+
+            const existing = allData.find(d =>
+                (d.semester || '初一上学期') === semester &&
+                d.exam_name === examName &&
+                d.subject === subject
+            );
+
+            if (isDemoMode) {
+                if (existing) {
+                    existing.score = scoreVal;
+                    existing.highest_score = finalMax;
+                } else {
+                    allData.push({ id: Date.now() + Math.random(), semester, exam_name: examName, subject, score: scoreVal, highest_score: finalMax });
+                }
+                return true;
+            }
+
+            if (existing) {
+                if (!confirm(`检测到【${semester} - ${examName} - ${subject}】已存在记录(${existing.score}分)，是否覆盖更新为 ${scoreVal} 分？`)) {
+                    return false;
+                }
+                const { error } = await db.from('exam_scores').update({ score: scoreVal, highest_score: finalMax }).eq('id', existing.id);
+                return !error;
+            } else {
+                // 优先写入带 semester 的记录；若数据库尚未添加 semester 列则自动回退兼容
+                let { error } = await db.from('exam_scores').insert([{
+                    semester, exam_name: examName, subject, score: scoreVal, highest_score: finalMax
+                }]);
+                if (error && error.message && error.message.includes('semester')) {
+                    const fallback = await db.from('exam_scores').insert([{
+                        exam_name: examName, subject, score: scoreVal, highest_score: finalMax
+                    }]);
+                    error = fallback.error;
+                }
+                return !error;
+            }
+        }
+
+        // 单科提交 (手机端提交成功后自动切回图表页查看最新走势)
+        document.getElementById('singleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const semester = document.getElementById('formSemester').value; 
+            const semester = document.getElementById('globalSemester').value;
             const examName = document.getElementById('examName').value.trim();
+            if (!examName) { alert('请先填写【考试名称】'); return; }
+
             const subject = document.getElementById('subject').value.replace(/\s+/g, '');
-            const score = document.getElementById('score').value;
-            const highestScore = document.getElementById('highestScore').value;
+            const scoreVal = parseFloat(document.getElementById('score').value);
+            const maxRaw = document.getElementById('highestScore').value;
+            const maxVal = maxRaw ? parseFloat(maxRaw) : scoreVal;
 
             document.getElementById('loadingMsg').classList.remove('hidden');
-
-            const { error } = await db
-                .from('exam_scores')
-                .insert([
-                    { 
-                        semester: semester,
-                        exam_name: examName, 
-                        subject: subject, 
-                        score: parseFloat(score), 
-                        highest_score: highestScore ? parseFloat(highestScore) : null 
-                    }
-                ]);
-
+            const ok = await upsertRecord(semester, examName, subject, scoreVal, maxVal);
             document.getElementById('loadingMsg').classList.add('hidden');
 
-            if (error) {
-                alert('保存失败，请检查网络或联系管理员！');
-                console.error(error);
-            } else {
+            if (ok) {
+                currentSubject = subject;
                 document.getElementById('score').value = '';
                 document.getElementById('highestScore').value = '';
-                
-                if (!domSubjectFilter.querySelector(`option[value="${subject}"]`)) {
-                    const opt = document.createElement('option');
-                    opt.value = subject;
-                    opt.textContent = subject;
-                    domSubjectFilter.appendChild(opt);
-                }
-                domSubjectFilter.value = subject;
-                
-                fetchData(); 
+                await (isDemoMode ? refreshAll() : fetchData());
+                if (window.innerWidth < 1024) switchMobileTab('charts');
+            } else {
+                alert('保存未完成，请检查网络连接或数据库权限！');
             }
         });
 
-        // 页面启动
-        window.onload = fetchData;
+        // 批量矩阵提交
+        document.getElementById('batchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const semester = document.getElementById('globalSemester').value;
+            const examName = document.getElementById('examName').value.trim();
+            if (!examName) { alert('请先填写【考试名称】'); return; }
+
+            const scoreInputs = document.querySelectorAll('[data-field="score"]');
+            const tasks = [];
+
+            scoreInputs.forEach(input => {
+                if (input.value.trim() !== '') {
+                    const sub = input.getAttribute('data-batch-sub');
+                    const maxInput = document.querySelector(`[data-batch-sub="${sub}"][data-field="max"]`);
+                    const sVal = parseFloat(input.value);
+                    const mVal = (maxInput && maxInput.value.trim() !== '') ? parseFloat(maxInput.value) : sVal;
+                    tasks.push({ sub, sVal, mVal, input, maxInput });
+                }
+            });
+
+            if (tasks.length === 0) { alert('请至少填写一门科目的分数！'); return; }
+
+            document.getElementById('loadingMsg').classList.remove('hidden');
+            for (const item of tasks) {
+                await upsertRecord(semester, examName, item.sub, item.sVal, item.mVal);
+                item.input.value = '';
+                if (item.maxInput) item.maxInput.value = '';
+            }
+            document.getElementById('loadingMsg').classList.add('hidden');
+
+            currentSubject = tasks[0].sub;
+            await (isDemoMode ? refreshAll() : fetchData());
+            if (window.innerWidth < 1024) switchMobileTab('charts');
+        });
+
+        document.getElementById('globalSemester').addEventListener('change', refreshAll);
+
+        window.onload = () => {
+            initBatchRows();
+            fetchData();
+        };
     </script>
 </body>
 </html>

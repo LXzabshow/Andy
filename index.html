@@ -10,63 +10,90 @@
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'VT323', monospace; text-align: center; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; transition: background 1.5s ease; image-rendering: pixelated; background-size: 64px 64px; }
         
-        .ground { position: absolute; bottom: 0; width: 100%; height: 20px; background: #5D4037; border-top: 6px solid #4CAF50; z-index: 20; }
+        /* 💡 视差滚动地面引擎 */
+        .ground {
+            position: absolute; bottom: 0; width: 100%; height: 26px; z-index: 20;
+            background-color: #5D4037;
+            background-image: 
+                linear-gradient(90deg, #4CAF50 50%, #388E3C 50%),
+                repeating-linear-gradient(90deg, #5D4037 0px, #5D4037 16px, #4E342E 16px, #4E342E 32px);
+            background-size: 32px 6px, 32px 20px;
+            background-position: 0 0, 0 6px;
+            background-repeat: repeat-x;
+            border-top: 2px solid #2E7D32;
+            animation: groundScroll 0.8s linear infinite;
+        }
+        .ground.paused { animation-play-state: paused !important; }
+        @keyframes groundScroll {
+            from { background-position: 0 0, 0 6px; }
+            to { background-position: -32px 0, -32px 6px; }
+        }
+
         .stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 15;}
-        .actor { position: absolute; bottom: 20px; transition: transform 0.1s; z-index: 30; }
+        .actor { position: absolute; bottom: 26px; transition: transform 0.1s; z-index: 30; }
         
-        .ui-container { margin-top: 5vh; width: 90%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.5s ease, transform 0.2s ease;}
+        .ui-container { margin-top: 3.5vh; width: 92%; max-width: 400px; z-index: 100; position: relative; transition: opacity 0.5s ease, transform 0.2s ease;}
         
-        .card { background-color: var(--card-bg, #c6c6c6); border: 5px solid var(--card-border, #000); box-shadow: var(--card-glow, inset 4px 4px rgba(255,255,255,0.4), inset -4px -4px rgba(0,0,0,0.4)); padding: 15px; position: relative; transition: all 0.8s ease; }
+        .card { background-color: var(--card-bg, #c6c6c6); border: 5px solid var(--card-border, #000); box-shadow: var(--card-glow, inset 4px 4px rgba(255,255,255,0.4), inset -4px -4px rgba(0,0,0,0.4)); padding: 14px; position: relative; transition: all 0.8s ease; }
         
         @keyframes pulse-redstone { 0% { box-shadow: 0 0 10px #ff0000, inset 0 0 10px #ff0000, inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4); } 50% { box-shadow: 0 0 30px #ff0000, inset 0 0 20px #ff0000, inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4); } 100% { box-shadow: 0 0 10px #ff0000, inset 0 0 10px #ff0000, inset 4px 4px rgba(255,255,255,0.2), inset -4px -4px rgba(0,0,0,0.4); } }
         @keyframes pulse-end { 0% { box-shadow: 0 0 20px #8e44ad, inset 0 0 20px #8e44ad; border-color: #2c3e50; } 50% { box-shadow: 0 0 50px #ff00ff, inset 0 0 40px #ff00ff; border-color: #8e44ad; } 100% { box-shadow: 0 0 20px #8e44ad, inset 0 0 20px #8e44ad; border-color: #2c3e50; } }
         .glow-redstone { animation: pulse-redstone 2s infinite; }
         .glow-end { animation: pulse-end 3s infinite; }
 
-        h2 { color: #ffffff; margin: 0 0 5px 0; font-size: 30px; text-shadow: 3px 3px #000; letter-spacing: 2px; }
+        h2 { color: #ffffff; margin: 0 0 5px 0; font-size: 28px; text-shadow: 3px 3px #000; letter-spacing: 2px; }
         
-        .rank-badge { background: #222; color: #ffb700; padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 10px; font-size: 18px; border-radius: 4px; box-shadow: 2px 2px #000; cursor: pointer; text-shadow: 1px 1px 0px #000; font-weight: bold;}
+        .rank-badge { background: #222; color: #ffb700; padding: 4px 12px; border: 2px solid #fff; display: inline-block; margin-bottom: 8px; font-size: 18px; border-radius: 4px; box-shadow: 2px 2px #000; cursor: pointer; text-shadow: 1px 1px 0px #000; font-weight: bold;}
         .rank-badge:active { transform: scale(0.95); }
         .rank-badge::after { content: ' 🔍'; font-size: 14px; opacity: 0.8; }
         
-        .slot { background: #8b8b8b; width: 70px; height: 70px; margin: 0; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; flex-shrink: 0;}
+        .slot { background: #8b8b8b; width: 66px; height: 66px; margin: 0; border: 4px solid #373737; border-right-color: #fff; border-bottom-color: #fff; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; flex-shrink: 0;}
         .slot:active .coin-icon { transform: scale(0.8); }
-        .coin-icon { font-size: 40px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
-        .total { font-size: 55px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 0; line-height: 1; flex-shrink: 0;}
+        .coin-icon { font-size: 38px; filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.5)); z-index: 2; transition: transform 0.1s;}
+        .total { font-size: 52px; color: #fff; font-weight: bold; text-shadow: 4px 4px 0px #333; margin: 0; line-height: 1; flex-shrink: 0;}
 
-        #activeBuffsContainer { width: 100%; display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
-        .buff-pill { background: rgba(0,0,0,0.7); border: 2px solid #ffb700; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-family: -apple-system, sans-serif; font-weight: bold; text-shadow: 1px 1px #000; display: flex; justify-content: space-between; align-items: center; animation: glow 2s infinite alternate;}
+        #activeBuffsContainer { width: 100%; display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+        .buff-pill { background: rgba(0,0,0,0.75); border: 2px solid #ffb700; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 13px; font-family: -apple-system, sans-serif; font-weight: bold; text-shadow: 1px 1px #000; display: flex; justify-content: space-between; align-items: center; animation: glow 2s infinite alternate;}
         @keyframes glow { from { box-shadow: 0 0 5px #ffb700; } to { box-shadow: 0 0 15px #ffb700, 0 0 5px #ffb700 inset; } }
 
-        .health-bar-container { width: 100%; margin-top: 10px; padding: 0 5px; box-sizing: border-box; }
+        .health-bar-container { width: 100%; margin-top: 8px; padding: 0 5px; box-sizing: border-box; }
         .health-bar-label { font-size: 14px; color: #fff; font-weight: bold; margin-bottom: 4px; text-shadow: 2px 2px #000; display:flex; justify-content: space-between; align-items: flex-end;}
-        .health-bar-bg { width: 100%; height: 16px; background-color: #333; border: 3px solid #000; position: relative; box-shadow: inset 2px 2px #111, inset -2px -2px #555; overflow: hidden;}
+        .health-bar-bg { width: 100%; height: 15px; background-color: #333; border: 3px solid #000; position: relative; box-shadow: inset 2px 2px #111, inset -2px -2px #555; overflow: hidden;}
         .health-bar-fill { height: 100%; background-color: #e70000; width: 0%; transition: width 0.8s; box-shadow: inset 0px 4px 0px rgba(255,255,255,0.3); }
         .health-bar-fill.safe { background-color: #2ecc71; } .health-bar-fill.warn { background-color: #f1c40f; }
 
-        .vitality-container { display:flex; width:100%; height:18px; border:3px solid #000; background:#222; padding:2px; box-sizing:border-box; box-shadow: inset 2px 2px #111, inset -2px -2px #555;}
+        .vitality-container { display:flex; width:100%; height:16px; border:3px solid #000; background:#222; padding:2px; box-sizing:border-box; box-shadow: inset 2px 2px #111, inset -2px -2px #555;}
         @keyframes flash-danger { 0% { opacity: 1; } 50% { opacity: 0.5; filter: brightness(2); } 100% { opacity: 1; } }
 
         .vitality-clickable { cursor: pointer; transition: transform 0.1s; }
         .vitality-clickable:active { transform: scale(0.98); }
 
-        .btn-upgrade { width: 100%; margin-top: 10px; padding: 10px; font-family: 'VT323', monospace; font-size: 18px; font-weight: bold; color: white; background: #d35400; border: 4px solid #000; cursor: pointer; animation: pulse 2s infinite;}
+        .btn-upgrade { width: 100%; margin-top: 8px; padding: 9px; font-family: 'VT323', monospace; font-size: 18px; font-weight: bold; color: white; background: #d35400; border: 4px solid #000; cursor: pointer; animation: pulse 2s infinite;}
         .btn-upgrade:disabled { background: #7f8c8d; cursor: not-allowed; animation: none; filter: grayscale(1); border-color:#555;}
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         
-        .main-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .btn-main-action { width: 100%; padding: 12px 0; font-family: inherit; font-size: 16px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 2px 2px rgba(255,255,255,0.3), inset -2px -2px rgba(0,0,0,0.3); }
+        .main-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+        .btn-main-action { position: relative; width: 100%; padding: 10px 0; font-family: inherit; font-size: 16px; font-weight: bold; color: white; background: #27ae60; border: 4px solid #000; cursor: pointer; box-shadow: inset 2px 2px rgba(255,255,255,0.3), inset -2px -2px rgba(0,0,0,0.3); }
         .btn-main-action:active:not(:disabled) { transform: scale(0.95); }
         .btn-shop { background: #e67e22; }
         .btn-game { background: #8e44ad; }
         .btn-log { background: #7f8c8d; }
         .btn-contract { background: #c0392b; }
+        .btn-contract.contract-active { border-color: #ffb700; box-shadow: 0 0 12px #ffb700, inset 2px 2px rgba(255,255,255,0.4); }
         .btn-milestone { background: #2980b9; }
 
-        .status-bar { background: rgba(0,0,0,0.8); color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; margin-top: 8px; border: 2px solid #555; }
+        .status-bar { background: rgba(0,0,0,0.8); color: #fff; padding: 3px 10px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; margin-top: 6px; border: 2px solid #555; }
         .light { width: 8px; height: 8px; background: #e74c3c; margin-right: 8px; } .light.online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
-        .message { color: #fff; margin-top: 5px; font-size: 14px; height: 20px; text-shadow: 2px 2px #000; font-weight: bold;}
+        .message { color: #fff; margin-top: 4px; font-size: 14px; height: 18px; text-shadow: 2px 2px #000; font-weight: bold;}
         .mute-btn { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; color: #fff; text-shadow: 2px 2px #000;}
+
+        /* 🎁 飘浮空投宝箱样式 */
+        #treasure-chest { position: fixed; top: 12%; left: 50%; font-size: 52px; z-index: 250; cursor: pointer; display: none; filter: drop-shadow(0 0 12px #ffb700); transition: left 2.5s ease-in-out, top 2.5s ease-in-out; }
+        .chest-float-anim { animation: bobbing 1s infinite alternate; }
+        @keyframes bobbing { from { transform: translateY(0) scale(1); } to { transform: translateY(-8px) scale(1.08); } }
+        .challenge-q { font-size: 15px; color: #000; margin: 12px 0; font-weight: bold; background: #fff; padding: 10px; border: 2px solid #555; white-space: pre-wrap; text-align: left; max-height: 200px; overflow-y: auto; font-family: -apple-system, sans-serif;}
+        .challenge-input { font-family: 'VT323', monospace; font-size: 24px; padding: 6px; width: 85%; text-align: center; border: 3px solid #000; margin-bottom: 12px; background: #fff;}
+        .btn-submit { background: #27ae60; color: white; padding: 10px 20px; border: 3px solid #000; font-family: inherit; font-size: 20px; cursor: pointer; width: 100%; font-weight: bold;}
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 400; display: none; justify-content: center; align-items: center; padding: 10px;}
         .challenge-card { background: #c6c6c6; border: 4px solid #000; box-shadow: inset 4px 4px #fff, inset -4px -4px #555; padding: 15px; width: 100%; max-width: 360px; text-align: center; display: flex; flex-direction: column; max-height: 90vh;}
@@ -118,19 +145,83 @@
         .fly-text { position: fixed; z-index: 1000; font-family: 'VT323', monospace; font-size: 40px; font-weight: bold; text-shadow: 2px 2px #000, -2px -2px #000; pointer-events: none; animation: floatUp 1s forwards; }
         @keyframes floatUp { 0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; } 20% { transform: translate(-50%, -20px) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -60px) scale(1); opacity: 0; } }
 
-        .skin-steve, .skin-creeper, .skin-villager { }
-        .skin-steve { width: 60px; height: 135px; } .skin-steve .head { width: 60px; height: 60px; background: #F8B090; position: absolute; top: 0; z-index: 2; } .skin-steve .hair { width: 60px; height: 15px; background: #452613; position: absolute; top: 0; z-index: 3; } .skin-steve .body { width: 60px; height: 45px; background: #00AAAA; position: absolute; top: 60px; z-index: 1; } .skin-steve .pants { width: 60px; height: 30px; background: #303090; position: absolute; top: 105px; } .skin-steve .sword { position: absolute; top: 35px; right: -40px; font-size: 60px; transform: scaleX(-1) rotate(45deg); transform-origin: 20% 80%; z-index: 4; display: none; filter: drop-shadow(2px 2px 0 #000); }
-        .skin-creeper { width: 45px; height: 120px; } .skin-creeper .head { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; } .skin-creeper .face { position: absolute; top: 10px; left: 8px; width: 29px; height: 25px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8; } .skin-creeper .body { width: 45px; height: 45px; background: #00AA00; position: absolute; top: 45px; } .skin-creeper .legs { width: 45px; height: 30px; position: absolute; top: 90px; } .skin-creeper .leg { width: 15px; height: 30px; background: #00AA00; position: absolute; bottom:0; }
-        .skin-villager { width: 50px; height: 140px; } .skin-villager .head { width: 50px; height: 60px; background: #d09b7c; position: absolute; top: 0; } .skin-villager .nose { width: 10px; height: 18px; background: #d09b7c; position: absolute; top: 30px; left: 20px; border: 1px solid #a3755b; z-index: 5;} .skin-villager .body { width: 50px; height: 80px; background: #684831; position: absolute; top: 60px; } .skin-villager .arms { width: 50px; height: 15px; background: #684831; position: absolute; top: 75px; left: 0; }
+        /* ========================================================
+           ⚔️ 横版挂机 RPG 引擎：史蒂夫动态神装与怪物模型样式
+           ======================================================== */
+        .skin-steve { width: 44px; height: 100px; left: 28%; bottom: 26px; z-index: 40; transition: left 0.3s ease; }
+        .skin-steve .head { width: 36px; height: 36px; background: #F8B090; position: absolute; top: 0; left: 4px; z-index: 3; border: 2px solid #222; }
+        .skin-steve .hair { width: 36px; height: 10px; background: #452613; position: absolute; top: 0; left: 0; z-index: 4; }
+        .skin-steve .eyes { position: absolute; top: 16px; right: 4px; width: 14px; height: 5px; background: linear-gradient(90deg, #fff 50%, #303090 50%); z-index: 4; }
+        /* 动态头盔 */
+        .skin-steve .helmet { position: absolute; top: -3px; left: 2px; width: 40px; height: 18px; z-index: 5; border: 2px solid #000; display: none; box-shadow: inset 0 3px rgba(255,255,255,0.4); }
+        /* 身体与胸甲 */
+        .skin-steve .body { width: 32px; height: 36px; background: #00AAAA; position: absolute; top: 36px; left: 6px; z-index: 2; border: 2px solid #222; box-shadow: inset 0 4px rgba(255,255,255,0.25); }
+        .skin-steve .arm { width: 14px; height: 32px; background: #00AAAA; position: absolute; top: 38px; left: 15px; z-index: 6; border: 2px solid #222; transform-origin: 50% 15%; }
+        /* 双腿与迈步动画 */
+        .skin-steve .leg-l, .skin-steve .leg-r { width: 14px; height: 28px; background: #303090; position: absolute; top: 72px; left: 15px; border: 2px solid #111; transform-origin: 50% 0%; }
+        .skin-steve .leg-l { z-index: 1; filter: brightness(0.8); }
+        .skin-steve .leg-r { z-index: 3; }
+        
+        .skin-steve.walking .leg-l { animation: walkLegL 0.45s ease-in-out infinite alternate; }
+        .skin-steve.walking .leg-r { animation: walkLegR 0.45s ease-in-out infinite alternate; }
+        .skin-steve.walking .arm { animation: walkArm 0.45s ease-in-out infinite alternate; }
+        .skin-steve.walking { animation: walkBob 0.22s ease-in-out infinite alternate; }
 
-        .breathe { animation: breathe 2s ease-in-out infinite; } @keyframes breathe { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.02); } }
-        .anim-attack { animation: swordSwing 0.35s ease-out forwards; } @keyframes swordSwing { 0% { transform: scaleX(-1) rotate(45deg); } 50% { transform: scaleX(-1) rotate(-60deg); } 100% { transform: scaleX(-1) rotate(45deg); } }
+        @keyframes walkLegL { from { transform: rotate(-28deg); } to { transform: rotate(28deg); } }
+        @keyframes walkLegR { from { transform: rotate(28deg); } to { transform: rotate(-28deg); } }
+        @keyframes walkArm { from { transform: rotate(20deg); } to { transform: rotate(-25deg); } }
+        @keyframes walkBob { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+
+        /* 武器与挥砍刀光 */
+        .skin-steve .sword { position: absolute; top: 20px; right: -34px; font-size: 40px; transform: scaleX(-1) rotate(35deg); transform-origin: 15% 85%; z-index: 8; filter: drop-shadow(2px 2px 0 #000); transition: transform 0.1s; }
+        .skin-steve .slash-fx { position: absolute; top: 15px; right: -55px; width: 45px; height: 65px; border-right: 6px solid #fff; border-radius: 50%; opacity: 0; z-index: 9; pointer-events: none; filter: drop-shadow(0 0 8px #00ffff); }
+        .anim-attack { animation: swordSwing 0.32s cubic-bezier(0.2, 0.8, 0.4, 1) forwards !important; }
+        .anim-slash { animation: slashArc 0.32s ease-out forwards; }
+        @keyframes swordSwing { 0% { transform: scaleX(-1) rotate(35deg) scale(1); } 45% { transform: scaleX(-1) rotate(-75deg) scale(1.25); } 100% { transform: scaleX(-1) rotate(35deg) scale(1); } }
+        @keyframes slashArc { 0% { opacity: 0; transform: scale(0.5) rotate(-30deg); } 40% { opacity: 1; transform: scale(1.1) rotate(10deg); } 100% { opacity: 0; transform: scale(1.3) rotate(35deg); } }
+
+        /* 👾 巡逻怪物通用像素模型与血条 */
+        .patrol-mob { position: absolute; bottom: 26px; z-index: 35; display: flex; flex-direction: column; align-items: center; transition: filter 0.1s; }
+        .patrol-mob.flying { bottom: 68px; animation: mobHover 0.8s ease-in-out infinite alternate; }
+        @keyframes mobHover { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+        
+        .mob-tag { background: rgba(0,0,0,0.75); color: #fff; font-size: 13px; padding: 1px 6px; border-radius: 3px; border: 1px solid #555; white-space: nowrap; margin-bottom: 3px; text-shadow: 1px 1px #000; }
+        .mob-hp-bar { display: flex; gap: 2px; background: #111; padding: 2px; border: 2px solid #000; margin-bottom: 5px; }
+        .mob-hp-seg { width: 12px; height: 6px; background: #e74c3c; transition: background 0.15s; }
+        .mob-hp-seg.empty { background: #333; }
+
+        .mob-sprite { position: relative; display: flex; flex-direction: column; align-items: center; transform-origin: bottom center; }
+        .mob-walking .mob-sprite { animation: mobBounce 0.32s ease-in-out infinite alternate; }
+        @keyframes mobBounce { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-4px) rotate(2deg); } }
+
+        .mob-head { width: 34px; height: 34px; border: 2px solid #111; position: relative; box-shadow: inset -3px -3px rgba(0,0,0,0.35); }
+        .mob-eye-l, .mob-eye-r { position: absolute; top: 14px; width: 6px; height: 6px; }
+        .mob-eye-l { left: 4px; } .mob-eye-r { left: 16px; }
+        .mob-mouth { position: absolute; bottom: 5px; left: 7px; width: 12px; height: 5px; background: #111; }
+        .mob-body { width: 30px; height: 34px; border: 2px solid #111; border-top: none; position: relative; box-shadow: inset -3px -3px rgba(0,0,0,0.35); }
+        .mob-legs { display: flex; gap: 4px; justify-content: center; }
+        .mob-leg { width: 11px; height: 22px; border: 2px solid #111; border-top: none; }
+        .mob-weapon { position: absolute; top: 32px; left: -22px; font-size: 28px; filter: drop-shadow(2px 2px 0 #000); }
+        .mob-wing { position: absolute; top: -8px; right: -24px; width: 36px; height: 22px; border: 2px solid #000; transform-origin: left center; animation: wingFlap 0.35s infinite alternate; opacity: 0.9; }
+        @keyframes wingFlap { from { transform: rotate(-20deg) scaleY(1); } to { transform: rotate(25deg) scaleY(0.6); } }
+
+        /* 怪物受击与死亡特效 */
+        .mob-hurt { filter: sepia(1) hue-rotate(-50deg) saturate(6) brightness(1.3) !important; transform: translateX(12px); }
+        .mob-dead { transition: all 0.45s ease-in !important; transform: translateX(20px) rotate(90deg) scale(0.8) !important; opacity: 0 !important; filter: sepia(1) hue-rotate(-50deg) saturate(8) !important; }
+        .dmg-popup { position: absolute; top: -25px; font-size: 26px; font-weight: bold; color: #ff3333; text-shadow: 2px 2px 0 #000, -1px -1px 0 #fff; pointer-events: none; z-index: 60; animation: dmgFloat 0.65s ease-out forwards; white-space: nowrap;}
+        @keyframes dmgFloat { 0% { transform: translateY(0) scale(0.8); opacity: 1; } 40% { transform: translateY(-18px) scale(1.2); opacity: 1; } 100% { transform: translateY(-32px) scale(1); opacity: 0; } }
+
+        /* 苦力怕演出备用模型 */
+        .skin-creeper { width: 45px; height: 100px; } .skin-creeper .head { width: 40px; height: 40px; background: #00AA00; position: absolute; top: 0; border: 3px solid #005500; } .skin-creeper .face { position: absolute; top: 8px; left: 6px; width: 24px; height: 22px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><path d="M1 1h2v2h2v-2h2v3h-2v1h1v2h-2v-1h-2v1h-2v-2h1v-1h-2z"/></svg>'); opacity: 0.8; } .skin-creeper .body { width: 34px; height: 38px; left: 3px; background: #00AA00; position: absolute; top: 40px; border: 2px solid #005500;} .skin-creeper .legs { width: 40px; height: 22px; position: absolute; top: 78px; } .skin-creeper .leg { width: 14px; height: 22px; background: #00AA00; position: absolute; bottom:0; border: 2px solid #005500;}
+
         .anim-hurt { animation: hurtFlash 0.3s steps(2) infinite; } @keyframes hurtFlash { 0% { filter: sepia(1) hue-rotate(-50deg) saturate(5); } 100% { filter: none; } }
         .anim-swell { animation: swell 2.5s ease-in forwards; } @keyframes swell { 0% { transform: scale(1); filter: brightness(1); } 95% { transform: scale(2.5); filter: brightness(100); opacity: 1;} 100% { transform: scale(3); opacity: 0; } }
         .shake { animation: shake 0.5s infinite; } @keyframes shake { 0% { transform: translate(2px, 2px); } 20% { transform: translate(-4px, 0px); } 40% { transform: translate(2px, -2px); } 60% { transform: translate(-4px, 2px); } 80% { transform: translate(-2px, -2px); } 100% { transform: translate(2px, -4px); } }
-        .run-l-to-r { animation: runLeftToRight 8s linear forwards; } @keyframes runLeftToRight { 0% { left: -150px; } 100% { left: 120vw; } }
-        .run-r-to-l { animation: runRightToLeft 8s linear forwards; } @keyframes runRightToLeft { 0% { right: -150px; } 100% { right: 120vw; } }
         
+        /* 💡 修复：突破境界时的白光闪烁样式回归 */
+        .flash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 9998; opacity: 0; pointer-events: none; animation: flashAnim 1.2s ease-out forwards; }
+        @keyframes flashAnim { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
+
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
         .mc-btn { background: #727272; border: 4px solid #fff; padding: 15px 30px; font-size: 24px; color: white; font-family: 'VT323', monospace; cursor: pointer; }
         .confetti { position: fixed; top: 50%; left: 50%; z-index: 999; animation: explode-particle 1s ease-out forwards; pointer-events: none; font-size: 30px;}
@@ -152,6 +243,20 @@
     <audio id="sfx-hit"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/damage/hit1.ogg" type="audio/ogg"></audio>
     <audio id="sfx-fuse"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/fuse.ogg" type="audio/ogg"></audio>
     <audio id="sfx-click"><source src="https://raw.githubusercontent.com/kurisubrooks/minecraft-sounds/master/sounds/random/click.ogg" type="audio/ogg"></audio>
+
+    <!-- 🎁 空中飘浮空投宝箱与解密弹窗 -->
+    <div id="treasure-chest" class="chest-float-anim" onclick="openChallengeModal()">🎁</div>
+    <div id="challengeModal" class="modal-overlay" style="z-index: 800;">
+        <div class="challenge-card">
+            <div class="challenge-title">📜 未知空投悬赏</div>
+            <div style="color:#008800; font-size:22px; font-weight:bold;">赏金: +<span id="c_reward">50</span> 🪙</div>
+            <div id="c_timer" style="color:#c0392b; font-size:16px; margin: 6px 0; font-weight:bold;">宝箱消散倒计时...</div>
+            <div class="challenge-q" id="c_question">题目加载中...</div>
+            <input type="text" id="c_input" class="challenge-input" placeholder="输入封印密码">
+            <button class="btn-submit" onclick="submitAnswer()">🔓 解开封印</button>
+            <button class="btn-close-modal" onclick="closeChallengeModal()">暂时放弃</button>
+        </div>
+    </div>
 
     <div id="confirmModal" class="modal-overlay" style="z-index: 1000;"><div class="challenge-card" style="max-width: 300px;"><div class="challenge-title" style="font-size: 24px;">📋 确认告示</div><div id="confirmText" style="color:#000; font-size:16px; margin: 15px 0; font-weight:bold; line-height:1.5;">...</div><button class="btn-main-action" onclick="executeConfirmedAction()" style="margin-top: 5px;">✅ 确定</button><button class="btn-close-modal" onclick="closeConfirmModal()" style="margin-top: 5px;">❌ 取消</button></div></div>
     <div id="contractModal" class="modal-overlay"><div class="challenge-card"><div class="challenge-title" style="color: #c0392b;">📜 誓言祭坛</div><div id="contractContent" style="margin-top:10px; text-align:left;">加载中...</div><button class="btn-close-modal" onclick="closeContractModal()">离开祭坛</button></div></div>
@@ -204,7 +309,7 @@
             <h2>Andy的探险背包</h2>
             <div id="rankBadge" class="rank-badge" onclick="openRankModal()">同步中...</div>
             
-            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin: 5px 0 10px 0;">
+            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; margin: 4px 0 8px 0;">
                 <div class="slot" onclick="clickCoin()"><div class="coin-icon" id="icon">🪙</div></div>
                 <div id="totalDisplay" class="total">...</div>
             </div>
@@ -217,9 +322,9 @@
             </div>
 
             <!-- ⚡ 10段式体能血条引擎 -->
-            <div class="health-bar-container vitality-clickable" style="margin-top:12px;" onclick="openDecayModal()">
+            <div class="health-bar-container vitality-clickable" style="margin-top:10px;" onclick="openDecayModal()">
                 <div class="health-bar-label" style="align-items: center;">
-                    <span style="display:flex; align-items:center;">⚡ 体力值：<span id="vitalityStatusBadge" style="margin-left:5px;"></span></span>
+                    <span style="display:flex; align-items:center;">⚡ 体力值(点击查法则)：<span id="vitalityStatusBadge" style="margin-left:5px;"></span></span>
                     <span id="vitalityText">10.0 / 10.0</span>
                 </div>
                 <div id="vitalityBarContainer" class="vitality-container"></div>
@@ -231,7 +336,7 @@
                 <button class="btn-main-action" onclick="openRewardModal()">⚔️ 挑战</button>
                 <button class="btn-main-action btn-shop" onclick="openShopModal()">🛒 商店</button>
                 <button class="btn-main-action btn-game" onclick="openGameModal()">🎮 高塔</button>
-                <button class="btn-main-action btn-contract" onclick="openContractModal()">📜 契约</button>
+                <button id="btnContractMain" class="btn-main-action btn-contract" onclick="openContractModal()">📜 契约</button>
                 <button class="btn-main-action btn-milestone" onclick="openMilestoneModal()">🏆 图鉴</button>
                 <button class="btn-main-action btn-log" onclick="openLogModal()">📝 账单</button>
             </div>
@@ -241,21 +346,39 @@
         </div>
     </div>
 
+    <!-- ⚔️ 底部横版挂机巡逻与战斗舞台 -->
     <div class="stage" id="stage">
-        <div id="hero-steve" class="actor skin-steve breathe" style="left: -200px; display: none; z-index: 100;"><div class="head"></div><div class="hair"></div><div class="body"></div><div class="pants"></div><div class="sword">🗡️</div></div>
-        <div id="hero-creeper" class="actor skin-creeper" style="right: -200px; display: none; z-index: 99;"><div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div></div>
+        <div id="hero-steve" class="actor skin-steve walking">
+            <div class="helmet" id="steve-helmet"></div>
+            <div class="head"><div class="hair"></div><div class="eyes"></div></div>
+            <div class="body" id="steve-body"></div>
+            <div class="arm" id="steve-arm"></div>
+            <div class="leg-l" id="steve-leg-l"></div>
+            <div class="leg-r" id="steve-leg-r"></div>
+            <div class="sword" id="steve-sword">🪵</div>
+            <div class="slash-fx" id="steve-slash"></div>
+        </div>
+        <div id="hero-creeper" class="actor skin-creeper" style="right: -200px; display: none; z-index: 99;">
+            <div class="head"><div class="face"></div></div>
+            <div class="body"></div>
+            <div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>
+        </div>
     </div>
-    <div class="ground"></div>
+    <div class="ground" id="groundBar"></div>
 
     <script>
         const SUPABASE_URL = 'https://ollnjvnytqmurqxvqtrp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_kifp-3_BCphodjxVLIQyow_2cf0WhbB';
 
-        let isMuted = false, lastCoins = null, isAnimating = false, lastScenario = -1; 
-        let ambientInterval = null, syncInterval = null, currentData = null, pendingAction = null; 
+        let isMuted = false, lastCoins = null, isAnimating = false; 
+        let syncInterval = null, currentData = null, pendingAction = null; 
         let isGameRunning = false; 
+        let activeEventData = null, timerInterval = null, chestFloatInterval = null;
         const ROW_ID = 1;
         let dbClient = null;
+
+        // 💡 精度锁死工具函数：消除 IEEE 754 浮点数毛刺
+        function round1(num) { return Math.round((Number(num) || 0) * 10) / 10; }
 
         window.addEventListener('error', function(e) {
             const status = document.getElementById('connStatus'); const msg = document.getElementById('statusMsg');
@@ -286,6 +409,9 @@
         const stage = document.getElementById('stage');
         const heroSteve = document.getElementById('hero-steve');
         const heroCreeper = document.getElementById('hero-creeper');
+        const groundBar = document.getElementById('groundBar');
+        const chest = document.getElementById('treasure-chest');
+        const cModal = document.getElementById('challengeModal');
         
         const rModal = document.getElementById('rewardModal');
         const lModal = document.getElementById('logModal');
@@ -333,6 +459,95 @@
             { rank: 10, cap: Infinity, cost: 0, title: "🐲 末影屠龙者", tex: SVG_TEX.void, cardBg: "#0f0f1a", borderColor: "#2c3e50", glow: "pulse", animClass: "glow-end" }
         ];
 
+        // ========================================================
+        // 🛡️ 史蒂夫 1~10 级神装外观配置表与 50 种等级怪物生态池
+        // ========================================================
+        const STEVE_GEAR = [
+            { helm: null, armor: "#00AAAA", pants: "#303090", weapon: "🪵", glow: "none" },
+            { helm: "#8B5A2B", armor: "#A0522D", pants: "#6E4720", weapon: "🪨", glow: "none" },
+            { helm: "#E0E0E0", armor: "#D0D0D0", pants: "#A9A9A9", weapon: "🗡️", glow: "0 0 4px #fff" },
+            { helm: "#FFD700", armor: "#DAA520", pants: "#B8860B", weapon: "⚔️", glow: "0 0 8px #ffd700" },
+            { helm: "#FF2222", armor: "#990000", pants: "#550000", weapon: "🔨", glow: "0 0 10px #ff0000" },
+            { helm: "#00FFFF", armor: "#00CED1", pants: "#008B8B", weapon: "💎", glow: "0 0 12px #00ffff" },
+            { helm: "#3B1E54", armor: "#240046", pants: "#10002B", weapon: "🪓", glow: "0 0 12px #9d4edd" },
+            { helm: "#2ECC71", armor: "#27AE60", pants: "#1E8449", weapon: "🔱", glow: "0 0 14px #00ff00" },
+            { helm: "#4A3B3C", armor: "#3D2C2E", pants: "#2B1B17", weapon: "🔥", glow: "0 0 15px #ff4500" },
+            { helm: "#1A0033", armor: "#110022", pants: "#08020F", weapon: "⚡", glow: "0 0 18px #ff00ff" }
+        ];
+
+        const MOB_POOLS = {
+            1: [
+                { name: "绿史莱姆", hp: 1, head: "#55FF55", body: "#33CC33", eye: "#004400", scale: 0.85, short: true },
+                { name: "荒野僵尸", hp: 2, head: "#4C7838", body: "#00AAAA", eye: "#111", leg: "#303090" },
+                { name: "洞穴毒蛛", hp: 1, head: "#1B3B48", body: "#142B34", eye: "#FF0000", scale: 0.8, short: true },
+                { name: "森林骷髅", hp: 2, head: "#DCDCDC", body: "#BDBDBD", eye: "#222", leg: "#A9A9A9", weapon: "🏹" },
+                { name: "僵尸村民", hp: 2, head: "#5E7C38", body: "#684831", eye: "#900", leg: "#4A3525" }
+            ],
+            2: [
+                { name: "矿洞苦力怕", hp: 2, head: "#00AA00", body: "#009900", eye: "#000", leg: "#007700" },
+                { name: "矿工僵尸", hp: 2, head: "#4C7838", body: "#555555", eye: "#111", leg: "#333", weapon: "⛏️" },
+                { name: "地底蠹虫", hp: 1, head: "#888888", body: "#666666", eye: "#000", scale: 0.7, short: true },
+                { name: "岩石骷髅", hp: 2, head: "#A9A9A9", body: "#808080", eye: "#111", leg: "#666", weapon: "🗡️" },
+                { name: "幽暗蜘蛛", hp: 2, head: "#2C221E", body: "#1E1714", eye: "#FF2222", scale: 0.9, short: true }
+            ],
+            3: [
+                { name: "巡逻掠夺者", hp: 2, head: "#72787A", body: "#523A28", eye: "#111", leg: "#2F3538", weapon: "🏹" },
+                { name: "铁斧卫道士", hp: 3, head: "#72787A", body: "#2C3E50", eye: "#111", leg: "#1A252F", weapon: "🪓" },
+                { name: "沼泽女巫", hp: 2, head: "#A38A70", body: "#4A235A", eye: "#220033", leg: "#2E1538", weapon: "🧪" },
+                { name: "铁甲僵尸", hp: 3, head: "#4C7838", body: "#D0D0D0", eye: "#111", leg: "#999", weapon: "🗡️" },
+                { name: "飞翼恼鬼", hp: 1, head: "#85C1E9", body: "#5DADE2", eye: "#FF0000", flying: true, scale: 0.8, weapon: "🗡️" }
+            ],
+            4: [
+                { name: "沙漠尸壳", hp: 2, head: "#776B55", body: "#A8946D", eye: "#111", leg: "#6B5E45" },
+                { name: "冰原流浪者", hp: 2, head: "#C8D6E5", body: "#8395A7", eye: "#00FFFF", leg: "#576574", weapon: "🏹" },
+                { name: "金甲骷髅", hp: 3, head: "#DCDCDC", body: "#FFD700", eye: "#111", leg: "#DAA520", weapon: "⚔️" },
+                { name: "夜空幻翼", hp: 2, head: "#1B263B", body: "#415A77", eye: "#00FF00", flying: true, wing: "#0D1B2A" },
+                { name: "唤魔者法师", hp: 3, head: "#72787A", body: "#1C1C1C", eye: "#FFD700", leg: "#111", weapon: "✨" }
+            ],
+            5: [
+                { name: "红石苦力怕", hp: 2, head: "#AA0000", body: "#880000", eye: "#FFCC00", leg: "#550000" },
+                { name: "失控铁傀儡", hp: 3, head: "#D9D9D9", body: "#CCCCCC", eye: "#FF0000", leg: "#999999", scale: 1.2 },
+                { name: "闪电苦力怕", hp: 3, head: "#00CC66", body: "#00994D", eye: "#00FFFF", leg: "#006633" },
+                { name: "红石魔像", hp: 3, head: "#8B0000", body: "#B22222", eye: "#FFFF00", leg: "#4A0000", scale: 1.15, weapon: "🔨" },
+                { name: "发条骷髅", hp: 2, head: "#CD7F32", body: "#8B4513", eye: "#FF3300", leg: "#5C2E0E", weapon: "⚙️" }
+            ],
+            6: [
+                { name: "僵尸猪灵", hp: 2, head: "#E69999", body: "#5E7C38", eye: "#900", leg: "#6E4720", weapon: "⚔️" },
+                { name: "狂暴疣猪兽", hp: 3, head: "#A0624E", body: "#7D4938", eye: "#FFF", scale: 1.1, short: true },
+                { name: "熔岩岩浆怪", hp: 2, head: "#3B170B", body: "#61210B", eye: "#FF9900", scale: 0.95, short: true },
+                { name: "下界恶魂", hp: 2, head: "#F2F2F2", body: "#E6E6E6", eye: "#990000", flying: true, scale: 1.15 },
+                { name: "猪灵蛮兵", hp: 3, head: "#E69999", body: "#2C2C2C", eye: "#FFF", leg: "#1A1A1A", weapon: "🪓" }
+            ],
+            7: [
+                { name: "下界烈焰人", hp: 2, head: "#FFB700", body: "#FF6600", eye: "#FFF", flying: true, weapon: "🔥" },
+                { name: "凋灵骷髅", hp: 3, head: "#262626", body: "#1A1A1A", eye: "#888", leg: "#111", scale: 1.15, weapon: "🗡️" },
+                { name: "黑曜石卫士", hp: 3, head: "#240046", body: "#10002B", eye: "#9D4EDD", leg: "#000", scale: 1.15, weapon: "🪓" },
+                { name: "灵魂沙幽灵", hp: 2, head: "#3D2B1F", body: "#261A12", eye: "#00FFFF", flying: true },
+                { name: "下界熔岩巨兽", hp: 3, head: "#800000", body: "#FF4500", eye: "#FFFF00", leg: "#4A0000", scale: 1.2 }
+            ],
+            8: [
+                { name: "深海守卫者", hp: 2, head: "#588276", body: "#45695E", eye: "#FF5500", flying: true, short: true },
+                { name: "三叉戟溺尸", hp: 3, head: "#437A6E", body: "#3A5A52", eye: "#00FFFF", leg: "#2D423E", weapon: "🔱" },
+                { name: "远古守卫者", hp: 3, head: "#B8B5A8", body: "#8C897A", eye: "#00FFFF", flying: true, scale: 1.25 },
+                { name: "潜影贝卫兵", hp: 2, head: "#8E44AD", body: "#6C3483", eye: "#FFF", short: true },
+                { name: "绿宝石魔像", hp: 3, head: "#2ECC71", body: "#1E8449", eye: "#FFFF00", leg: "#145A32", scale: 1.15, weapon: "⚔️" }
+            ],
+            9: [
+                { name: "幽匿监守者", hp: 3, head: "#0B2B32", body: "#071D22", eye: "#00FFFF", leg: "#041114", scale: 1.35, weapon: "💠" },
+                { name: "狂暴劫掠兽", hp: 3, head: "#5A5A5A", body: "#444444", eye: "#FF0000", leg: "#2E2E2E", scale: 1.25 },
+                { name: "虚空末影人", hp: 3, head: "#111111", body: "#080808", eye: "#FF00FF", leg: "#050505", scale: 1.2 },
+                { name: "合金重甲卫", hp: 3, head: "#4A3B3C", body: "#2B1B17", eye: "#FF4500", leg: "#1A110E", scale: 1.15, weapon: "🔥" },
+                { name: "深渊凋灵怪", hp: 3, head: "#1F1F1F", body: "#141414", eye: "#00E5FF", flying: true, scale: 1.2 }
+            ],
+            10: [
+                { name: "🐲 末影魔龙", hp: 3, head: "#111111", body: "#1A0526", eye: "#FF00FF", flying: true, wing: "#3B0954", scale: 1.4, weapon: "🔮" },
+                { name: "💀 三头凋灵王", hp: 3, head: "#222222", body: "#111111", eye: "#00FFFF", flying: true, scale: 1.35, weapon: "💀" },
+                { name: "⚡ 终界守卫长", hp: 3, head: "#10002B", body: "#240046", eye: "#FF00FF", leg: "#000", scale: 1.25, weapon: "⚡" },
+                { name: "👁️ 虚空审判者", hp: 3, head: "#2B0033", body: "#14001A", eye: "#00FFCC", flying: true, wing: "#4A0059", scale: 1.3 },
+                { name: "👑 混沌末影王", hp: 3, head: "#000000", body: "#1F0033", eye: "#FFD700", leg: "#0A0012", scale: 1.35, weapon: "🔱" }
+            ]
+        };
+
         const MILESTONES = [ { count: 5, reward: 50, name: "铁阶" }, { count: 10, reward: 100, name: "金阶" }, { count: 20, reward: 200, name: "钻石" }, { count: 30, reward: 300, name: "绿宝石" }, { count: 50, reward: 500, name: "下界之星" }, { count: 75, reward: 800, name: "龙蛋" }, { count: 100, reward: 1200, name: "终界信标" }, { count: 250, reward: 3000, name: "不死图腾" }, { count: 500, reward: 6000, name: "基岩之心" } ];
         const MS_NAMES = { strength: '力量', agility: '敏捷', endurance: '耐力', intelligence: '智力', spirit: '精神', stamina: '体力' };
 
@@ -341,12 +556,12 @@
 
         function sanitizeVitality(v) {
             if (!v || typeof v !== 'object') v = {};
-            if (typeof v.current !== 'number') v.current = 10.0;
+            v.current = typeof v.current === 'number' ? round1(v.current) : 10.0;
             v.freeze = !!v.freeze;
             if (!v.lastDecayDate) v.lastDecayDate = getTodayStr();
             if (!v.dailyAbsorbed || typeof v.dailyAbsorbed !== 'object') v.dailyAbsorbed = { date: getTodayStr(), amount: 0 };
             if (!v.dailyAbsorbed.date) v.dailyAbsorbed.date = getTodayStr();
-            if (typeof v.dailyAbsorbed.amount !== 'number') v.dailyAbsorbed.amount = 0;
+            v.dailyAbsorbed.amount = typeof v.dailyAbsorbed.amount === 'number' ? round1(v.dailyAbsorbed.amount) : 0;
             if (typeof v.inactiveDays !== 'number') v.inactiveDays = 0;
             return v;
         }
@@ -382,8 +597,8 @@
                 if (!record.vitality.freeze && record.vitality.current > 0) {
                     record.vitality.inactiveDays = (record.vitality.inactiveDays || 0) + 1;
                     let decayIdx = Math.min(record.vitality.inactiveDays - 1, 6);
-                    let decay = matrix[decayIdx];
-                    record.vitality.current = Math.max(0, record.vitality.current - decay);
+                    let decay = Number(matrix[decayIdx]) || 0;
+                    record.vitality.current = Math.max(0, round1(record.vitality.current - decay));
                     logs.unshift({ time: iterDate + ' 00:00', action: `⚡ 衰减 (-${decay.toFixed(1)}/停训${record.vitality.inactiveDays}天)`, amount: 0 });
                 }
                 record.vitality.dailyAbsorbed = { date: iterDate, amount: 0 };
@@ -411,13 +626,220 @@
             return record;
         }
 
+        // ========================================================
+        // ⚔️ 横版挂机 RPG 巡逻与战斗状态机 (静默视觉打击版)
+        // ========================================================
+        let patrolState = 'WALKING'; // 'WALKING' | 'APPROACHING' | 'FIGHTING' | 'PAUSED'
+        let currentMob = null;
+        let nextMobSpawnTime = 0;
+        let nextSwingTime = 0;
+        let patrolLoopId = null;
+
+        function updateSteveGear(rank) {
+            const g = STEVE_GEAR[Math.min(Math.max(rank, 1), 10) - 1];
+            const helmEl = document.getElementById('steve-helmet');
+            const bodyEl = document.getElementById('steve-body');
+            const armEl = document.getElementById('steve-arm');
+            const legLEl = document.getElementById('steve-leg-l');
+            const legREl = document.getElementById('steve-leg-r');
+            const swordEl = document.getElementById('steve-sword');
+
+            if (helmEl) {
+                if (g.helm) { helmEl.style.display = 'block'; helmEl.style.background = g.helm; helmEl.style.boxShadow = g.glow; }
+                else { helmEl.style.display = 'none'; }
+            }
+            if (bodyEl) { bodyEl.style.background = g.armor; bodyEl.style.boxShadow = g.glow; }
+            if (armEl) { armEl.style.background = g.armor; }
+            if (legLEl) { legLEl.style.background = g.pants; }
+            if (legREl) { legREl.style.background = g.pants; }
+            if (swordEl) { swordEl.innerText = g.weapon; }
+        }
+
+        function setSteveWalking(walking) {
+            if (!heroSteve || !groundBar) return;
+            if (walking) {
+                heroSteve.classList.add('walking');
+                groundBar.classList.remove('paused');
+            } else {
+                heroSteve.classList.remove('walking');
+                groundBar.classList.add('paused');
+            }
+        }
+
+        function startPatrolEngine() {
+            if (patrolLoopId) cancelAnimationFrame(patrolLoopId);
+            patrolState = 'WALKING';
+            setSteveWalking(true);
+            nextMobSpawnTime = Date.now() + 3000;
+            patrolTick();
+        }
+
+        function spawnPatrolMob() {
+            const rank = currentData ? (currentData.currentRank || 1) : 1;
+            const pool = MOB_POOLS[rank] || MOB_POOLS[1];
+            const tpl = pool[Math.floor(Math.random() * pool.length)];
+
+            const el = document.createElement('div');
+            el.className = `patrol-mob mob-walking ${tpl.flying ? 'flying' : ''}`;
+            const startX = window.innerWidth + 40;
+            el.style.left = startX + 'px';
+
+            let hpHtml = '';
+            for (let i = 0; i < tpl.hp; i++) hpHtml += `<div class="mob-hp-seg"></div>`;
+
+            const scale = tpl.scale || 1;
+            const bodyH = tpl.short ? 20 : 32;
+            const legHtml = tpl.short ? '' : `<div class="mob-legs"><div class="mob-leg" style="background:${tpl.leg || tpl.body}"></div><div class="mob-leg" style="background:${tpl.leg || tpl.body}"></div></div>`;
+            const wingHtml = tpl.wing ? `<div class="mob-wing" style="background:${tpl.wing}"></div>` : '';
+            const weaponHtml = tpl.weapon ? `<div class="mob-weapon">${tpl.weapon}</div>` : '';
+
+            el.innerHTML = `
+                <div class="mob-tag">Lv.${rank} ${tpl.name}</div>
+                <div class="mob-hp-bar">${hpHtml}</div>
+                <div class="mob-sprite" style="transform: scale(${scale});">
+                    ${wingHtml}
+                    <div class="mob-head" style="background:${tpl.head}">
+                        <div class="mob-eye-l" style="background:${tpl.eye}"></div>
+                        <div class="mob-eye-r" style="background:${tpl.eye}"></div>
+                        <div class="mob-mouth"></div>
+                    </div>
+                    <div class="mob-body" style="background:${tpl.body}; height:${bodyH}px;"></div>
+                    ${legHtml}
+                    ${weaponHtml}
+                </div>
+            `;
+            stage.appendChild(el);
+
+            currentMob = {
+                el: el,
+                name: tpl.name,
+                hp: tpl.hp,
+                maxHp: tpl.hp,
+                x: startX
+            };
+            patrolState = 'APPROACHING';
+        }
+
+        function performPatrolStrike() {
+            if (!currentMob || !currentMob.el) return;
+            const sword = document.getElementById('steve-sword');
+            const slash = document.getElementById('steve-slash');
+            if (sword) { sword.classList.remove('anim-attack'); void sword.offsetWidth; sword.classList.add('anim-attack'); }
+            if (slash) { slash.classList.remove('anim-slash'); void slash.offsetWidth; slash.classList.add('anim-slash'); }
+
+            setTimeout(() => {
+                if (!currentMob || !currentMob.el) return;
+                currentMob.hp -= 1;
+                currentMob.el.classList.add('mob-hurt');
+
+                // 更新头顶像素血条
+                const segs = currentMob.el.querySelectorAll('.mob-hp-seg');
+                segs.forEach((s, idx) => {
+                    if (idx >= currentMob.hp) s.classList.add('empty');
+                });
+
+                // 弹出伤害飘字
+                const dmg = document.createElement('div');
+                dmg.className = 'dmg-popup';
+                dmg.innerText = currentMob.hp === 0 ? '💥 斩杀!' : '-1';
+                currentMob.el.appendChild(dmg);
+
+                if (currentMob.hp <= 0) {
+                    const deadEl = currentMob.el;
+                    const dropX = currentMob.x;
+                    currentMob = null;
+                    patrolState = 'WALKING';
+                    nextMobSpawnTime = Date.now() + 5000 + Math.random() * 5000; // 5~10秒后遇到下一个怪物
+
+                    setTimeout(() => {
+                        deadEl.classList.remove('mob-hurt');
+                        deadEl.classList.add('mob-dead');
+                        spawnLootDrops(dropX);
+                    }, 80);
+
+                    setTimeout(() => {
+                        deadEl.remove();
+                        if (!isAnimating && !isGameRunning) setSteveWalking(true);
+                    }, 520);
+                } else {
+                    setTimeout(() => {
+                        if (currentMob && currentMob.el) currentMob.el.classList.remove('mob-hurt');
+                    }, 180);
+                }
+            }, 140);
+        }
+
+        function spawnLootDrops(xPos) {
+            const icons = ['✨', '🟢', '🪙'];
+            for (let i = 0; i < 4; i++) {
+                const p = document.createElement('div');
+                p.style.position = 'absolute';
+                p.style.left = (xPos + 10) + 'px';
+                p.style.bottom = '50px';
+                p.style.fontSize = '18px';
+                p.style.zIndex = '50';
+                p.style.transition = 'all 0.55s cubic-bezier(0.2, 0.8, 0.4, 1)';
+                p.innerText = icons[i % icons.length];
+                stage.appendChild(p);
+                setTimeout(() => {
+                    p.style.left = (window.innerWidth * 0.28 + 15) + 'px';
+                    p.style.bottom = '65px';
+                    p.style.opacity = '0';
+                    p.style.transform = 'scale(0.5)';
+                }, 30);
+                setTimeout(() => p.remove(), 600);
+            }
+        }
+
+        function clearPatrolMob() {
+            if (currentMob && currentMob.el) currentMob.el.remove();
+            currentMob = null;
+            document.querySelectorAll('.patrol-mob').forEach(el => el.remove());
+        }
+
+        function patrolTick() {
+            patrolLoopId = requestAnimationFrame(patrolTick);
+            if (isAnimating || isGameRunning) return;
+
+            const now = Date.now();
+            const steveRightX = window.innerWidth * 0.28 + 68; // 史蒂夫前方交战距离
+
+            if (patrolState === 'WALKING') {
+                if (now >= nextMobSpawnTime) {
+                    spawnPatrolMob();
+                }
+            } else if (patrolState === 'APPROACHING') {
+                if (!currentMob) { patrolState = 'WALKING'; return; }
+                currentMob.x -= 2.2; // 随地面向左平移靠近史蒂夫
+                currentMob.el.style.left = currentMob.x + 'px';
+
+                if (currentMob.x <= steveRightX) {
+                    currentMob.x = steveRightX;
+                    currentMob.el.style.left = currentMob.x + 'px';
+                    currentMob.el.classList.remove('mob-walking');
+                    patrolState = 'FIGHTING';
+                    setSteveWalking(false); // 停步交战
+                    nextSwingTime = now + 200;
+                }
+            } else if (patrolState === 'FIGHTING') {
+                if (!currentMob) { patrolState = 'WALKING'; setSteveWalking(true); return; }
+                if (now >= nextSwingTime) {
+                    nextSwingTime = now + 680;
+                    performPatrolStrike();
+                }
+            }
+        }
+
+        // ========================================================
+        // 核心同步与业务模块
+        // ========================================================
         async function startGame() {
             if (!dbClient) return alert("数据库尚未初始化完成，请稍后再试或检查网络。");
             document.getElementById('start-overlay').style.display='none';
             if (!isMuted) { bgm.play().catch(e=>{}); } 
             await syncData(); syncInterval = setInterval(syncData, 5000); 
             setInterval(processCooldowns, 1000); setInterval(renderBuffs, 1000); 
-            playAmbientScenario(); ambientInterval = setInterval(playAmbientScenario, 12000);
+            startPatrolEngine();
         }
 
         async function syncData() {
@@ -439,7 +861,7 @@
                 record.currentRank = record.currentRank || 1; record.shopItems = record.shopItems || [];
                 record.activeBuffs = record.activeBuffs || {}; record.taskItems = record.taskItems || [];
                 record.schulteDaily = record.schulteDaily || { lastDate: "", playCount: 0, winCount: 0 };
-                record.milestones = record.milestones || {}; Object.keys(MS_NAMES).forEach(k => record.milestones[k] = record.milestones[k] || 0);
+                record.milestones = record.milestones || {}; Object.keys(MS_NAMES).forEach(k => record.milestones[k] = round1(record.milestones[k] || 0));
                 record.milestoneClaimed = record.milestoneClaimed || {}; Object.keys(MS_NAMES).forEach(k => record.milestoneClaimed[k] = record.milestoneClaimed[k] || []);
                 if(!record.towerConfig) record.towerConfig = { freePlays: 5, maxRewards: 5, normal: { ticket: 1, reward: 2 }, hard: { ticket: 1, reward: 4 }, survival: { ticket: 2, reward: 6 } };
 
@@ -447,6 +869,34 @@
                 currentData = record; 
                 let cloudCoins = record.coins || 0;
                 
+                // 🎁 检测空投悬赏宝箱
+                if (record.activeEvent && record.activeEvent.expireTime > Date.now()) {
+                    activeEventData = record.activeEvent;
+                    if (chest && chest.style.display !== 'block') {
+                        chest.style.display = 'block';
+                        startFloatingChest();
+                    }
+                } else {
+                    activeEventData = null;
+                    if (chest) chest.style.display = 'none';
+                    stopFloatingChest();
+                }
+
+                // 📜 契约按钮呼吸提示
+                const contractBtn = document.getElementById('btnContractMain');
+                if (contractBtn) {
+                    if (record.activeContract && record.activeContract.status === 'active') {
+                        contractBtn.innerText = '📜 契约🔥';
+                        contractBtn.classList.add('contract-active');
+                    } else if (record.activeContract && record.activeContract.status === 'pending') {
+                        contractBtn.innerText = '📜 契约⏳';
+                        contractBtn.classList.remove('contract-active');
+                    } else {
+                        contractBtn.innerText = '📜 契约';
+                        contractBtn.classList.remove('contract-active');
+                    }
+                }
+
                 renderLogs(record.childLogs); 
                 updateRankUI(cloudCoins, record.currentRank);
 
@@ -492,7 +942,7 @@
             container.innerHTML = html;
             
             if(currentData.vitality && currentData.vitality.freeze) {
-                document.getElementById('vitalityStatusBadge').innerHTML = `<span style="color:#00ffff; font-size:12px;">❄️冻结</span>`;
+                document.getElementById('vitalityStatusBadge').innerHTML = `<span style="color:#00ffff; font-size:12px;">🕊️和平</span>`;
             }
         }
 
@@ -510,7 +960,7 @@
             let html = '';
             for(let i = 0; i < 7; i++) {
                 let dayNum = i + 1;
-                let val = matrix[i];
+                let val = Number(matrix[i]) || 0;
                 let isTarget = (dayNum === nextDay);
                 let bg = isTarget ? '#ffeaa7' : '#fff';
                 let border = isTarget ? '2px solid #e67e22' : '1px solid #ccc';
@@ -542,6 +992,7 @@
             if (btnUpgrade) { btnUpgrade.innerText = rank >= RANK_DATA.length ? "已达最高境界 👑" : `🆙 突破界限 (需花费 ${rData.cost} 币)`; btnUpgrade.disabled = rank >= RANK_DATA.length || coins < rData.cost; }
 
             renderVitalityBar(currentData.vitality.current);
+            updateSteveGear(rank); // 同步史蒂夫全身装备与武器
         }
 
         function openRankModal() {
@@ -571,7 +1022,7 @@
         function openMilestoneModal() {
             if (!currentData) return; clickCoin(); msModal.style.display = 'flex'; const container = document.getElementById('milestoneContent'); let ms = currentData.milestones || {}; let html = '';
             for (let [key, name] of Object.entries(MS_NAMES)) { 
-                let count = ms[key] || 0; 
+                let count = round1(ms[key] || 0); 
                 let displayCount = Number.isInteger(count) ? count : count.toFixed(1);
                 let nextTier = MILESTONES.find(t => t.count > count) || MILESTONES[MILESTONES.length - 1]; 
                 let isMax = count >= MILESTONES[MILESTONES.length - 1].count; 
@@ -583,7 +1034,7 @@
         function closeMilestoneModal() { msModal.style.display = 'none'; }
 
         function checkMilestoneProgress(type, record, logs, addVal) {
-            record.milestones[type] = (record.milestones[type] || 0) + addVal; 
+            record.milestones[type] = round1((record.milestones[type] || 0) + Number(addVal || 1.0)); 
             let count = record.milestones[type]; 
             let extraCoins = 0;
             for (let tier of MILESTONES) { 
@@ -604,16 +1055,25 @@
             let multi = getVitalityMultiplier(currentData.vitality.current);
             let safeAbsorbed = (currentData.vitality.dailyAbsorbed && typeof currentData.vitality.dailyAbsorbed.amount === 'number') ? currentData.vitality.dailyAbsorbed.amount : 0;
             
-            let spaceLeft = Math.max(0, 5.0 - safeAbsorbed);
+            let spaceLeft = Math.max(0, round1(5.0 - safeAbsorbed));
             document.getElementById('vitalityNotice').innerHTML = `当前体能效率：${multi.msg} (今日还可吸收 ${spaceLeft.toFixed(1)} ⚡)`;
             
             container.innerHTML = currentData.taskItems.map(task => {
                 let staminaUI = task.stamina_val ? `<span style="background:#2980b9; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">⚡ +${task.stamina_val}</span>` : '';
                 
-                let msVal = task.milestone_val || 1.0;
+                let msVal = round1(task.milestone_val || 1.0);
                 let msDisplay = Number.isInteger(msVal) ? msVal : msVal.toFixed(1);
                 let milestoneUI = task.milestone ? `<span class="badge" style="background:#8e44ad; color:#fff; padding:2px 6px; border-radius:4px; font-size:12px; border:1px solid #000; font-family:-apple-system, sans-serif;">属性: ${MS_NAMES[task.milestone]} +${msDisplay}</span>` : '';
                 
+                // 💡 真实到手收益可视化透出
+                let actualReward = Math.floor(task.price * multi.coin);
+                let rewardHtml = `+${task.price} 🪙`;
+                if (multi.coin < 1.0) {
+                    rewardHtml = `<del style="color:#666; font-size:14px;">${task.price}</del> <span style="color:#b85d00;">+${actualReward} 🪙</span>`;
+                } else if (multi.coin > 1.0) {
+                    rewardHtml = `<span style="color:#0055aa;">+${actualReward} 🪙</span>`;
+                }
+
                 return `<div class="mc-item-btn" id="btn-${task.id}" onclick='triggerTaskClick("${task.id}")'>
                             <div class="cd-overlay"></div>
                             <div class="mc-item-header">
@@ -621,7 +1081,7 @@
                                     ${task.icon || '⚔️'} ${task.name} 
                                     <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">${milestoneUI}${staminaUI}</div>
                                 </span>
-                                <div><span class="mc-item-reward">+${task.price} 🪙</span></div>
+                                <div><span class="mc-item-reward">${rewardHtml}</span></div>
                             </div>
                             <div class="mc-item-desc" style="margin-top:4px;">${task.desc}</div>
                             <span class="cd-timer">--:--</span>
@@ -687,13 +1147,13 @@
                     let today = getTodayStr();
                     let dailyObj = record.vitality.dailyAbsorbed; if(!dailyObj || dailyObj.date !== today) dailyObj = { date: today, amount: 0 };
                     
-                    let spaceLeft = 5.0 - dailyObj.amount;
+                    let spaceLeft = round1(5.0 - dailyObj.amount);
                     if (spaceLeft > 0) {
-                        let actualStaminaGained = Math.min(taskData.stamina_val, spaceLeft);
-                        actualStaminaGained = Math.min(actualStaminaGained, 10.0 - record.vitality.current);
+                        let actualStaminaGained = Math.min(Number(taskData.stamina_val), spaceLeft);
+                        actualStaminaGained = round1(Math.min(actualStaminaGained, 10.0 - record.vitality.current));
                         if (actualStaminaGained > 0) {
-                            record.vitality.current += actualStaminaGained;
-                            dailyObj.amount += actualStaminaGained;
+                            record.vitality.current = round1(record.vitality.current + actualStaminaGained);
+                            dailyObj.amount = round1(dailyObj.amount + actualStaminaGained);
                             
                             if (dailyObj.amount >= 1.0) { record.vitality.inactiveDays = 0; }
 
@@ -716,6 +1176,58 @@
             } catch (e) { alert("申报异常，请重试"); }
         }
 
+        // ========================================================
+        // 🎁 空中飘浮空投宝箱控制逻辑
+        // ========================================================
+        function startFloatingChest() { if(!chestFloatInterval) { moveChest(); chestFloatInterval = setInterval(moveChest, 3500); } }
+        function stopFloatingChest() { clearInterval(chestFloatInterval); chestFloatInterval = null; }
+        function moveChest() { if(!chest) return; const randomX = Math.floor(Math.random() * 70) + 12, randomY = Math.floor(Math.random() * 20) + 6; chest.style.left = randomX + '%'; chest.style.top = randomY + '%'; }
+        
+        function openChallengeModal() {
+            if(!activeEventData || !cModal) return;
+            clickCoin();
+            cModal.style.display = 'flex';
+            document.getElementById('c_question').innerText = activeEventData.question;
+            document.getElementById('c_reward').innerText = activeEventData.reward;
+            document.getElementById('c_input').value = "";
+            clearInterval(timerInterval);
+            updateEventTimer();
+            timerInterval = setInterval(updateEventTimer, 1000);
+        }
+        function closeChallengeModal() { if(cModal) cModal.style.display = 'none'; clearInterval(timerInterval); }
+        function updateEventTimer() {
+            if(!activeEventData) return;
+            let diff = activeEventData.expireTime - Date.now();
+            if(diff <= 0) { closeChallengeModal(); if(chest) chest.style.display = 'none'; return; }
+            let h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+            let cTimer = document.getElementById('c_timer');
+            if(cTimer) cTimer.innerText = `消散倒计时: ${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+        }
+        async function submitAnswer() {
+            let inputEl = document.getElementById('c_input'); if(!inputEl || !activeEventData) return;
+            if(inputEl.value.trim() === activeEventData.answer.trim()) {
+                const maxCap = RANK_DATA[(currentData.currentRank || 1) - 1].cap;
+                let multi = getVitalityMultiplier(currentData.vitality.current);
+                let finalReward = Math.floor(activeEventData.reward * multi.coin);
+                if (currentData.coins >= maxCap) { playSound('fuse'); alert("🎒 背包容量已满！请先突破境界。"); closeChallengeModal(); return; }
+                closeChallengeModal(); if(chest) chest.style.display = 'none'; stopFloatingChest();
+                try {
+                    let newCoins = Math.min(currentData.coins + finalReward, maxCap);
+                    let logs = currentData.childLogs || [];
+                    logs.unshift({ time: getFormattedTime(), action: "🎁 破解空投悬赏宝箱", amount: finalReward });
+                    await dbClient.from('gamedata').update({ coins: newCoins, activeEvent: null, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
+                    currentData.coins = newCoins; currentData.activeEvent = null; currentData.childLogs = logs;
+                    localStorage.setItem('andy_last_seen_coins', newCoins);
+                    playAttackSequence(finalReward, newCoins);
+                } catch(e){}
+            } else {
+                playSound('fuse'); alert("❌ 封印密码错误，请重新思考！");
+            }
+        }
+
+        // ========================================================
+        // 👁️ 试炼高塔模块 (含防作弊单例监听器修复)
+        // ========================================================
         function openGameModal() {
             if (!currentData || !currentData.towerConfig) return alert('高塔参数未同步，请重试');
             [sModal, rModal, lModal, cfModal, rankModal, ctModal, msModal].forEach(m => { if(m) m.style.display = 'none'; });
@@ -756,7 +1268,10 @@
             let totalCells = currentGameSize * currentGameSize; let numberPool = []; for(let i = 1; i <= totalCells; i++) numberPool.push(i); for(let i = numberPool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [numberPool[i], numberPool[j]] = [numberPool[j], numberPool[i]]; }
             const gridContainer = document.getElementById('schulteGrid'); gridContainer.style.gridTemplateColumns = `repeat(${currentGameSize}, 1fr)`; gridContainer.innerHTML = '';
             numberPool.forEach(num => { const cell = document.createElement('div'); cell.className = 'schulte-cell'; cell.innerText = num; cell.style.fontSize = currentGameSize === 7 ? '20px' : '24px'; cell.onclick = () => handleCellClick(cell, num); gridContainer.appendChild(cell); });
-            gridContainer.addEventListener('touchstart', function(e) { if (e.touches.length > 1) { e.preventDefault(); triggerAntiCheat(); } }, {passive: false});
+            
+            // 💡 修复：使用 ontouchstart 直接赋值，避免重复叠加监听器导致内存泄漏
+            gridContainer.ontouchstart = function(e) { if (e.touches.length > 1) { e.preventDefault(); triggerAntiCheat(); } };
+            
             clearInterval(gameClockTimer); clearInterval(potionTimer);
             if (mode === 'survival') { potionTimer = setInterval(() => { if(!isGameRunning) { clearInterval(potionTimer); return; } let cells = Array.from(document.querySelectorAll('.schulte-cell:not(.correct)')); if(cells.length > 5) { for(let i=0; i<3; i++) { let target = cells[Math.floor(Math.random() * cells.length)]; if(!target.classList.contains('debuff')) { target.classList.add('debuff'); setTimeout(() => { target.classList.remove('debuff'); }, 1500); } } } }, 2500); }
             gameClockTimer = setInterval(() => { gameTimeRemaining--; document.getElementById('gameTimerText').innerText = gameTimeRemaining; if(gameTimeRemaining <= 0) endGameSession(false); }, 1000);
@@ -804,23 +1319,60 @@
             const rank = currentData.currentRank || 1; const rData = RANK_DATA[rank - 1]; if (currentData.coins < rData.cost) return; 
             const nextRank = rank + 1; const nextRData = RANK_DATA[nextRank - 1]; const newCoins = currentData.coins - rData.cost; let logs = currentData.childLogs || []; logs.unshift({ time: getFormattedTime(), action: `突破境界: ${nextRData.title}`, amount: -rData.cost });
             try {
-                isAnimating = true; playSound('fuse'); document.body.classList.add('shake'); if(uiLayer) uiLayer.style.transform = 'scale(0.95)';
+                isAnimating = true; setSteveWalking(false); playSound('fuse'); document.body.classList.add('shake'); if(uiLayer) uiLayer.style.transform = 'scale(0.95)';
                 const dbUpdatePromise = dbClient.from('gamedata').update({ coins: newCoins, currentRank: nextRank, childLogs: logs.slice(0, 10) }).eq('id', ROW_ID);
-                setTimeout(async () => { document.body.classList.remove('shake'); playSound('explode'); setTimeout(() => playSound('levelup'), 400); let flash = document.createElement('div'); flash.className = 'flash-overlay'; document.body.appendChild(flash); setTimeout(() => flash.remove(), 1200); createParticles(80, ['✨', '💎', '💠', '🔥', '⚡', '❇️']); if(uiLayer) { uiLayer.style.opacity = '0'; uiLayer.style.transform = 'scale(1)'; } await dbUpdatePromise; setTimeout(() => { localStorage.setItem('andy_last_seen_coins', newCoins); currentData.coins = newCoins; currentData.currentRank = nextRank; updateValue(newCoins); let banner = document.createElement('div'); banner.className = 'level-up-banner'; banner.innerHTML = `<div style="font-size:40px; color:#fff;">境界突破</div><div style="font-size:75px; color:${nextRData.color};">${nextRData.title}</div>`; document.body.appendChild(banner); setTimeout(() => banner.remove(), 3500); if(uiLayer) uiLayer.style.opacity = '1'; isAnimating = false; }, 500); }, 1000); 
-            } catch (e) { alert("突破受阻！"); isAnimating = false; if(uiLayer) { uiLayer.style.opacity = '1'; uiLayer.style.transform = 'scale(1)'; } document.body.classList.remove('shake'); }
+                setTimeout(async () => {
+                    document.body.classList.remove('shake'); playSound('explode'); setTimeout(() => playSound('levelup'), 400);
+                    let flash = document.createElement('div'); flash.className = 'flash-overlay'; document.body.appendChild(flash); setTimeout(() => flash.remove(), 1200);
+                    createParticles(80, ['✨', '💎', '💠', '🔥', '⚡', '❇️']); if(uiLayer) { uiLayer.style.opacity = '0'; uiLayer.style.transform = 'scale(1)'; }
+                    await dbUpdatePromise;
+                    setTimeout(() => {
+                        localStorage.setItem('andy_last_seen_coins', newCoins); currentData.coins = newCoins; currentData.currentRank = nextRank; updateValue(newCoins);
+                        let banner = document.createElement('div'); banner.className = 'level-up-banner';
+                        // 💡 修复：使用高亮金黄色与新边框色渲染突破横幅
+                        banner.innerHTML = `<div style="font-size:40px; color:#fff;">境界突破</div><div style="font-size:70px; color:#ffb700;">${nextRData.title}</div>`;
+                        document.body.appendChild(banner); setTimeout(() => banner.remove(), 3500);
+                        if(uiLayer) uiLayer.style.opacity = '1'; isAnimating = false; setSteveWalking(true);
+                    }, 500);
+                }, 1000); 
+            } catch (e) { alert("突破受阻！"); isAnimating = false; setSteveWalking(true); if(uiLayer) { uiLayer.style.opacity = '1'; uiLayer.style.transform = 'scale(1)'; } document.body.classList.remove('shake'); }
         }
 
         function openLogModal() { if(lModal) lModal.style.display = 'flex'; } function closeLogModal() { if(lModal) lModal.style.display = 'none'; }
-        function renderLogs(logs) { const container = document.getElementById('logListContent'); if(!container) return; if(logs && logs.length > 0) { container.innerHTML = logs.map(log => { let amountClass = log.amount > 0 ? "log-v" : "log-v sub"; if (log.action.includes('🏆')) amountClass = "log-v milestone"; let txt = typeof log.amount === 'string' ? log.amount : (log.amount > 0 ? '+' + log.amount : log.amount); return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${txt}</span></div>`; }).join(''); } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>'; }
+        function renderLogs(logs) { const container = document.getElementById('logListContent'); if(!container) return; if(logs && logs.length > 0) { container.innerHTML = logs.map(log => { let amountClass = log.amount > 0 ? "log-v" : "log-v sub"; if (log.action.includes('🏆')) amountClass = "log-v milestone"; let txt = typeof log.amount === 'string' ? log.amount : (log.amount > 0 ? '+' + log.amount : log.amount); return `<div class="log-row"><span class="log-t">[${log.time}]</span><span class="log-a">${log.action}</span><span class="${amountClass}">${txt === '0' || txt === 0 ? '' : txt}</span></div>`; }).join(''); } else container.innerHTML = '<div style="text-align:center; color:#888; padding: 20px 0;">行囊里还没有记录哦~</div>'; }
         function renderBuffs() { if (!currentData || !currentData.activeBuffs) return; const container = document.getElementById('activeBuffsContainer'); if (!container) return; const now = Date.now(); let hasActive = false; let html = ''; for (const [id, buff] of Object.entries(currentData.activeBuffs)) { const remain = buff.endTime - now; if (remain > 0) { hasActive = true; let days = Math.floor(remain / (24 * 3600000)), hours = Math.floor((remain % (24 * 3600000)) / 3600000), mins = Math.floor((remain % 3600000) / 60000), secs = Math.floor((remain % 60000) / 1000); let timeStr = days >= 1 ? `${days}天 ${hours}小时` : `${hours}:${mins<10?'0'+mins:mins}:${secs<10?'0'+secs:secs}`; html += `<div class="buff-pill"><span>${buff.icon} ${buff.name}</span><span style="color:#ffb700;">⏳ ${timeStr}</span></div>`; } } container.innerHTML = hasActive ? html : ''; }
         function processCooldowns() { if(!currentData || !currentData.cooldowns || !currentData.taskItems) return; const now = Date.now(); currentData.taskItems.forEach(task => { const btn = document.getElementById(`btn-${task.id}`); if (!btn) return; const remain = (currentData.cooldowns[task.id] || 0) - now; if(remain > 0) { btn.classList.add('in-cd'); const totalMs = (task.hours || 3) * 3600000; btn.style.setProperty('--progress', (remain / totalMs) * 360 + 'deg'); const h = Math.floor(remain / 3600000), m = Math.floor((remain % 3600000) / 60000), s = Math.floor((remain % 60000) / 1000); let timerEl = btn.querySelector('.cd-timer'); if(timerEl) timerEl.innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`; } else btn.classList.remove('in-cd'); }); }
-        function playAttackSequence(amount, finalCoins) { isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0'; if(heroSteve) { heroSteve.style.display = 'block'; heroSteve.style.left = "35%"; } if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "35%"; } let sword = document.querySelector('.skin-steve .sword'); if(sword) sword.style.display = 'block'; setTimeout(() => { if(sword) sword.classList.add('anim-attack'); playSound('hit'); setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); }, 500); setTimeout(() => { if(heroCreeper) heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#004400"; } }, 1200); setTimeout(() => { updateValue(finalCoins); resetStage(); }, 3000); }
-        function playExplodeSequence(amount, finalCoins, customMsg) { isAnimating = true; clearAmbientActors(); if(uiLayer) uiLayer.style.opacity = '0'; if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "45%"; } setTimeout(() => { playSound('fuse'); if(heroCreeper) heroCreeper.classList.add('anim-swell'); }, 500); setTimeout(() => { if(heroCreeper) heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); createParticles(40, '🟥'); playSound('explode'); if(statusMsg) { statusMsg.innerText = customMsg; statusMsg.style.color = "#8b0000"; } }, 2500); setTimeout(() => { document.body.classList.remove('shake'); updateValue(finalCoins); resetStage(); }, 4000); }
-        function resetStage() { if(uiLayer) uiLayer.style.opacity = '1'; if(heroSteve) heroSteve.style.display = 'none'; if(heroCreeper) { heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; } isAnimating = false; }
+        
+        // 🎉 大场面领奖与受袭演出（带音效，与巡逻引擎平滑切换）
+        function playAttackSequence(amount, finalCoins) {
+            isAnimating = true; clearPatrolMob(); setSteveWalking(false);
+            if(uiLayer) uiLayer.style.opacity = '0.15';
+            if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "35%"; }
+            let sword = document.getElementById('steve-sword');
+            setTimeout(() => { if(sword) { sword.classList.remove('anim-attack'); void sword.offsetWidth; sword.classList.add('anim-attack'); } playSound('hit'); setTimeout(() => { if(heroCreeper) heroCreeper.classList.add('anim-hurt'); }, 150); }, 400);
+            setTimeout(() => { if(heroCreeper) heroCreeper.style.display = 'none'; createParticles(60, '💰'); playSound('levelup'); if(statusMsg) { statusMsg.innerText = `战利品入账！+${amount}`; statusMsg.style.color="#2ecc71"; } }, 1100);
+            setTimeout(() => { updateValue(finalCoins); resetStage(); }, 2800);
+        }
+
+        function playExplodeSequence(amount, finalCoins, customMsg) {
+            isAnimating = true; clearPatrolMob(); setSteveWalking(false);
+            if(uiLayer) uiLayer.style.opacity = '0.15';
+            if(heroCreeper) { heroCreeper.style.display = 'block'; heroCreeper.style.right = "45%"; }
+            setTimeout(() => { playSound('fuse'); if(heroCreeper) heroCreeper.classList.add('anim-swell'); }, 400);
+            setTimeout(() => { if(heroCreeper) heroCreeper.style.opacity = '0'; document.body.classList.add('shake'); createParticles(40, '🟥'); playSound('explode'); if(statusMsg) { statusMsg.innerText = customMsg; statusMsg.style.color = "#ff4444"; } }, 2300);
+            setTimeout(() => { document.body.classList.remove('shake'); updateValue(finalCoins); resetStage(); }, 3600);
+        }
+
+        function resetStage() {
+            if(uiLayer) uiLayer.style.opacity = '1';
+            if(heroCreeper) { heroCreeper.style.display = 'none'; heroCreeper.style.opacity = '1'; heroCreeper.className='actor skin-creeper'; }
+            isAnimating = false;
+            patrolState = 'WALKING';
+            setSteveWalking(true);
+            nextMobSpawnTime = Date.now() + 4000;
+        }
+
         function updateValue(coins) { if(totalDisplay) totalDisplay.innerText = coins; updateRankUI(coins, currentData ? (currentData.currentRank || 1) : 1); }
-        function playAmbientScenario() { if (isAnimating || isGameRunning) return; let scenario; do { scenario = Math.floor(Math.random() * 2); } while (scenario === lastScenario); lastScenario = scenario; if (scenario === 0) { spawnActor('skin-villager', 'left', 12); } else { spawnActor('skin-creeper', 'right', 12); } }
-        function spawnActor(skinClass, direction, duration) { if (isAnimating || isGameRunning || !stage) return; const el = document.createElement('div'); el.className = `actor ambient-actor ${skinClass}`; el.style.bottom = (22 + Math.floor(Math.random() * 8)) + 'px'; let inner = ''; if(skinClass.includes('creeper')) inner = '<div class="head"><div class="face"></div></div><div class="body"></div><div class="legs"><div class="leg" style="left:0"></div><div class="leg" style="right:0"></div></div>'; else if(skinClass.includes('villager')) inner = '<div class="head"><div class="nose"></div></div><div class="body"></div><div class="arms"></div>'; el.innerHTML = inner; if (direction === 'left') { el.style.left = '-100px'; el.style.animation = `runLeftToRight ${duration}s linear forwards`; } else { el.style.right = '-100px'; el.style.transform = 'scaleX(-1)'; el.style.animation = `runRightToLeft ${duration}s linear forwards`; } stage.appendChild(el); setTimeout(() => el.remove(), duration * 1000); }
-        function clearAmbientActors() { document.querySelectorAll('.ambient-actor').forEach(el => el.remove()); }
         function createParticles(c, chars) { const isArray = Array.isArray(chars); for (let i = 0; i < c; i++) { const el = document.createElement('div'); el.classList.add('confetti'); el.innerText = isArray ? chars[Math.floor(Math.random() * chars.length)] : chars; const angle = Math.random() * 360, dist = 50 + Math.random() * 100; el.style.setProperty('--tx', (Math.cos(angle * Math.PI / 180) * dist) + 'vw'); el.style.setProperty('--ty', (Math.sin(angle * Math.PI / 180) * dist) + 'vh'); document.body.appendChild(el); setTimeout(() => el.remove(), 1000); } }
         function clickCoin() { if(!isMuted) { sfxClick.currentTime = 0; sfxClick.play().catch(e=>{}); } }
         function toggleMute() { isMuted = !isMuted; bgm[isMuted ? 'pause' : 'play'](); document.querySelector('.mute-btn').innerText = isMuted ? '🔇' : '🔊'; }
